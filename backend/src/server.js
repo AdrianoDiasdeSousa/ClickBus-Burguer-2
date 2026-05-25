@@ -12,13 +12,18 @@ const pool = require("./config/db");
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+
+// Aumenta o limite para permitir salvar imagens em base64.
+// Isso resolve o erro 413 Payload Too Large ao editar imagem do produto.
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/store", storeRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/store-settings", storeSettingsRoutes);
+
 app.get("/", (req, res) => {
   res.json({
     mensagem: "API ClickBus Burguer rodando com sucesso",
@@ -48,6 +53,24 @@ app.get("/api/db-test", async (req, res) => {
       detalhe: error.message,
     });
   }
+});
+
+// Tratamento simples para JSON grande demais ou inválido.
+// Ajuda o front-end a receber JSON em vez de uma página HTML de erro.
+app.use((error, req, res, next) => {
+  if (error.type === "entity.too.large") {
+    return res.status(413).json({
+      erro: "A imagem enviada é muito grande. Use uma imagem menor.",
+    });
+  }
+
+  if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
+    return res.status(400).json({
+      erro: "JSON inválido enviado para o servidor.",
+    });
+  }
+
+  next(error);
 });
 
 const PORT = process.env.PORT || 3000;
