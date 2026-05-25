@@ -2548,7 +2548,6 @@ function aplicarVisualStatusLoja(aberta) {
 }
 
 async function verificarStatusLoja() {
-    await verificarStatusLoja();
   const elementosStatus = document.querySelectorAll(
     "[data-status-loja], #statusLoja",
   );
