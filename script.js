@@ -3298,8 +3298,22 @@ function sincronizarPedidoComProdutos(pedido) {
   salvarProdutos(produtos);
 }
 
-function avancarCarrinho() {
+async function avancarCarrinho() {
   if (bloquearPedidoParaAdmin()) return;
+
+  try {
+    await carregarConfiguracoesLojaDaApi();
+  } catch (erro) {
+    console.error("Erro ao verificar status da loja:", erro);
+  }
+
+  if (typeof lojaEstaAberta === "function" && !lojaEstaAberta()) {
+    mostrarAviso(
+      "A loja está fechada no momento. Não é possível fazer pedido agora.",
+      "erro",
+    );
+    return;
+  }
 
   const pedido = carregarPedidoAtual();
 
@@ -3310,7 +3324,6 @@ function avancarCarrinho() {
 
   window.location.href = "finalizar-pedido.html";
 }
-
 /* =========================
    FINALIZAÇÃO DO PEDIDO
 ========================= */
