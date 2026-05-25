@@ -2285,6 +2285,21 @@ async function avancarPedido() {
   window.location.href = "finalizar-pedido.html";
 }
 
+  const totalTexto =
+    document.getElementById("valorTotal")?.textContent || "R$ 0,00";
+
+  const totalNumerico = Number(
+    totalTexto.replace("R$", "").replace(/\./g, "").replace(",", ".").trim(),
+  );
+
+  if (!totalNumerico || totalNumerico <= 0) {
+    alert("Escolha pelo menos um item antes de avançar.");
+    return;
+  }
+
+  window.location.href = "finalizar-pedido.html";
+}
+
 function sairDoSistema() {
   limparPedidoEmAndamento();
   localStorage.removeItem("usuarioLogado");
