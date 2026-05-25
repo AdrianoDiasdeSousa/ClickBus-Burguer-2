@@ -5284,78 +5284,165 @@ window.avancarPedido = async function () {
 };
 
 
+
 /* =====================================================
-   ALERTA SONORO PARA NOVOS PEDIDOS
-   Deve ficar no FINAL do script.js
+   ALERTA SONORO DE NOVOS PEDIDOS
+   Colocar no FINAL do script.js
 ===================================================== */
 
-let quantidadePedidosAnteriorAlerta = null;
-let alertaSonoroLiberado = false;
+let clickbusQtdPedidosAnterior = null;
+let clickbusSomAtivado = false;
+let clickbusUltimoSomEm = 0;
 
-const somNovoPedido = new Audio(
-  "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
-);
-somNovoPedido.volume = 1;
+function clickbusTocarBipNovoPedido() {
+  if (!clickbusSomAtivado) return;
 
-function liberarSomNovoPedido() {
-  alertaSonoroLiberado = true;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const contexto = new AudioContext();
 
-  somNovoPedido
-    .play()
-    .then(() => {
-      somNovoPedido.pause();
-      somNovoPedido.currentTime = 0;
-    })
-    .catch(() => {});
+    const tocarNota = (frequencia, inicio, duracao) => {
+      const oscilador = contexto.createOscillator();
+      const ganho = contexto.createGain();
+
+      oscilador.type = "sine";
+      oscilador.frequency.value = frequencia;
+
+      ganho.gain.setValueAtTime(0.0001, contexto.currentTime + inicio);
+      ganho.gain.exponentialRampToValueAtTime(
+        0.45,
+        contexto.currentTime + inicio + 0.02,
+      );
+      ganho.gain.exponentialRampToValueAtTime(
+        0.0001,
+        contexto.currentTime + inicio + duracao,
+      );
+
+      oscilador.connect(ganho);
+      ganho.connect(contexto.destination);
+
+      oscilador.start(contexto.currentTime + inicio);
+      oscilador.stop(contexto.currentTime + inicio + duracao);
+    };
+
+    tocarNota(880, 0, 0.18);
+    tocarNota(1175, 0.22, 0.22);
+  } catch (erro) {
+    console.warn("Não foi possível tocar o som de novo pedido:", erro);
+  }
 }
 
-document.addEventListener("click", liberarSomNovoPedido, { once: true });
+function clickbusCriarBotaoAtivarSom() {
+  if (!window.location.pathname.includes("pedidos.html")) return;
+  if (document.getElementById("btnAtivarSomPedidos")) return;
 
-function tocarSomNovoPedido() {
-  if (!alertaSonoroLiberado) return;
+  const botao = document.createElement("button");
+  botao.id = "btnAtivarSomPedidos";
+  botao.type = "button";
+  botao.textContent = "🔔 Ativar som";
+  botao.style.position = "fixed";
+  botao.style.right = "18px";
+  botao.style.bottom = "18px";
+  botao.style.zIndex = "99999";
+  botao.style.padding = "12px 18px";
+  botao.style.border = "none";
+  botao.style.borderRadius = "14px";
+  botao.style.background = "#f28c00";
+  botao.style.color = "#000";
+  botao.style.fontWeight = "700";
+  botao.style.fontSize = "16px";
+  botao.style.cursor = "pointer";
+  botao.style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
 
-  somNovoPedido.currentTime = 0;
-  somNovoPedido.play().catch((erro) => {
-    console.warn("O navegador bloqueou o som do alerta:", erro);
+  botao.addEventListener("click", () => {
+    clickbusSomAtivado = true;
+    localStorage.setItem("clickbus_som_pedidos_ativado", "sim");
+
+    botao.textContent = "🔔 Som ativo";
+    botao.style.background = "#34a853";
+    botao.style.color = "#fff";
+
+    clickbusTocarBipNovoPedido();
+    mostrarAviso("Som de novos pedidos ativado.", "sucesso");
   });
+
+  document.body.appendChild(botao);
 }
 
-function contarPedidosRecebidosNaTela() {
-  const cardsPedidos = document.querySelectorAll(".pedido-card, .card-pedido");
+function clickbusContarPedidosNaPagina() {
+  if (!window.location.pathname.includes("pedidos.html")) return 0;
 
-  if (cardsPedidos.length > 0) {
-    return cardsPedidos.length;
+  const textoPagina = document.body.innerText || "";
+
+  const matchNovos = textoPagina.match(/Há\s+(\d+)\s+novos pedidos/i);
+  if (matchNovos) {
+    return Number(matchNovos[1]) || 0;
   }
 
-  const textoNotificacao =
-    document.body.textContent.match(/Há\s+(\d+)\s+novos pedidos/i);
-
-  if (textoNotificacao) {
-    return Number(textoNotificacao[1]) || 0;
+  const cardsPorTexto = textoPagina.match(/Pedido\s+#\d+/gi);
+  if (cardsPorTexto) {
+    return cardsPorTexto.length;
   }
 
-  return 0;
+  const cards = document.querySelectorAll(
+    ".pedido-card, .card-pedido, .item-pedido, [data-pedido-id]",
+  );
+
+  return cards.length;
 }
 
-function verificarNovosPedidosComSom() {
-  const estaNaPaginaPedidos = window.location.pathname.includes("pedidos.html");
+function clickbusVerificarPedidosNovosComSom() {
+  if (!window.location.pathname.includes("pedidos.html")) return;
 
-  if (!estaNaPaginaPedidos) return;
+  const quantidadeAtual = clickbusContarPedidosNaPagina();
 
-  const quantidadeAtual = contarPedidosRecebidosNaTela();
-
-  if (quantidadePedidosAnteriorAlerta === null) {
-    quantidadePedidosAnteriorAlerta = quantidadeAtual;
+  if (clickbusQtdPedidosAnterior === null) {
+    clickbusQtdPedidosAnterior = quantidadeAtual;
     return;
   }
 
-  if (quantidadeAtual > quantidadePedidosAnteriorAlerta) {
-    tocarSomNovoPedido();
-    mostrarAviso("🔔 Novo pedido recebido!", "sucesso", 5000);
+  if (quantidadeAtual > clickbusQtdPedidosAnterior) {
+    const agora = Date.now();
+
+    if (agora - clickbusUltimoSomEm > 3000) {
+      clickbusUltimoSomEm = agora;
+      clickbusTocarBipNovoPedido();
+      mostrarAviso("🔔 Novo pedido recebido!", "sucesso", 5000);
+    }
   }
 
-  quantidadePedidosAnteriorAlerta = quantidadeAtual;
+  clickbusQtdPedidosAnterior = quantidadeAtual;
 }
 
-setInterval(verificarNovosPedidosComSom, 5000);
-document.addEventListener("DOMContentLoaded", verificarNovosPedidosComSom);
+function clickbusIniciarAlertaPedidos() {
+  if (!window.location.pathname.includes("pedidos.html")) return;
+
+  clickbusCriarBotaoAtivarSom();
+
+  if (localStorage.getItem("clickbus_som_pedidos_ativado") === "sim") {
+    clickbusSomAtivado = true;
+
+    const botao = document.getElementById("btnAtivarSomPedidos");
+    if (botao) {
+      botao.textContent = "🔔 Som ativo";
+      botao.style.background = "#34a853";
+      botao.style.color = "#fff";
+    }
+  }
+
+  clickbusVerificarPedidosNovosComSom();
+
+  setInterval(clickbusVerificarPedidosNovosComSom, 3000);
+
+  const observador = new MutationObserver(() => {
+    clickbusVerificarPedidosNovosComSom();
+  });
+
+  observador.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
+}
+
+document.addEventListener("DOMContentLoaded", clickbusIniciarAlertaPedidos);
