@@ -4466,12 +4466,20 @@ function iniciarAtualizacaoAutomatica() {
     }, 5000);
   }
 
-  if (estaNaPaginaCardapio) {
-    setInterval(() => {
-      atualizarStatusLoja?.();
-      carregarProdutosCardapio?.();
-    }, 5000);
-  }
+ if (estaNaPaginaCardapio) {
+  setInterval(() => {
+    if (typeof renderizarCardapio === "function") {
+      renderizarCardapio();
+    }
+
+    if (typeof window.atualizarStatusLoja === "function") {
+      window.atualizarStatusLoja();
+    }
+
+    if (typeof atualizarHorarioFunta === "function") {
+      atualizarHorarioFunta();
+    }
+  }, 5000);
 }
 
 function converterStatusTelaParaApi(statusTela) {
