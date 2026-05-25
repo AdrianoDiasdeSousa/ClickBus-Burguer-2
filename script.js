@@ -5481,3 +5481,62 @@ function clickbusIniciarAlertaPedidos() {
 
 document.addEventListener("DOMContentLoaded", clickbusIniciarAlertaPedidos);
 
+
+window.editarImagemProduto = async function (id) {
+  const produtos = carregarProdutos();
+  const produto = produtos.find((item) => Number(item.id) === Number(id));
+
+  if (!produto) {
+    mostrarAviso("Produto não encontrado.", "erro");
+    return;
+  }
+
+  const caminhoImagem = prompt(
+    "Cole o caminho da imagem. Exemplo: img/produtos/carne-sol.png",
+    produto.imagem || ""
+  );
+
+  if (caminhoImagem === null) return;
+
+  const imagem = caminhoImagem.trim();
+
+  if (!imagem) {
+    mostrarAviso("Nenhum caminho de imagem informado.", "erro");
+    return;
+  }
+
+  const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: produto.nome,
+      description: produto.descricao || "",
+      price: Number(produto.preco) || 0,
+      category: produto.categoria || "lanche",
+      image_url: imagem,
+      available: produto.disponivel !== false,
+      display_order: Number(produto.ordem) || Number(produto.id),
+      admin_notice: produto.avisoAdmin || "",
+    }),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok) {
+    mostrarAviso(resultado.erro || "Erro ao salvar imagem.", "erro");
+    return;
+  }
+
+  produto.imagem = imagem;
+  salvarProdutos(produtos);
+
+  mostrarAviso("Imagem atualizada com sucesso.", "sucesso");
+  await renderizarCardapio();
+};
+
+window.carregarProdutosCardapio = async function () {
+  await renderizarCardapio();
+};
+
