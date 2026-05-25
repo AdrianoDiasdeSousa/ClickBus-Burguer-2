@@ -2256,6 +2256,13 @@ function cadastrarNovaBebida() {
 function cadastrarNovoProduto() {
   cadastrarNovoLanche();
 }
+function carregarObservacoesPedido() {
+  try {
+    return JSON.parse(localStorage.getItem("observacoesPedidoAtual")) || {};
+  } catch (erro) {
+    return {};
+  }
+}
 function avancarPedido() {
   if (usuarioEhAdmin()) return;
 
