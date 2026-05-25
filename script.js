@@ -4346,18 +4346,20 @@ function iniciarAtualizacaoAutomatica() {
     }, 5000);
   }
 
- if (estaNaPaginaCardapio) {
-  setInterval(() => {
-    if (typeof atualizarStatusLoja === "function") {
-      atualizarStatusLoja();
-    }
+  if (estaNaPaginaCardapio) {
+    setInterval(() => {
+      if (typeof atualizarStatusLoja === "function") {
+        atualizarStatusLoja();
+      }
 
-    if (typeof renderizarCardapio === "function") {
-      renderizarCardapio();
-    }
-  }, 5000);
+      if (typeof renderizarCardapio === "function") {
+        renderizarCardapio();
+      }
+    }, 5000);
+  }
 }
 
+function converterStatusTelaParaApi(statusTela) {
 function converterStatusTelaParaApi(statusTela) {
   const mapa = {
     "Pedido recebido": "pendente",
