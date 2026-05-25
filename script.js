@@ -4357,7 +4357,6 @@ function iniciarAtualizacaoAutomatica() {
       }
     }, 5000);
   }
-}
 
 function converterStatusTelaParaApi(statusTela) {
 function converterStatusTelaParaApi(statusTela) {
@@ -5199,5 +5198,3 @@ window.avancarPedido = function () {
 
   window.location.href = "finalizar-pedido.html";
 };
-
-window.carregarProdutosCardapio = renderizarCardapio;
