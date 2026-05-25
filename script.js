@@ -4199,14 +4199,11 @@ function iniciarAtualizacaoAutomatica() {
     }, 5000);
   }
 
-  if (estaNaPaginaCardapio) {
-    setInterval(() => {
-      atualizarStatusLoja?.();
-      renderizarCardapio();
-    }, 5000);
-  }
+if (estaNaPaginaCardapio) {
+  setInterval(() => {
+    atualizarStatusLoja();
+  }, 30000);
 }
-
 function converterStatusTelaParaApi(statusTela) {
   const mapa = {
     "Pedido recebido": "pendente",
