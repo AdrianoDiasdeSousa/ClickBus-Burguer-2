@@ -2263,7 +2263,6 @@ function carregarObservacoesPedido() {
     return {};
   }
 }
-
 async function avancarPedido() {
   if (usuarioEhAdmin()) return;
 
@@ -2309,45 +2308,8 @@ async function avancarPedido() {
   window.location.href = "carrinho.html";
 }
 
-  if (!lojaEstaAberta()) {
-    mostrarAviso(
-      "A loja está fechada no momento. Tente novamente quando estiver aberta.",
-      "erro",
-    );
-    return;
-  }
+function sairDoSistema() {
 
-  const produtos = carregarProdutos();
-
-  const observacoes = carregarObservacoesPedido();
-
-  const itensSelecionados = produtos
-    .filter(
-      (produto) =>
-        Number(produto.quantidade) > 0 && produto.disponivel !== false,
-    )
-    .map((produto) => {
-      const itemPedido = { ...produto };
-      const observacao = observacoes[String(produto.id)] || "";
-
-      if (observacao) {
-        itemPedido.observacao = observacao;
-      } else {
-        delete itemPedido.observacao;
-      }
-
-      return itemPedido;
-    });
-
-  if (itensSelecionados.length === 0) {
-    mostrarAviso("Selecione pelo menos um item antes de avançar.", "erro");
-    return;
-  }
-
-  localStorage.setItem("pedidoAtual", JSON.stringify(itensSelecionados));
-
-  window.location.href = "carrinho.html";
-}
 
 function sairDoSistema() {
   limparPedidoEmAndamento();
