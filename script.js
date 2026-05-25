@@ -2033,29 +2033,92 @@ function editarImagemProduto(id) {
     return;
   }
 
-  const produtos = carregarProdutos();
-  const produto = produtos.find((item) => item.id === id);
+function editarImagemProduto(id) {
+  if (!usuarioEhAdmin()) {
+    mostrarAviso("Apenas o administrador pode editar imagens.", "erro");
+    return;
+  }
 
-  if (!produto) return;
+  const produtos = carregarProdutos();
+  const produto = produtos.find((item) => Number(item.id) === Number(id));
+
+  if (!produto) {
+    mostrarAviso("Produto não encontrado.", "erro");
+    return;
+  }
 
   const inputArquivo = document.createElement("input");
   inputArquivo.type = "file";
-  inputArquivo.accept = "image/*";
+  inputArquivo.accept = "image/png, image/jpeg, image/webp";
 
   inputArquivo.addEventListener("change", () => {
     const arquivo = inputArquivo.files[0];
 
     if (!arquivo) return;
 
+    if (!arquivo.type.startsWith("image/")) {
+      mostrarAviso("Selecione apenas arquivos de imagem.", "erro");
+      return;
+    }
+
+    const tamanhoMaximoMb = 2;
+    const tamanhoMaximoBytes = tamanhoMaximoMb * 1024 * 1024;
+
+    if (arquivo.size > tamanhoMaximoBytes) {
+      mostrarAviso(
+        `A imagem é muito grande. Use uma imagem de até ${tamanhoMaximoMb} MB.`,
+        "erro",
+      );
+      return;
+    }
+
     const leitor = new FileReader();
 
-    leitor.onload = () => {
-      produto.imagem = leitor.result;
+    leitor.onload = async () => {
+      const imagemBase64 = leitor.result;
 
-      salvarProdutos(produtos);
-      renderizarCardapio();
+      const produtoAtualizado = {
+        ...produto,
+        imagem: imagemBase64,
+      };
 
-      mostrarAviso("Imagem atualizada com sucesso!", "sucesso");
+      try {
+        mostrarAviso("Salvando imagem do produto...", "info");
+
+        const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
+        });
+
+        let resultado = null;
+
+        try {
+          resultado = await resposta.json();
+        } catch {
+          resultado = null;
+        }
+
+        if (!resposta.ok) {
+          mostrarAviso(
+            resultado?.erro || "Erro ao salvar imagem no servidor.",
+            "erro",
+          );
+          return;
+        }
+
+        produto.imagem = imagemBase64;
+        salvarProdutos(produtos);
+
+        mostrarAviso("Imagem atualizada com sucesso!", "sucesso");
+
+        await renderizarCardapio();
+      } catch (error) {
+        console.error("Erro ao salvar imagem:", error);
+        mostrarAviso("Erro de conexão ao salvar imagem.", "erro");
+      }
     };
 
     leitor.readAsDataURL(arquivo);
@@ -2063,7 +2126,6 @@ function editarImagemProduto(id) {
 
   inputArquivo.click();
 }
-
 async function alternarDisponibilidadeProduto(id) {
   if (!usuarioEhAdmin()) {
     mostrarAviso(
