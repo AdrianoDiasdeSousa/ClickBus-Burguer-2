@@ -2027,7 +2027,77 @@ async function editarAvisoProduto(id) {
   }
 }
 
+async function editarImagemProduto(id) {
+  if (!usuarioEhAdmin()) {
+    mostrarAviso("Apenas o administrador pode editar imagens.", "erro");
+    return;
+  }
 
+  const produtos = carregarProdutos();
+  const produto = produtos.find((item) => Number(item.id) === Number(id));
+
+  if (!produto) {
+    mostrarAviso("Produto não encontrado.", "erro");
+    return;
+  }
+
+  const novaImagem = prompt(
+    "Cole ou digite o caminho da imagem.\n\nExemplo:\nimg/produtos/carne-sol.png",
+    produto.imagem || ""
+  );
+
+  if (novaImagem === null) return;
+
+  const caminhoImagem = novaImagem.trim();
+
+  if (!caminhoImagem) {
+    mostrarAviso("Informe o caminho da imagem.", "erro");
+    return;
+  }
+
+  const produtoAtualizado = {
+    ...produto,
+    imagem: caminhoImagem,
+  };
+
+  try {
+    mostrarAviso("Salvando imagem do produto...", "info");
+
+    const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
+    });
+
+    let resultado = null;
+
+    try {
+      resultado = await resposta.json();
+    } catch {
+      resultado = null;
+    }
+
+    if (!resposta.ok) {
+      mostrarAviso(
+        resultado?.erro || "Erro ao salvar imagem do produto.",
+        "erro"
+      );
+      return;
+    }
+
+    produto.imagem = caminhoImagem;
+    salvarProdutos(produtos);
+
+    mostrarAviso("Imagem do produto atualizada com sucesso.", "sucesso");
+
+    await renderizarCardapio();
+  } catch (error) {
+    console.error("Erro ao salvar imagem:", error);
+    mostrarAviso("Erro de conexão ao salvar imagem.", "erro");
+  }
+}
 async function alternarDisponibilidadeProduto(id) {
   if (!usuarioEhAdmin()) {
     mostrarAviso(
