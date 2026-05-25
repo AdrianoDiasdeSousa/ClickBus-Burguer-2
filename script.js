@@ -4,8 +4,7 @@
 
 const TEMPO_AVISO_PADRAO = 2600;
 const TEMPO_AVISO_NAVEGACAO = 1600;
-const API_BASE_URL =
-  typeof API_URL !== "undefined" ? API_URL : "http://localhost:3000/api";
+const API_BASE_URL = "https://clickbus-burguer-api.onrender.com/api";
 
 function prepararAvisosTemporarios() {
   if (document.getElementById("estiloAvisosTemporarios")) return;
