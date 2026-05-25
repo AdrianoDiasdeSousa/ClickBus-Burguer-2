@@ -2255,7 +2255,21 @@ function cadastrarNovaBebida() {
 function cadastrarNovoProduto() {
   cadastrarNovoLanche();
 }
-function avancarPedido() {
+async function avancarPedido() {
+  try {
+    await carregarConfiguracoesLojaDaApi();
+  } catch (erro) {
+    console.error("Erro ao verificar status da loja:", erro);
+  }
+
+  if (typeof lojaEstaAberta === "function" && !lojaEstaAberta()) {
+    mostrarAviso(
+      "A loja está fechada no momento. Não é possível fazer pedido agora.",
+      "erro",
+    );
+    return;
+  }
+
   const totalTexto =
     document.getElementById("valorTotal")?.textContent || "R$ 0,00";
 
