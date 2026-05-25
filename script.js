@@ -3241,20 +3241,20 @@ async function salvarPerfilLoja(event) {
   const perfilAtual = carregarPerfilLoja();
 
   const perfilAtualizado = {
-    ...perfilAtual,
-    nome: nomeLoja,
-    categoria: categoriaLoja,
-    endereco: enderecoLoja,
-    localizacaoLoja,
-    telefone: telefoneLoja,
-    horario: horarioLoja,
-    dias: diasLoja,
-    tituloCompartilhamento,
-    cidadeEntrega,
-    linkPublicado,
-    mensagemCliente,
-    mensagemAdmin,
-  };
+  ...perfilAtual,
+  nome: nomeLoja,
+  categoria: categoriaLoja,
+  endereco: enderecoLoja,
+  localizacaoLoja,
+  telefone: telefoneLoja,
+  horario: horarioLoja,
+  dias: diasLoja,
+  tituloCompartilhamento,
+  cidadeEntrega,
+  linkPublicado,
+  mensagemCliente,
+  mensagemAdmin,
+};
 
   salvarPerfilLojaLocal(perfilAtualizado);
 
