@@ -2033,12 +2033,6 @@ function editarImagemProduto(id) {
     return;
   }
 
-function editarImagemProduto(id) {
-  if (!usuarioEhAdmin()) {
-    mostrarAviso("Apenas o administrador pode editar imagens.", "erro");
-    return;
-  }
-
   const produtos = carregarProdutos();
   const produto = produtos.find((item) => Number(item.id) === Number(id));
 
