@@ -5163,6 +5163,12 @@ window.atualizarStatusLoja = function () {
   }
 };
 
+window.atualizarStatusLoja = function () {
+  if (typeof iniciarAtualizacaoStatusLoja === "function") {
+    iniciarAtualizacaoStatusLoja();
+  }
+};
+
 window.avancarPedido = function () {
   if (bloquearPedidoParaAdmin()) return;
 
@@ -5189,7 +5195,7 @@ window.avancarPedido = function () {
 
   localStorage.setItem("pedidoAtual", JSON.stringify(pedido));
 
-     window.location.href = "finalizar-pedido.html";
+  window.location.href = "finalizar-pedido.html";
 };
 
 window.carregarProdutosCardapio = renderizarCardapio;
