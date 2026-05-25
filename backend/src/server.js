@@ -15,8 +15,8 @@ app.use(cors());
 
 // Aumenta o limite para permitir salvar imagens em base64.
 // Isso resolve o erro 413 Payload Too Large ao editar imagem do produto.
-app.use(express.json({ limit: "30mb" }));
-app.use(express.urlencoded({ extended: true, limit: "30mb" }));
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
