@@ -2257,19 +2257,46 @@ function cadastrarNovoProduto() {
   cadastrarNovoLanche();
 }
 function avancarPedido() {
-  const totalTexto =
-    document.getElementById("valorTotal")?.textContent || "R$ 0,00";
+  if (usuarioEhAdmin()) return;
 
-  const totalNumerico = Number(
-    totalTexto.replace("R$", "").replace(/\./g, "").replace(",", ".").trim(),
-  );
-
-  if (!totalNumerico || totalNumerico <= 0) {
-    alert("Escolha pelo menos um item antes de avançar.");
+  if (!lojaEstaAberta()) {
+    mostrarAviso(
+      "A loja está fechada no momento. Tente novamente quando estiver aberta.",
+      "erro",
+    );
     return;
   }
 
-  window.location.href = "finalizar-pedido.html";
+  const produtos = carregarProdutos();
+
+  const observacoes = carregarObservacoesPedido();
+
+  const itensSelecionados = produtos
+    .filter(
+      (produto) =>
+        Number(produto.quantidade) > 0 && produto.disponivel !== false,
+    )
+    .map((produto) => {
+      const itemPedido = { ...produto };
+      const observacao = observacoes[String(produto.id)] || "";
+
+      if (observacao) {
+        itemPedido.observacao = observacao;
+      } else {
+        delete itemPedido.observacao;
+      }
+
+      return itemPedido;
+    });
+
+  if (itensSelecionados.length === 0) {
+    mostrarAviso("Selecione pelo menos um item antes de avançar.", "erro");
+    return;
+  }
+
+  localStorage.setItem("pedidoAtual", JSON.stringify(itensSelecionados));
+
+  window.location.href = "carrinho.html";
 }
 
 function sairDoSistema() {
@@ -2303,11 +2330,8 @@ const perfilLojaPadrao = {
     "🍔 ClickBus Burguer | Delivery em Sandolândia\n\nFaça seu pedido pelo cardápio digital e receba no conforto da sua casa.",
 };
 
-const CHAVE_DIVULGACAO_LOJA = "clickbus_divulgacao_loja";
-
 let configuracoesLojaCache = {
   store_name: perfilLojaPadrao.nome,
-  category: perfilLojaPadrao.categoria,
   address: perfilLojaPadrao.endereco,
   location: perfilLojaPadrao.localizacaoLoja,
   phone: perfilLojaPadrao.telefone,
@@ -2316,90 +2340,6 @@ let configuracoesLojaCache = {
   manual_status: "auto",
   updated_at: null,
 };
-
-function carregarDivulgacaoLojaLocal() {
-  try {
-    return {
-      tituloCompartilhamento: perfilLojaPadrao.tituloCompartilhamento,
-      cidadeEntrega: perfilLojaPadrao.cidadeEntrega,
-      linkPublicado: perfilLojaPadrao.linkPublicado,
-      mensagemCliente: perfilLojaPadrao.mensagemCliente,
-      mensagemAdmin: perfilLojaPadrao.mensagemAdmin,
-      ...(JSON.parse(localStorage.getItem(CHAVE_DIVULGACAO_LOJA) || "{}") ||
-        {}),
-    };
-  } catch (error) {
-    console.warn("Erro ao carregar divulgação local:", error);
-    return {
-      tituloCompartilhamento: perfilLojaPadrao.tituloCompartilhamento,
-      cidadeEntrega: perfilLojaPadrao.cidadeEntrega,
-      linkPublicado: perfilLojaPadrao.linkPublicado,
-      mensagemCliente: perfilLojaPadrao.mensagemCliente,
-      mensagemAdmin: perfilLojaPadrao.mensagemAdmin,
-    };
-  }
-}
-
-function salvarDivulgacaoLojaLocal(dados) {
-  const divulgacaoAtual = carregarDivulgacaoLojaLocal();
-  const divulgacaoAtualizada = {
-    ...divulgacaoAtual,
-    tituloCompartilhamento:
-      dados.tituloCompartilhamento ?? divulgacaoAtual.tituloCompartilhamento,
-    cidadeEntrega: dados.cidadeEntrega ?? divulgacaoAtual.cidadeEntrega,
-    linkPublicado: dados.linkPublicado ?? divulgacaoAtual.linkPublicado,
-    mensagemCliente: dados.mensagemCliente ?? divulgacaoAtual.mensagemCliente,
-    mensagemAdmin: dados.mensagemAdmin ?? divulgacaoAtual.mensagemAdmin,
-  };
-
-  localStorage.setItem(
-    CHAVE_DIVULGACAO_LOJA,
-    JSON.stringify(divulgacaoAtualizada),
-  );
-
-  return divulgacaoAtualizada;
-}
-
-function atualizarCacheConfiguracoesLoja(configuracoes = {}) {
-  configuracoesLojaCache = {
-    store_name:
-      configuracoes.store_name ??
-      configuracoesLojaCache.store_name ??
-      perfilLojaPadrao.nome,
-    category:
-      configuracoes.category ??
-      configuracoesLojaCache.category ??
-      perfilLojaPadrao.categoria,
-    address:
-      configuracoes.address ??
-      configuracoesLojaCache.address ??
-      perfilLojaPadrao.endereco,
-    location:
-      configuracoes.location ??
-      configuracoesLojaCache.location ??
-      perfilLojaPadrao.localizacaoLoja,
-    phone:
-      configuracoes.phone ??
-      configuracoesLojaCache.phone ??
-      perfilLojaPadrao.telefone,
-    opening_hours:
-      configuracoes.opening_hours ??
-      configuracoesLojaCache.opening_hours ??
-      perfilLojaPadrao.horario,
-    business_days:
-      configuracoes.business_days ??
-      configuracoesLojaCache.business_days ??
-      perfilLojaPadrao.dias,
-    manual_status:
-      configuracoes.manual_status ??
-      configuracoesLojaCache.manual_status ??
-      "auto",
-    updated_at:
-      configuracoes.updated_at ?? configuracoesLojaCache.updated_at ?? null,
-  };
-
-  return configuracoesLojaCache;
-}
 
 async function carregarConfiguracoesLojaDaApi() {
   try {
@@ -2410,7 +2350,19 @@ async function carregarConfiguracoesLojaDaApi() {
     }
 
     const configuracoes = await resposta.json();
-    return atualizarCacheConfiguracoesLoja(configuracoes);
+
+    configuracoesLojaCache = {
+      store_name: configuracoes.store_name || perfilLojaPadrao.nome,
+      address: configuracoes.address || perfilLojaPadrao.endereco,
+      location: configuracoes.location || perfilLojaPadrao.localizacaoLoja,
+      phone: configuracoes.phone || perfilLojaPadrao.telefone,
+      opening_hours: configuracoes.opening_hours || perfilLojaPadrao.horario,
+      business_days: configuracoes.business_days || perfilLojaPadrao.dias,
+      manual_status: configuracoes.manual_status || "auto",
+      updated_at: configuracoes.updated_at || null,
+    };
+
+    return configuracoesLojaCache;
   } catch (error) {
     console.error("Erro ao carregar configurações da loja:", error);
     return configuracoesLojaCache;
@@ -2438,53 +2390,24 @@ async function salvarConfiguracoesLojaNaApi(novasConfiguracoes) {
     console.error("Erro retornado pela API da loja:", resultado);
     throw new Error(
       resultado?.erro ||
-        resultado?.detalhe ||
         `Erro ao salvar configurações da loja. Status: ${resposta.status}`,
     );
   }
 
-  const settings = resultado?.settings || resultado || {};
-  return atualizarCacheConfiguracoesLoja(settings);
-}
+  const settings = resultado.settings;
 
-function salvarPerfilLojaLocal(perfilAtualizado) {
-  atualizarCacheConfiguracoesLoja({
-    store_name: perfilAtualizado.nome,
-    category: perfilAtualizado.categoria,
-    address: perfilAtualizado.endereco,
-    location: perfilAtualizado.localizacaoLoja,
-    phone: perfilAtualizado.telefone,
-    opening_hours: perfilAtualizado.horario,
-    business_days: perfilAtualizado.dias,
-  });
-
-  salvarDivulgacaoLojaLocal({
-    tituloCompartilhamento: perfilAtualizado.tituloCompartilhamento,
-    cidadeEntrega: perfilAtualizado.cidadeEntrega,
-    linkPublicado: perfilAtualizado.linkPublicado,
-    mensagemCliente: perfilAtualizado.mensagemCliente,
-    mensagemAdmin: perfilAtualizado.mensagemAdmin,
-  });
-}
-
-function carregarPerfilLoja() {
-  const divulgacao = carregarDivulgacaoLojaLocal();
-
-  return {
-    nome: configuracoesLojaCache.store_name || perfilLojaPadrao.nome,
-    categoria: configuracoesLojaCache.category || perfilLojaPadrao.categoria,
-    endereco: configuracoesLojaCache.address || perfilLojaPadrao.endereco,
-    localizacaoLoja:
-      configuracoesLojaCache.location || perfilLojaPadrao.localizacaoLoja,
-    telefone: configuracoesLojaCache.phone || perfilLojaPadrao.telefone,
-    horario: configuracoesLojaCache.opening_hours || perfilLojaPadrao.horario,
-    dias: configuracoesLojaCache.business_days || perfilLojaPadrao.dias,
-    tituloCompartilhamento: divulgacao.tituloCompartilhamento,
-    cidadeEntrega: divulgacao.cidadeEntrega,
-    linkPublicado: divulgacao.linkPublicado,
-    mensagemCliente: divulgacao.mensagemCliente,
-    mensagemAdmin: divulgacao.mensagemAdmin,
+  configuracoesLojaCache = {
+    store_name: settings.store_name || perfilLojaPadrao.nome,
+    address: settings.address || perfilLojaPadrao.endereco,
+    location: settings.location || perfilLojaPadrao.localizacaoLoja,
+    phone: settings.phone || perfilLojaPadrao.telefone,
+    opening_hours: settings.opening_hours || perfilLojaPadrao.horario,
+    business_days: settings.business_days || perfilLojaPadrao.dias,
+    manual_status: settings.manual_status || "auto",
+    updated_at: settings.updated_at || null,
   };
+
+  return configuracoesLojaCache;
 }
 
 function controlarVisualPerfilLoja() {
@@ -2499,6 +2422,24 @@ function controlarVisualPerfilLoja() {
   if (perfilCliente) {
     perfilCliente.style.display = "";
   }
+}
+
+function carregarPerfilLoja() {
+  return {
+    nome: configuracoesLojaCache.store_name || perfilLojaPadrao.nome,
+    categoria: perfilLojaPadrao.categoria,
+    endereco: configuracoesLojaCache.address || perfilLojaPadrao.endereco,
+    localizacaoLoja:
+      configuracoesLojaCache.location || perfilLojaPadrao.localizacaoLoja,
+    telefone: configuracoesLojaCache.phone || perfilLojaPadrao.telefone,
+    horario: configuracoesLojaCache.opening_hours || perfilLojaPadrao.horario,
+    dias: configuracoesLojaCache.business_days || perfilLojaPadrao.dias,
+    tituloCompartilhamento: perfilLojaPadrao.tituloCompartilhamento,
+    cidadeEntrega: perfilLojaPadrao.cidadeEntrega,
+    linkPublicado: perfilLojaPadrao.linkPublicado,
+    mensagemCliente: perfilLojaPadrao.mensagemCliente,
+    mensagemAdmin: perfilLojaPadrao.mensagemAdmin,
+  };
 }
 
 function obterStatusManualLoja() {
@@ -2520,6 +2461,7 @@ function lojaEstaAbertaPeloHorario() {
   const horaAtual = agora.getHours() * 60 + agora.getMinutes();
 
   const [aberturaHora, aberturaMinuto] = horaAbertura.split(":").map(Number);
+
   const [fechamentoHora, fechamentoMinuto] = horaFechamento
     .split(":")
     .map(Number);
@@ -2602,14 +2544,17 @@ async function verificarStatusLoja() {
   const elementosStatus = document.querySelectorAll(
     "[data-status-loja], #statusLoja",
   );
+
   const elementosHorario = document.querySelectorAll("[data-horario-loja]");
 
   if (!elementosStatus.length && !elementosHorario.length) return;
 
   await carregarConfiguracoesLojaDaApi();
+
   atualizarHorarioFuncionamento();
 
   const aberta = lojaEstaAberta();
+
   aplicarVisualStatusLoja(aberta);
 
   const btnAlternarStatusLoja = document.getElementById(
@@ -2684,7 +2629,6 @@ async function alternarStatusManualLoja() {
     mostrarAviso("Erro ao alterar status da loja.", "erro");
   }
 }
-
 function obterDestinoRotaLoja() {
   const perfil = carregarPerfilLoja();
   return (perfil.localizacaoLoja || perfil.endereco || "").trim();
@@ -2716,6 +2660,237 @@ function abrirRotaLojaWaze() {
   }
 
   window.open(obterLinkWaze(destino), "_blank");
+}
+
+async function preencherPerfilLoja() {
+  const nomeLoja = document.getElementById("nomeLoja");
+  const categoriaLoja = document.getElementById("categoriaLoja");
+  const enderecoLoja = document.getElementById("enderecoLoja");
+  const localizacaoLoja = document.getElementById("localizacaoLoja");
+  const acoesLocalizacaoLoja = document.getElementById("acoesLocalizacaoLoja");
+  const telefoneLoja = document.getElementById("telefoneLoja");
+  const horarioLoja = document.getElementById("horarioLoja");
+  const diasLoja = document.getElementById("diasLoja");
+  const tituloCompartilhamentoLoja = document.getElementById(
+    "tituloCompartilhamentoLoja",
+  );
+  const cidadeEntregaLoja = document.getElementById("cidadeEntregaLoja");
+  const linkPublicadoLoja = document.getElementById("linkPublicadoLoja");
+  const mensagemClienteLoja = document.getElementById("mensagemClienteLoja");
+  const mensagemAdminLoja = document.getElementById("mensagemAdminLoja");
+  const areaDivulgacaoLoja = document.getElementById("areaDivulgacaoLoja");
+  const btnSalvar = document.getElementById("btnSalvarPerfilLoja");
+  const btnSalvarDivulgacao = document.getElementById(
+    "btnSalvarDivulgacaoLoja",
+  );
+
+  if (
+    !nomeLoja ||
+    !categoriaLoja ||
+    !enderecoLoja ||
+    !telefoneLoja ||
+    !horarioLoja ||
+    !diasLoja
+  ) {
+    return;
+  }
+
+  await carregarConfiguracoesLojaDaApi();
+
+  const perfil = carregarPerfilLoja();
+
+  nomeLoja.value = perfil.nome;
+  categoriaLoja.value = perfil.categoria;
+  enderecoLoja.value = perfil.endereco;
+
+  if (localizacaoLoja) {
+    localizacaoLoja.value = perfil.localizacaoLoja || "";
+  }
+
+  telefoneLoja.value = perfil.telefone;
+  horarioLoja.value = perfil.horario;
+  diasLoja.value = perfil.dias;
+
+  preencherPerfilLojaCliente();
+
+  function configurarEdicaoPerfilClienteAdmin() {
+    const admin = usuarioEhAdmin();
+
+    document.querySelectorAll(".perfil-loja-cliente span").forEach((span) => {
+      span.classList.toggle("oculto", admin);
+    });
+
+    document.querySelectorAll(".input-perfil-cliente").forEach((input) => {
+      input.classList.toggle("oculto", !admin);
+    });
+
+    const btnSalvar = document.getElementById("btnSalvarPerfilCliente");
+
+    if (btnSalvar) {
+      btnSalvar.classList.toggle("oculto", !admin);
+    }
+  }
+
+  function salvarPerfilLojaPelaAreaCliente() {
+    const nomeLoja = document.getElementById("nomeLoja");
+    const categoriaLoja = document.getElementById("categoriaLoja");
+    const enderecoLoja = document.getElementById("enderecoLoja");
+    const telefoneLoja = document.getElementById("telefoneLoja");
+    const horarioLoja = document.getElementById("horarioLoja");
+    const diasLoja = document.getElementById("diasLoja");
+
+    if (nomeLoja) {
+      nomeLoja.value =
+        document.getElementById("clienteNomeLojaInput")?.value || "";
+    }
+
+    if (categoriaLoja) {
+      categoriaLoja.value =
+        document.getElementById("clienteCategoriaLojaInput")?.value || "";
+    }
+
+    if (enderecoLoja) {
+      enderecoLoja.value =
+        document.getElementById("clienteEnderecoLojaInput")?.value || "";
+    }
+
+    if (telefoneLoja) {
+      telefoneLoja.value =
+        document.getElementById("clienteTelefoneLojaInput")?.value || "";
+    }
+
+    if (horarioLoja) {
+      horarioLoja.value =
+        document.getElementById("clienteHorarioLojaInput")?.value || "";
+    }
+
+    if (diasLoja) {
+      diasLoja.value =
+        document.getElementById("clienteDiasLojaInput")?.value || "";
+    }
+
+    const eventoFake = {
+      preventDefault() {},
+    };
+
+    salvarPerfilLoja(eventoFake);
+    preencherPerfilLojaCliente();
+  }
+
+  if (tituloCompartilhamentoLoja) {
+    tituloCompartilhamentoLoja.value = perfil.tituloCompartilhamento || "";
+  }
+
+  if (cidadeEntregaLoja) {
+    cidadeEntregaLoja.value = perfil.cidadeEntrega || "";
+  }
+
+  if (linkPublicadoLoja) {
+    linkPublicadoLoja.value = perfil.linkPublicado || "";
+  }
+
+  if (mensagemClienteLoja) {
+    mensagemClienteLoja.value = perfil.mensagemCliente || "";
+  }
+
+  if (mensagemAdminLoja) {
+    mensagemAdminLoja.value = perfil.mensagemAdmin || "";
+  }
+
+  const admin = usuarioEhAdmin();
+
+  if (areaDivulgacaoLoja) {
+    areaDivulgacaoLoja.classList.toggle("oculto", !admin);
+  }
+
+  if (acoesLocalizacaoLoja) {
+    const destinoLoja = (
+      perfil.localizacaoLoja ||
+      perfil.endereco ||
+      ""
+    ).trim();
+
+    acoesLocalizacaoLoja.classList.toggle("oculto", !destinoLoja);
+  }
+
+  const campos = [
+    nomeLoja,
+    categoriaLoja,
+    enderecoLoja,
+    localizacaoLoja,
+    telefoneLoja,
+    horarioLoja,
+    diasLoja,
+    tituloCompartilhamentoLoja,
+    cidadeEntregaLoja,
+    linkPublicadoLoja,
+    mensagemClienteLoja,
+    mensagemAdminLoja,
+  ].filter(Boolean);
+
+  campos.forEach((campo) => {
+    campo.readOnly = !admin;
+
+    if (admin) {
+      campo.classList.add("editavel");
+    } else {
+      campo.classList.remove("editavel");
+    }
+  });
+
+  if (btnSalvar) {
+    btnSalvar.classList.toggle("oculto", !admin);
+  }
+
+  if (btnSalvarDivulgacao) {
+    btnSalvarDivulgacao.classList.toggle("oculto", !admin);
+  }
+}
+function obterDestinoRotaLoja() {
+  const perfil = carregarPerfilLoja();
+  return (perfil.localizacaoLoja || perfil.endereco || "").trim();
+}
+
+function abrirRotaLojaGoogleMaps() {
+  const destino = obterDestinoRotaLoja();
+
+  if (!destino) {
+    mostrarAviso(
+      "Cadastre a localização ou endereço da loja primeiro.",
+      "erro",
+    );
+    return;
+  }
+
+  window.open(obterLinkGoogleMapsRota(destino), "_blank");
+}
+
+function abrirRotaLojaWaze() {
+  const destino = obterDestinoRotaLoja();
+
+  if (!destino) {
+    mostrarAviso(
+      "Cadastre a localização ou endereço da loja primeiro.",
+      "erro",
+    );
+    return;
+  }
+
+  window.open(obterLinkWaze(destino), "_blank");
+}
+
+function controlarVisualPerfilLoja() {
+  const admin = usuarioEhAdmin();
+
+  document.querySelectorAll(".area-admin-perfil").forEach((area) => {
+    area.style.display = admin ? "" : "none";
+  });
+
+  const perfilCliente = document.getElementById("perfilLojaCliente");
+
+  if (perfilCliente) {
+    perfilCliente.style.display = "";
+  }
 }
 
 function configurarEdicaoPerfilClienteAdmin() {
@@ -2773,6 +2948,7 @@ async function preencherPerfilLoja() {
   const telefoneLoja = document.getElementById("telefoneLoja");
   const horarioLoja = document.getElementById("horarioLoja");
   const diasLoja = document.getElementById("diasLoja");
+
   const tituloCompartilhamentoLoja = document.getElementById(
     "tituloCompartilhamentoLoja",
   );
@@ -2936,13 +3112,11 @@ async function salvarPerfilLojaPelaAreaCliente() {
     preventDefault() {},
   };
 
-  await salvarPerfilLoja(eventoFake, "Informações da loja salvas com sucesso.");
+  await salvarPerfilLoja(eventoFake);
+  preencherPerfilLojaCliente();
 }
 
-async function salvarPerfilLoja(
-  event,
-  mensagemSucesso = "Perfil da loja salvo com sucesso.",
-) {
+async function salvarPerfilLoja(event) {
   event.preventDefault();
 
   if (!usuarioEhAdmin()) {
@@ -2967,7 +3141,24 @@ async function salvarPerfilLoja(
     document.getElementById("horarioLoja")?.value.trim() || "";
   const diasLoja = document.getElementById("diasLoja")?.value.trim() || "";
 
-  const perfilAtual = carregarPerfilLoja();
+  const tituloCompartilhamento =
+    document.getElementById("tituloCompartilhamentoLoja")?.value.trim() ||
+    perfilLojaPadrao.tituloCompartilhamento;
+
+  const cidadeEntrega =
+    document.getElementById("cidadeEntregaLoja")?.value.trim() ||
+    perfilLojaPadrao.cidadeEntrega;
+
+  const linkPublicado =
+    document.getElementById("linkPublicadoLoja")?.value.trim() || "";
+
+  const mensagemCliente =
+    document.getElementById("mensagemClienteLoja")?.value.trim() ||
+    perfilLojaPadrao.mensagemCliente;
+
+  const mensagemAdmin =
+    document.getElementById("mensagemAdminLoja")?.value.trim() ||
+    perfilLojaPadrao.mensagemAdmin;
 
   if (
     !nomeLoja ||
@@ -2997,6 +3188,8 @@ async function salvarPerfilLoja(
     return;
   }
 
+  const perfilAtual = carregarPerfilLoja();
+
   const perfilAtualizado = {
     ...perfilAtual,
     nome: nomeLoja,
@@ -3006,21 +3199,11 @@ async function salvarPerfilLoja(
     telefone: telefoneLoja,
     horario: horarioLoja,
     dias: diasLoja,
-    tituloCompartilhamento:
-      document.getElementById("tituloCompartilhamentoLoja")?.value.trim() ||
-      perfilAtual.tituloCompartilhamento,
-    cidadeEntrega:
-      document.getElementById("cidadeEntregaLoja")?.value.trim() ||
-      perfilAtual.cidadeEntrega,
-    linkPublicado:
-      document.getElementById("linkPublicadoLoja")?.value.trim() ||
-      perfilAtual.linkPublicado,
-    mensagemCliente:
-      document.getElementById("mensagemClienteLoja")?.value.trim() ||
-      perfilAtual.mensagemCliente,
-    mensagemAdmin:
-      document.getElementById("mensagemAdminLoja")?.value.trim() ||
-      perfilAtual.mensagemAdmin,
+    tituloCompartilhamento,
+    cidadeEntrega,
+    linkPublicado,
+    mensagemCliente,
+    mensagemAdmin,
   };
 
   salvarPerfilLojaLocal(perfilAtualizado);
@@ -3044,97 +3227,7 @@ async function salvarPerfilLoja(
     );
   }
 
-  mostrarAviso(mensagemSucesso, "sucesso");
-}
-
-function salvarDivulgacaoLoja(event) {
-  event.preventDefault();
-
-  if (!usuarioEhAdmin()) {
-    mostrarAviso("Apenas o administrador pode alterar a divulgação.", "erro");
-    return;
-  }
-
-  const perfilAtual = carregarPerfilLoja();
-
-  const perfilAtualizado = {
-    ...perfilAtual,
-    tituloCompartilhamento:
-      document.getElementById("tituloCompartilhamentoLoja")?.value.trim() ||
-      perfilAtual.tituloCompartilhamento,
-    cidadeEntrega:
-      document.getElementById("cidadeEntregaLoja")?.value.trim() ||
-      perfilAtual.cidadeEntrega,
-    linkPublicado:
-      document.getElementById("linkPublicadoLoja")?.value.trim() || "",
-    mensagemCliente:
-      document.getElementById("mensagemClienteLoja")?.value.trim() ||
-      perfilAtual.mensagemCliente,
-    mensagemAdmin:
-      document.getElementById("mensagemAdminLoja")?.value.trim() ||
-      perfilAtual.mensagemAdmin,
-  };
-
-  salvarPerfilLojaLocal(perfilAtualizado);
-
-  if (typeof atualizarPaginaCompartilhar === "function") {
-    atualizarPaginaCompartilhar();
-  }
-
-  mostrarAviso("Divulgação salva com sucesso.", "sucesso");
-}
-
-function atualizarPaginaCompartilhar() {
-  const perfil = carregarPerfilLoja();
-
-  const seloCompartilhar = document.getElementById("seloCompartilhar");
-  const tituloCompartilhar = document.getElementById("tituloCompartilhar");
-  const descricaoCompartilhar = document.getElementById(
-    "descricaoCompartilhar",
-  );
-  const mensagemCompartilhar = document.getElementById("mensagemCompartilhar");
-  const linkLojaCompartilhar = document.getElementById("linkLojaCompartilhar");
-  const btnPedirAgoraCompartilhar = document.getElementById(
-    "btnPedirAgoraCompartilhar",
-  );
-
-  if (!tituloCompartilhar && !descricaoCompartilhar && !mensagemCompartilhar) {
-    return;
-  }
-
-  if (seloCompartilhar) {
-    seloCompartilhar.textContent = "Divulgue a loja";
-  }
-
-  if (tituloCompartilhar) {
-    tituloCompartilhar.textContent =
-      perfil.tituloCompartilhamento ||
-      `${perfil.nome} | Delivery em ${perfil.cidadeEntrega || "sua cidade"}`;
-  }
-
-  if (descricaoCompartilhar) {
-    descricaoCompartilhar.innerHTML = `
-      Faça seu pedido online agora mesmo no ${perfil.nome}!<br />
-      Seu delivery em ${perfil.cidadeEntrega || "sua cidade"}.
-      Acesse a loja através do cardápio digital web.
-    `;
-  }
-
-  if (mensagemCompartilhar) {
-    mensagemCompartilhar.textContent =
-      perfil.mensagemCliente ||
-      `🍔 ${perfil.nome}. Peça pelo cardápio digital.`;
-  }
-
-  const linkFinal = perfil.linkPublicado || "cardapio.html";
-
-  if (linkLojaCompartilhar) {
-    linkLojaCompartilhar.textContent = linkFinal;
-  }
-
-  if (btnPedirAgoraCompartilhar) {
-    btnPedirAgoraCompartilhar.href = linkFinal;
-  }
+  mostrarAviso("Perfil da loja salvo com sucesso.", "sucesso");
 }
 
 /* =========================
@@ -3994,20 +4087,18 @@ function formatarHoraPedido(dataISO) {
 }
 
 function formatarFormaPagamento(formaPagamento) {
-  const valor = String(formaPagamento || "").trim();
-
   const mapa = {
     dinheiro: "Dinheiro",
     pix: "Pix",
     cartao: "Cartão",
     cartão: "Cartão",
-    entrega: "Entrega",
-    entregacadastro: "Entrega",
-    entregatemporario: "Entrega",
-    retirada: "Retirada no estabelecimento",
   };
 
-  return mapa[valor.toLowerCase()] || valor || "Não informado";
+  return (
+    mapa[String(formaPagamento || "").toLowerCase()] ||
+    formaPagamento ||
+    "Não informado"
+  );
 }
 
 function pegarClasseStatus(status) {
@@ -4345,20 +4436,15 @@ function iniciarAtualizacaoAutomatica() {
       carregarDetalhePedidoPagina();
     }, 5000);
   }
-}
+
   if (estaNaPaginaCardapio) {
     setInterval(() => {
-      if (typeof atualizarStatusLoja === "function") {
-        atualizarStatusLoja();
-      }
-
-      if (typeof renderizarCardapio === "function") {
-        renderizarCardapio();
-      }
+      atualizarStatusLoja?.();
+      carregarProdutosCardapio?.();
     }, 5000);
   }
+}
 
-function converterStatusTelaParaApi(statusTela) {
 function converterStatusTelaParaApi(statusTela) {
   const mapa = {
     "Pedido recebido": "pendente",
@@ -4946,12 +5032,6 @@ async function copiarLinkCompartilhar() {
   );
 }
 
-function atualizarStatusLoja() {
-  if (typeof iniciarAtualizacaoStatusLoja === "function") {
-    iniciarAtualizacaoStatusLoja();
-  }
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   executarComSeguranca("iniciarAtualizacaoAutomaticaPaginas", () => {
     if (typeof iniciarAtualizacaoAutomaticaPaginas === "function") {
@@ -5065,136 +5145,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
-function carregarObservacoesPedido() {
-  return {};
-}
-
-function atualizarStatusLoja() {
-  if (typeof iniciarAtualizacaoStatusLoja === "function") {
-    iniciarAtualizacaoStatusLoja();
-  }
-}
-
-function avancarPedido() {
-  const totalTexto =
-    document.getElementById("valorTotal")?.textContent || "R$ 0,00";
-
-  const totalNumerico = Number(
-    totalTexto.replace("R$", "").replace(/\./g, "").replace(",", ".").trim(),
-  );
-
-  if (!totalNumerico || totalNumerico <= 0) {
-    alert("Escolha pelo menos um item antes de avançar.");
-    return;
-  }
-
-  window.location.href = "finalizar-pedido.html";
-}
-window.carregarObservacoesPedido = function () {
-  try {
-    return JSON.parse(localStorage.getItem("observacoesPedidoAtual") || "{}");
-  } catch (erro) {
-    return {};
-  }
-};
-
-window.salvarObservacoesPedido = function (observacoes) {
-  localStorage.setItem(
-    "observacoesPedidoAtual",
-    JSON.stringify(observacoes || {}),
-  );
-};
-
-window.limparObservacaoPedidoProduto = function (id) {
-  const observacoes = window.carregarObservacoesPedido();
-  delete observacoes[String(id)];
-  window.salvarObservacoesPedido(observacoes);
-};
-
-window.carregarObservacaoPagina = function () {
-  const campoObservacao = document.getElementById("campoObservacao");
-
-  if (!campoObservacao) return;
-
-  const produtoId = Number(localStorage.getItem("produtoObservacaoId"));
-  const observacoes = window.carregarObservacoesPedido();
-
-  campoObservacao.value = observacoes[String(produtoId)] || "";
-};
-
-window.salvarObservacaoPagina = function () {
-  const campoObservacao = document.getElementById("campoObservacao");
-
-  if (!campoObservacao) return;
-
-  const produtoId = Number(localStorage.getItem("produtoObservacaoId"));
-  const produtos = carregarProdutos();
-  const produto = produtos.find(
-    (item) => Number(item.id) === Number(produtoId),
-  );
-
-  if (!produto) {
-    mostrarAviso("Produto não encontrado.", "erro");
-    return;
-  }
-
-  const observacoes = window.carregarObservacoesPedido();
-  const textoObservacao = campoObservacao.value.trim();
-
-  if (textoObservacao) {
-    observacoes[String(produtoId)] = textoObservacao;
-  } else {
-    delete observacoes[String(produtoId)];
-  }
-
-  window.salvarObservacoesPedido(observacoes);
-
-  avisarENavegar(
-    textoObservacao
-      ? "Observação salva com sucesso!"
-      : "Observação removida com sucesso!",
-    "cardapio.html",
-  );
-};
-
-window.atualizarStatusLoja = function () {
-  if (typeof iniciarAtualizacaoStatusLoja === "function") {
-    iniciarAtualizacaoStatusLoja();
-  }
-};
-
-window.atualizarStatusLoja = function () {
-  if (typeof iniciarAtualizacaoStatusLoja === "function") {
-    iniciarAtualizacaoStatusLoja();
-  }
-};
-
-window.avancarPedido = function () {
-  if (bloquearPedidoParaAdmin()) return;
-
-  const produtos = carregarProdutos();
-  const observacoes = window.carregarObservacoesPedido();
-
-  const pedido = produtos
-    .filter((produto) => Number(produto.quantidade) > 0)
-    .map((produto) => ({
-      id: Number(produto.id),
-      nome: produto.nome,
-      descricao: produto.descricao || "",
-      preco: Number(produto.preco) || 0,
-      imagem: produto.imagem || "",
-      categoria: produto.categoria || "",
-      quantidade: Number(produto.quantidade) || 0,
-      observacao: observacoes[String(produto.id)] || "",
-    }));
-
-  if (pedido.length === 0) {
-    mostrarAviso("Escolha pelo menos um item antes de avançar.", "erro");
-    return;
-  }
-
-  localStorage.setItem("pedidoAtual", JSON.stringify(pedido));
-
-  window.location.href = "finalizar-pedido.html";
-};
