@@ -2028,19 +2028,16 @@ async function editarAvisoProduto(id) {
   }
 }
 
-async function editarImagemProduto(id) {
+function editarImagemProduto(id) {
   if (!usuarioEhAdmin()) {
     mostrarAviso("Apenas o administrador pode editar imagens.", "erro");
     return;
   }
 
   const produtos = carregarProdutos();
-  const produto = produtos.find((item) => Number(item.id) === Number(id));
+  const produto = produtos.find((item) => item.id === id);
 
-  if (!produto) {
-    mostrarAviso("Produto não encontrado.", "erro");
-    return;
-  }
+  if (!produto) return;
 
   const inputArquivo = document.createElement("input");
   inputArquivo.type = "file";
@@ -2053,38 +2050,13 @@ async function editarImagemProduto(id) {
 
     const leitor = new FileReader();
 
-    leitor.onload = async () => {
-      const produtoAtualizado = {
-        ...produto,
-        imagem: leitor.result,
-      };
+    leitor.onload = () => {
+      produto.imagem = leitor.result;
 
-      try {
-        const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
-        });
+      salvarProdutos(produtos);
+      renderizarCardapio();
 
-        const resultado = await resposta.json();
-
-        if (!resposta.ok) {
-          mostrarAviso(
-            resultado.erro || "Erro ao salvar imagem do produto.",
-            "erro",
-          );
-          return;
-        }
-
-        mostrarAviso("Imagem atualizada com sucesso!", "sucesso");
-
-        await renderizarCardapio();
-      } catch (error) {
-        console.error("Erro ao editar imagem:", error);
-        mostrarAviso("Erro de conexão ao salvar imagem.", "erro");
-      }
+      mostrarAviso("Imagem atualizada com sucesso!", "sucesso");
     };
 
     leitor.readAsDataURL(arquivo);
@@ -2092,7 +2064,6 @@ async function editarImagemProduto(id) {
 
   inputArquivo.click();
 }
-   
 
 async function alternarDisponibilidadeProduto(id) {
   if (!usuarioEhAdmin()) {
@@ -4466,42 +4437,10 @@ function iniciarAtualizacaoAutomatica() {
     }, 5000);
   }
 
-function iniciarAtualizacaoAutomaticaPaginas() {
-  const paginaAtual = window.location.pathname;
-
-  const estaNaPaginaPedidos = paginaAtual.includes("pedidos.html");
-  const estaNaPaginaDetalhePedido = paginaAtual.includes("detalhe-pedido.html");
-  const estaNaPaginaCardapio = paginaAtual.includes("cardapio.html");
-
-  if (estaNaPaginaPedidos) {
-    setInterval(() => {
-      if (typeof renderizarPedidos === "function") {
-        renderizarPedidos();
-      }
-    }, 5000);
-  }
-
-  if (estaNaPaginaDetalhePedido) {
-    setInterval(() => {
-      if (typeof carregarDetalhePedidoPagina === "function") {
-        carregarDetalhePedidoPagina();
-      }
-    }, 5000);
-  }
-
   if (estaNaPaginaCardapio) {
     setInterval(() => {
-      if (typeof renderizarCardapio === "function") {
-        renderizarCardapio();
-      }
-
-      if (typeof window.atualizarStatusLoja === "function") {
-        window.atualizarStatusLoja();
-      }
-
-      if (typeof atualizarHorarioFunta === "function") {
-        atualizarHorarioFunta();
-      }
+      atualizarStatusLoja?.();
+      carregarProdutosCardapio?.();
     }, 5000);
   }
 }
@@ -4976,21 +4915,23 @@ function iniciarAtualizacaoAutomaticaPaginas() {
     }, 5000);
   }
 
- se (estaNaPaginaCardapio) {
-  definirIntervalo(() => {
-    se (tipo de renderizarCardapio === "função") {
-      renderizarCardapio();
-    }
+  if (estaNaPaginaCardapio) {
+    setInterval(() => {
+      if (typeof renderizarCardapio === "function") {
+        renderizarCardapio();
+      }
 
-    if (typeof window.atualizarStatusLoja === "function") {
-      window.atualizarStatusLoja();
-    }
+      if (typeof atualizarStatusLoja === "function") {
+        atualizarStatusLoja();
+      }
 
-    se (tipo de atualizarHorárioFunta === "função") {
-      atualizarHorárioFunta();
-    }
-  }, 5000);
+      if (typeof atualizarHorarioFuncionamento === "function") {
+        atualizarHorarioFuncionamento();
+      }
+    }, 5000);
+  }
 }
+
 function obterDadosCompartilhamento() {
   const titulo =
     document.getElementById("tituloCompartilhar")?.textContent?.trim() ||
