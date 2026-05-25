@@ -2257,46 +2257,19 @@ function cadastrarNovoProduto() {
   cadastrarNovoLanche();
 }
 function avancarPedido() {
-  if (usuarioEhAdmin()) return;
+  const totalTexto =
+    document.getElementById("valorTotal")?.textContent || "R$ 0,00";
 
-  if (!lojaEstaAberta()) {
-    mostrarAviso(
-      "A loja está fechada no momento. Tente novamente quando estiver aberta.",
-      "erro",
-    );
+  const totalNumerico = Number(
+    totalTexto.replace("R$", "").replace(/\./g, "").replace(",", ".").trim(),
+  );
+
+  if (!totalNumerico || totalNumerico <= 0) {
+    alert("Escolha pelo menos um item antes de avançar.");
     return;
   }
 
-  const produtos = carregarProdutos();
-
-  const observacoes = carregarObservacoesPedido();
-
-  const itensSelecionados = produtos
-    .filter(
-      (produto) =>
-        Number(produto.quantidade) > 0 && produto.disponivel !== false,
-    )
-    .map((produto) => {
-      const itemPedido = { ...produto };
-      const observacao = observacoes[String(produto.id)] || "";
-
-      if (observacao) {
-        itemPedido.observacao = observacao;
-      } else {
-        delete itemPedido.observacao;
-      }
-
-      return itemPedido;
-    });
-
-  if (itensSelecionados.length === 0) {
-    mostrarAviso("Selecione pelo menos um item antes de avançar.", "erro");
-    return;
-  }
-
-  localStorage.setItem("pedidoAtual", JSON.stringify(itensSelecionados));
-
-  window.location.href = "carrinho.html";
+  window.location.href = "finalizar-pedido.html";
 }
 
 function sairDoSistema() {
@@ -2352,7 +2325,8 @@ function carregarDivulgacaoLojaLocal() {
       linkPublicado: perfilLojaPadrao.linkPublicado,
       mensagemCliente: perfilLojaPadrao.mensagemCliente,
       mensagemAdmin: perfilLojaPadrao.mensagemAdmin,
-      ...(JSON.parse(localStorage.getItem(CHAVE_DIVULGACAO_LOJA) || "{}") || {}),
+      ...(JSON.parse(localStorage.getItem(CHAVE_DIVULGACAO_LOJA) || "{}") ||
+        {}),
     };
   } catch (error) {
     console.warn("Erro ao carregar divulgação local:", error);
@@ -2417,8 +2391,11 @@ function atualizarCacheConfiguracoesLoja(configuracoes = {}) {
       configuracoesLojaCache.business_days ??
       perfilLojaPadrao.dias,
     manual_status:
-      configuracoes.manual_status ?? configuracoesLojaCache.manual_status ?? "auto",
-    updated_at: configuracoes.updated_at ?? configuracoesLojaCache.updated_at ?? null,
+      configuracoes.manual_status ??
+      configuracoesLojaCache.manual_status ??
+      "auto",
+    updated_at:
+      configuracoes.updated_at ?? configuracoesLojaCache.updated_at ?? null,
   };
 
   return configuracoesLojaCache;
@@ -2911,7 +2888,10 @@ async function preencherPerfilLoja() {
 
 async function salvarPerfilLojaPelaAreaCliente() {
   if (!usuarioEhAdmin()) {
-    mostrarAviso("Apenas o administrador pode alterar o perfil da loja.", "erro");
+    mostrarAviso(
+      "Apenas o administrador pode alterar o perfil da loja.",
+      "erro",
+    );
     return;
   }
 
@@ -2959,7 +2939,10 @@ async function salvarPerfilLojaPelaAreaCliente() {
   await salvarPerfilLoja(eventoFake, "Informações da loja salvas com sucesso.");
 }
 
-async function salvarPerfilLoja(event, mensagemSucesso = "Perfil da loja salvo com sucesso.") {
+async function salvarPerfilLoja(
+  event,
+  mensagemSucesso = "Perfil da loja salvo com sucesso.",
+) {
   event.preventDefault();
 
   if (!usuarioEhAdmin()) {
@@ -4958,6 +4941,11 @@ async function copiarLinkCompartilhar() {
   );
 }
 
+function atualizarStatusLoja() {
+  if (typeof iniciarAtualizacaoStatusLoja === "function") {
+    iniciarAtualizacaoStatusLoja();
+  }
+}
 document.addEventListener("DOMContentLoaded", () => {
   executarComSeguranca("iniciarAtualizacaoAutomaticaPaginas", () => {
     if (typeof iniciarAtualizacaoAutomaticaPaginas === "function") {
