@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL = "https://clickbus-burguer-api.onrender.com/api";
 
 async function fazerRequisicaoApi(caminho, opcoes = {}) {
   const resposta = await fetch(`${API_URL}${caminho}`, {
