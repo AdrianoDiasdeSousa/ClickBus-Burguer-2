@@ -3725,6 +3725,19 @@ function alternarCampoTroco() {
 }
 
 async function confirmarPedido() {
+     try {
+    await carregarConfiguracoesLojaDaApi();
+  } catch (erro) {
+    console.error("Erro ao verificar status da loja:", erro);
+  }
+
+  if (typeof lojaEstaAberta === "function" && !lojaEstaAberta()) {
+    mostrarAviso(
+      "A loja está fechada no momento. Não é possível confirmar pedido agora.",
+      "erro",
+    );
+    return;
+  }
   if (bloquearPedidoParaAdmin()) return;
 
   const pedido = carregarPedidoAtual();
