@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Observações - ClickBus Burguer</title>
+
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/observacoes.css" />
+  </head>
+
+  <body>
+    <header class="topo">
+      <a href="index.html" class="area-logo">
+        <img src="img/logo-topo.png" alt="Logo ClickBus Burguer" />
+      </a>
+
+      <a href="cardapio.html" class="botao-voltar">↩ Voltar</a>
+    </header>
+
+    <main class="pagina-observacoes">
+      <section class="observacoes-container">
+        <h1>Observações</h1>
+
+        <textarea
+          id="campoObservacao"
+          placeholder="Ex.: Tirar milho, batata palha, etc."
+        ></textarea>
+
+        <div class="botoes-observacoes">
+          <a href="cardapio.html" class="btn-continuar">
+            Continuar comprando
+          </a>
+
+          <button
+            type="button"
+            class="btn-salvar"
+            onclick="salvarObservacaoPagina()"
+          >
+            Salvar
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detalhe do Pedido - ClickBus Burguer</title>
+
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/detalhe-pedido.css" />
+  </head>
+
+  <body>
+    <header class="topo">
+      <a href="index.html" class="area-logo">
+        <img src="img/logo-topo.png" alt="Logo ClickBus Burguer" />
+      </a>
+
+      <a href="pedidos.html" class="botao-voltar">↩ Voltar</a>
+    </header>
+
+    <main class="pagina-detalhe-pedido">
+      <section class="detalhe-container">
+        <h1>Detalhe do pedido</h1>
+
+        <section class="cliente-pedido">
+          <div class="cliente-card">
+            <div class="cliente-info">
+              <span class="cliente-label">Cliente</span>
+              <strong id="clienteDetalhe">Cliente</strong>
+            </div>
+
+            <div class="cliente-info">
+              <span class="cliente-label">Telefone</span>
+              <strong id="telefoneDetalhe">(00) 00000-0000</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="info-pedido">
+          <span id="dataDetalhe">Data do pedido --/--/----</span>
+          <span id="horaDetalhe">--:--</span>
+          <span id="statusDetalhe" class="status-detalhe">Pedido Recebido</span>
+        </section>
+
+        <section class="pagamento-detalhe">
+          <div>
+            <span>Recebimento</span>
+            <strong id="recebimentoDetalhe">Não informado</strong>
+          </div>
+
+          <div>
+            <span>Pagamento</span>
+            <strong id="pagamentoDetalhe">Não informado</strong>
+          </div>
+
+          <div>
+            <span>Troco para</span>
+            <strong id="trocoDetalhe">Não precisa</strong>
+          </div>
+
+          <div class="endereco-detalhe">
+            <span>Endereço/retirada</span>
+            <strong id="enderecoDetalhe">Não informado</strong>
+          </div>
+
+          <div class="localizacao-detalhe">
+            <span>Localização da entrega</span>
+            <strong id="localizacaoDetalhe">Não informada</strong>
+          </div>
+        </section>
+
+        <section class="box-detalhe">
+          <div id="itensDetalhePedido" class="itens-detalhe"></div>
+
+          <div class="resumo-detalhe">
+            <span>
+              Total de Produtos
+              <strong id="totalProdutosDetalhe">00</strong>
+            </span>
+
+            <span>
+              Valor Total:
+              <strong id="valorTotalDetalhe">R$ 0,00</strong>
+            </span>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

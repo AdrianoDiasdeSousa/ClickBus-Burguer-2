@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compartilhar Loja - ClickBus Burguer</title>
+
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/compartilhar.css" />
+  </head>
+
+  <body>
+    <header class="topo">
+      <a href="index.html" class="area-logo">
+        <img src="img/logo-topo.png" alt="Logo ClickBus Burguer" />
+      </a>
+
+      <a href="cardapio.html" class="botao-voltar">↩ Voltar</a>
+    </header>
+
+    <main class="pagina-compartilhar">
+      <section class="compartilhar-container">
+        <h1 class="titulo-pagina-compartilhar">Compartilhar Loja</h1>
+
+        <div class="compartilhar-card">
+          <div class="texto-compartilhar">
+            <span id="seloCompartilhar" class="selo-compartilhar">
+              Divulgue a loja
+            </span>
+
+            <h2 id="tituloCompartilhar">
+              Bus Burguer | Delivery em Sandolândia | Pedido online
+            </h2>
+
+            <p id="descricaoCompartilhar" class="descricao-compartilhar">
+              Faça seu pedido online agora mesmo no Bus Burguer!<br />
+              Seu delivery em Sandolândia. Acesse a loja através do cardápio
+              digital web.
+            </p>
+
+            <div class="mensagem-divulgacao">
+              <strong id="tituloMensagemCompartilhar">Mensagem pronta</strong>
+              <p id="mensagemCompartilhar">
+                🍔 Bus Burguer | Delivery em Sandolândia. Peça pelo cardápio
+                digital.
+              </p>
+            </div>
+
+            <p class="link-loja">
+              <strong>Link da loja:</strong>
+              <span id="linkLojaCompartilhar">cardapio.html</span>
+            </p>
+
+            <div class="acoes-copia-compartilhar">
+              <button type="button" onclick="copiarMensagemCompartilhar()">
+                Copiar mensagem
+              </button>
+
+              <button type="button" onclick="copiarLinkCompartilhar()">
+                Copiar link
+              </button>
+            </div>
+          </div>
+
+          <div class="redes-compartilhar">
+            <button type="button" onclick="compartilharWhatsApp()">
+              <span class="icone-rede">
+                <img
+                  src="img/whatsapp.png"
+                  alt="WhatsApp"
+                  class="img-rede-social"
+                />
+              </span>
+              <span>WhatsApp</span>
+            </button>
+
+            <button type="button" onclick="compartilharMessenger()">
+              <span class="icone-rede">
+                <img
+                  src="img/messenger.png"
+                  alt="Messenger"
+                  class="img-rede-social"
+                />
+              </span>
+              <span>Messenger</span>
+            </button>
+
+            <button type="button" onclick="compartilharInstagram()">
+              <span class="icone-rede">
+                <img
+                  src="img/instagram.png"
+                  alt="Instagram"
+                  class="img-rede-social"
+                />
+              </span>
+              <span>Instagram</span>
+            </button>
+
+            <button type="button" onclick="compartilharTelegram()">
+              <span class="icone-rede">
+                <img
+                  src="img/telegram.png"
+                  alt="Telegram"
+                  class="img-rede-social"
+                />
+              </span>
+              <span>Telegram</span>
+            </button>
+          </div>
+
+          <a
+            href="cardapio.html"
+            class="btn-pedir-agora"
+            id="btnPedirAgoraCompartilhar"
+          >
+            Fazer pedido agora
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

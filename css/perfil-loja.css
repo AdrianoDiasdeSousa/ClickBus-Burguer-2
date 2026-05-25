@@ -1,0 +1,555 @@
+.pagina-perfil {
+  min-height: calc(100vh - 80px);
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.42)),
+    url("../img/fundo.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-left: 6px solid #111;
+  border-right: 6px solid #111;
+  border-bottom: 6px solid #111;
+  padding: 56px 20px 70px;
+  color: #fff;
+}
+
+.perfil-container {
+  width: 860px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* =========================
+   CABEÇALHO DO PERFIL
+========================= */
+
+.cabecalho-perfil {
+  width: 760px;
+  max-width: 92%;
+  margin: 0 auto 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  text-align: center;
+}
+
+.cabecalho-perfil h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 38px;
+  font-weight: normal;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.status-loja {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.status-loja.aberto {
+  background-color: #10c43a;
+}
+
+.status-loja.fechado {
+  background-color: #e00000;
+}
+
+/* =========================
+   VISÃO DO CLIENTE
+========================= */
+
+.perfil-loja-cliente {
+  width: 680px;
+  max-width: 90%;
+  margin: 24px auto 30px;
+  padding: 22px 26px;
+  border: 1px solid #e88700;
+  border-radius: 18px;
+  background: rgba(24, 24, 24, 0.78);
+  box-shadow: 0 0 10px rgba(232, 135, 0, 0.15);
+  color: #fff;
+}
+
+.perfil-loja-cliente h2 {
+  text-align: center;
+  margin: 0 0 22px;
+  font-size: 26px;
+  color: #fff;
+}
+
+.info-loja-cliente {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+
+.info-loja-cliente p {
+  margin: 0;
+  padding: 11px 14px;
+  border-left: 4px solid #e88700;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.info-loja-cliente p:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.info-loja-cliente strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #e88700;
+  font-size: 14px;
+}
+
+.info-loja-cliente span {
+  color: #fff;
+  font-weight: bold;
+}
+
+.input-perfil-cliente {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #e88700;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  font-weight: bold;
+  box-sizing: border-box;
+}
+
+.botoes-rota-cliente {
+  display: flex;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.botoes-rota-cliente button {
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+}
+
+.botoes-rota-cliente button:first-child {
+  background-color: #e88700;
+  color: #111;
+}
+
+.botoes-rota-cliente button:last-child {
+  background-color: #4657ff;
+  color: #fff;
+}
+
+.botoes-rota-cliente button:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+.btn-salvar-perfil-cliente {
+  display: block;
+  width: fit-content;
+  min-width: 210px;
+  margin: 22px auto 0;
+  padding: 11px 22px;
+  border: none;
+  border-radius: 14px;
+  background: #e88700;
+  color: #111;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-salvar-perfil-cliente:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+/* =========================
+   FORMULÁRIOS DO ADMIN
+========================= */
+
+.form-perfil {
+  background: rgba(24, 24, 24, 0.78);
+  border: 1px solid #e88700;
+  border-radius: 18px;
+  box-shadow: 0 0 10px rgba(232, 135, 0, 0.15);
+  backdrop-filter: blur(3px);
+  color: #fff;
+}
+
+.bloco-perfil-loja {
+  width: 680px;
+  max-width: 90%;
+  margin: 26px auto 32px;
+  padding: 24px 26px 28px;
+}
+
+.bloco-perfil-loja h2 {
+  margin: 0 0 22px;
+  text-align: center;
+  font-size: 25px;
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.form-perfil label,
+.form-conta-admin label {
+  display: block;
+  margin: 0 0 7px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.form-perfil input,
+.form-perfil textarea,
+.form-conta-admin input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 18px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  border: 2px solid #e88700;
+  outline: none;
+  background: #fff;
+  color: #111;
+  font-size: 15px;
+  font-family: Georgia, "Times New Roman", serif;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-perfil input::placeholder,
+.form-perfil textarea::placeholder,
+.form-conta-admin input::placeholder {
+  color: #7b7b7b;
+}
+
+.form-perfil input:focus,
+.form-perfil textarea:focus,
+.form-conta-admin input:focus {
+  border-color: #ffb33b;
+  box-shadow: 0 0 0 3px rgba(232, 135, 0, 0.22);
+}
+
+.form-perfil input[readonly],
+.form-perfil textarea[readonly],
+.form-conta-admin input[readonly] {
+  background: rgba(244, 244, 244, 0.94);
+}
+
+.form-perfil input.editavel,
+.form-perfil textarea.editavel {
+  background: #fff;
+  border-color: #e88700;
+}
+
+/* =========================
+   LOCALIZAÇÃO DA LOJA
+========================= */
+
+.acoes-localizacao-loja {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: -4px 0 18px;
+}
+
+.acoes-localizacao-loja button {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 16px;
+  background-color: #4657ff;
+  color: #fff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.acoes-localizacao-loja button:first-child {
+  background-color: #e88700;
+  color: #111;
+}
+
+.acoes-localizacao-loja button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+/* =========================
+   DIVULGAÇÃO
+========================= */
+
+.area-divulgacao-loja {
+  width: 680px;
+  max-width: 90%;
+  margin: 26px auto 32px;
+  padding: 24px 26px 28px;
+  border: 1px solid #e88700;
+  border-radius: 18px;
+  background: rgba(24, 24, 24, 0.78);
+  box-shadow: 0 0 10px rgba(232, 135, 0, 0.15);
+  color: #fff;
+}
+
+.cabecalho-divulgacao {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.cabecalho-divulgacao h2 {
+  margin: 0 0 10px;
+  font-size: 25px;
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.cabecalho-divulgacao p {
+  width: 92%;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.grid-divulgacao {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 16px;
+}
+
+.campo-divulgacao {
+  display: flex;
+  flex-direction: column;
+}
+
+.campo-grande {
+  grid-column: 1 / -1;
+}
+
+.campo-divulgacao label {
+  margin: 0 0 7px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.campo-divulgacao input,
+.campo-divulgacao textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid #e88700;
+  border-radius: 12px;
+  background: #fff;
+  color: #111;
+  padding: 11px 13px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  outline: none;
+}
+
+.campo-divulgacao textarea {
+  min-height: 125px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.campo-divulgacao input:focus,
+.campo-divulgacao textarea:focus {
+  border-color: #ffb33b;
+  box-shadow: 0 0 0 3px rgba(232, 135, 0, 0.22);
+}
+
+/* =========================
+   CONTA DO ADMINISTRADOR
+========================= */
+
+.conta-admin {
+  width: 680px;
+  max-width: 90%;
+  margin: 26px auto 32px;
+  padding: 24px 26px 28px;
+  border: 1px solid #e88700;
+  border-radius: 18px;
+  background: rgba(24, 24, 24, 0.78);
+  box-shadow: 0 0 10px rgba(232, 135, 0, 0.15);
+  backdrop-filter: blur(3px);
+  color: #fff;
+}
+
+.conta-admin h2 {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 25px;
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.conta-admin p {
+  width: 92%;
+  margin: 0 auto 22px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* =========================
+   BOTÕES
+========================= */
+
+.btn-salvar-perfil {
+  display: block;
+  width: fit-content;
+  min-width: 210px;
+  margin: 26px auto 0;
+  padding: 11px 22px;
+  border: none;
+  border-radius: 14px;
+  background: #e88700;
+  color: #111;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.btn-salvar-perfil:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22);
+}
+
+/* =========================
+   UTILITÁRIOS
+========================= */
+
+.oculto {
+  display: none !important;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 1120px) {
+  .cabecalho-perfil {
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .status-loja {
+    position: static;
+    transform: none;
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 860px) {
+  .pagina-perfil {
+    padding: 44px 14px 56px;
+  }
+
+  .cabecalho-perfil h1 {
+    font-size: 34px;
+  }
+
+  .perfil-loja-cliente,
+  .bloco-perfil-loja,
+  .area-divulgacao-loja,
+  .conta-admin {
+    width: 100%;
+    max-width: 100%;
+    padding: 22px 18px 24px;
+  }
+
+  .info-loja-cliente,
+  .grid-divulgacao {
+    grid-template-columns: 1fr;
+  }
+
+  .campo-grande {
+    grid-column: auto;
+  }
+
+  .botoes-rota-cliente,
+  .acoes-localizacao-loja {
+    flex-direction: column;
+  }
+
+  .botoes-rota-cliente button,
+  .acoes-localizacao-loja button,
+  .btn-salvar-perfil,
+  .btn-salvar-perfil-cliente {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .form-perfil input,
+  .form-perfil textarea,
+  .form-conta-admin input {
+    font-size: 16px;
+  }
+
+  .perfil-loja-cliente h2,
+  .bloco-perfil-loja h2,
+  .cabecalho-divulgacao h2,
+  .conta-admin h2 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cabecalho-perfil h1 {
+    font-size: 30px;
+  }
+
+  .status-loja {
+    font-size: 20px;
+    padding: 9px 18px;
+  }
+
+  .perfil-loja-cliente,
+  .bloco-perfil-loja,
+  .area-divulgacao-loja,
+  .conta-admin {
+    padding: 20px 14px 22px;
+  }
+}

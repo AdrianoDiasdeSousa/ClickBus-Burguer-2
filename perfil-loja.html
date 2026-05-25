@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Perfil da Loja - ClickBus Burguer</title>
+
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/perfil-loja.css" />
+  </head>
+
+  <body>
+    <header class="topo">
+      <a href="index.html" class="area-logo">
+        <img src="img/logo-topo.png" alt="Logo ClickBus Burguer" />
+      </a>
+
+      <a href="cardapio.html" class="botao-voltar">↩ Voltar</a>
+    </header>
+
+    <main class="pagina-perfil">
+      <section class="perfil-container">
+        <div class="cabecalho-perfil">
+          <h1>Perfil da Loja</h1>
+          <span id="statusLoja" class="status-loja">Verificando...</span>
+        </div>
+
+        <section id="perfilLojaCliente" class="perfil-loja-cliente">
+          <h2>Informações da loja</h2>
+
+          <div class="info-loja-cliente">
+            <p>
+              <strong>Nome:</strong>
+              <span id="clienteNomeLoja">ClickBus Burguer</span>
+              <input
+                type="text"
+                id="clienteNomeLojaInput"
+                class="input-perfil-cliente oculto"
+              />
+            </p>
+
+            <p>
+              <strong>Categoria:</strong>
+              <span id="clienteCategoriaLoja">Hamburgueria</span>
+              <input
+                type="text"
+                id="clienteCategoriaLojaInput"
+                class="input-perfil-cliente oculto"
+              />
+            </p>
+
+            <p>
+              <strong>Endereço:</strong>
+              <span id="clienteEnderecoLoja"></span>
+              <input
+                type="text"
+                id="clienteEnderecoLojaInput"
+                class="input-perfil-cliente oculto"
+              />
+            </p>
+
+            <p>
+              <strong>Telefone:</strong>
+              <span id="clienteTelefoneLoja"></span>
+              <input
+                type="text"
+                id="clienteTelefoneLojaInput"
+                class="input-perfil-cliente oculto"
+              />
+            </p>
+
+            <p>
+              <strong>Funcionamento:</strong>
+              <span id="clienteHorarioLoja"></span>
+              <input
+                type="text"
+                id="clienteHorarioLojaInput"
+                class="input-perfil-cliente oculto"
+              />
+            </p>
+
+            <p>
+              <strong>Dias:</strong>
+              <span id="clienteDiasLoja"></span>
+              <input
+                type="text"
+                id="clienteDiasLojaInput"
+                class="input-perfil-cliente oculto"
+              />
+            </p>
+          </div>
+
+          <div class="botoes-rota-cliente">
+            <button type="button" onclick="abrirRotaLojaGoogleMaps()">
+              Abrir rota no Google Maps
+            </button>
+
+            <button type="button" onclick="abrirRotaLojaWaze()">
+              Abrir rota no Waze
+            </button>
+          </div>
+
+          <button
+            type="button"
+            id="btnSalvarPerfilCliente"
+            class="btn-salvar-perfil-cliente oculto"
+            onclick="salvarPerfilLojaPelaAreaCliente()"
+          >
+            Salvar alterações
+          </button>
+        </section>
+
+        <form
+          class="form-perfil bloco-perfil-loja area-admin-perfil oculto"
+          onsubmit="salvarPerfilLoja(event)"
+        >
+          <h2>Dados da loja</h2>
+
+          <label for="nomeLoja">Nome da loja</label>
+          <input type="text" id="nomeLoja" readonly />
+
+          <label for="categoriaLoja">Categoria</label>
+          <input type="text" id="categoriaLoja" readonly />
+
+          <label for="enderecoLoja">Endereço</label>
+          <input type="text" id="enderecoLoja" readonly />
+
+          <label for="localizacaoLoja">Localização da loja</label>
+          <input
+            type="text"
+            id="localizacaoLoja"
+            placeholder="Cole o link do Google Maps, Waze ou coordenadas da loja"
+            readonly
+          />
+
+          <div id="acoesLocalizacaoLoja" class="acoes-localizacao-loja oculto">
+            <button type="button" onclick="abrirRotaLojaGoogleMaps()">
+              Abrir rota no Google Maps
+            </button>
+
+            <button type="button" onclick="abrirRotaLojaWaze()">
+              Abrir rota no Waze
+            </button>
+          </div>
+
+          <label for="telefoneLoja">Telefone</label>
+          <input type="text" id="telefoneLoja" readonly />
+
+          <label for="horarioLoja">Horário de funcionamento</label>
+          <input type="text" id="horarioLoja" readonly />
+
+          <label for="diasLoja">Dias de funcionamento</label>
+          <input type="text" id="diasLoja" readonly />
+
+          <button
+            type="submit"
+            id="btnSalvarPerfilLoja"
+            class="btn-salvar-perfil oculto"
+          >
+            Salvar perfil da loja
+          </button>
+        </form>
+
+        <form
+          id="areaDivulgacaoLoja"
+          class="form-perfil area-divulgacao-loja area-admin-perfil oculto"
+          onsubmit="salvarDivulgacaoLoja(event)"
+        >
+          <div class="cabecalho-divulgacao">
+            <h2>Divulgação e compartilhamento</h2>
+            <p>
+              Essas informações aparecem na página Compartilhar Loja para
+              clientes e administrador.
+            </p>
+          </div>
+
+          <div class="grid-divulgacao">
+            <div class="campo-divulgacao campo-grande">
+              <label for="tituloCompartilhamentoLoja">
+                Título da divulgação
+              </label>
+              <input
+                type="text"
+                id="tituloCompartilhamentoLoja"
+                placeholder="Ex: Bus Burguer | Delivery em Sandolândia | Pedido online"
+                readonly
+              />
+            </div>
+
+            <div class="campo-divulgacao">
+              <label for="cidadeEntregaLoja">Cidade/área de entrega</label>
+              <input
+                type="text"
+                id="cidadeEntregaLoja"
+                placeholder="Ex: Sandolândia"
+                readonly
+              />
+            </div>
+
+            <div class="campo-divulgacao">
+              <label for="linkPublicadoLoja">Link publicado da loja</label>
+              <input
+                type="url"
+                id="linkPublicadoLoja"
+                placeholder="Ex: https://sualoja.com/cardapio.html"
+                readonly
+              />
+            </div>
+
+            <div class="campo-divulgacao campo-texto">
+              <label for="mensagemClienteLoja">
+                Mensagem para clientes indicarem
+              </label>
+              <textarea
+                id="mensagemClienteLoja"
+                placeholder="Mensagem que o cliente vai compartilhar"
+                readonly
+              ></textarea>
+            </div>
+
+            <div class="campo-divulgacao campo-texto">
+              <label for="mensagemAdminLoja">
+                Mensagem de propaganda do admin
+              </label>
+              <textarea
+                id="mensagemAdminLoja"
+                placeholder="Mensagem de divulgação da loja"
+                readonly
+              ></textarea>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            id="btnSalvarDivulgacaoLoja"
+            class="btn-salvar-perfil"
+          >
+            Salvar divulgação
+          </button>
+        </form>
+
+        <section
+          id="areaContaAdmin"
+          class="conta-admin area-admin-perfil oculto"
+        >
+          <h2>Conta do administrador</h2>
+          <p>
+            Altere o email, a senha e a recuperação da conta administrativa.
+          </p>
+
+          <form
+            class="form-conta-admin"
+            onsubmit="salvarContaAdministrador(event)"
+          >
+            <label for="emailAdminAtual">Email atual do admin</label>
+            <input type="email" id="emailAdminAtual" readonly />
+
+            <label for="novoEmailAdmin">Novo email do admin</label>
+            <input
+              type="email"
+              id="novoEmailAdmin"
+              placeholder="Digite o novo email, se quiser alterar"
+            />
+
+            <label for="senhaAtualAdmin">Senha atual</label>
+            <input
+              type="password"
+              id="senhaAtualAdmin"
+              placeholder="Digite a senha atual para confirmar"
+            />
+
+            <label for="novaSenhaAdmin">Nova senha</label>
+            <input
+              type="password"
+              id="novaSenhaAdmin"
+              placeholder="Deixe vazio para manter a senha atual"
+            />
+
+            <label for="confirmarSenhaAdmin">Confirmar nova senha</label>
+            <input
+              type="password"
+              id="confirmarSenhaAdmin"
+              placeholder="Repita a nova senha"
+            />
+
+            <label for="perguntaRecuperacaoAdmin">
+              Pergunta de recuperação
+            </label>
+            <input
+              type="text"
+              id="perguntaRecuperacaoAdmin"
+              placeholder="Ex: Nome da minha primeira escola"
+            />
+
+            <label for="respostaRecuperacaoAdmin">
+              Resposta de recuperação
+            </label>
+            <input
+              type="text"
+              id="respostaRecuperacaoAdmin"
+              placeholder="Digite uma resposta fácil de lembrar"
+            />
+
+            <button type="submit" class="btn-salvar-perfil">
+              Salvar conta do admin
+            </button>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

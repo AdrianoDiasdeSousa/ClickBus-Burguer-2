@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pedidos - ClickBus Burguer</title>
+
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/pedidos.css" />
+  </head>
+
+  <body>
+    <header class="topo">
+      <a href="index.html" class="area-logo">
+        <img src="img/logo-topo.png" alt="Logo ClickBus Burguer" />
+      </a>
+
+      <a href="cardapio.html" class="botao-voltar">↩ Voltar</a>
+    </header>
+
+    <main class="pagina-pedidos">
+      <section class="pedidos-container">
+        <h1>Lista de pedidos</h1>
+
+        <div id="alertaNovoPedido" class="alerta-novo-pedido oculto"></div>
+
+        <section id="filtrosPedidosAdmin" class="filtros-pedidos-admin oculto">
+          <div class="filtros-topo">
+            <strong id="tituloFiltroPedidos">Pedidos de hoje</strong>
+            <span id="resumoFiltroPedidos">0 pedidos encontrados</span>
+          </div>
+
+          <div class="botoes-filtro-pedidos">
+            <button type="button" id="btnFiltroHoje" onclick="filtrarPedidosAdmin('hoje')">
+              Hoje
+            </button>
+
+            <button type="button" id="btnFiltroTodos" onclick="filtrarPedidosAdmin('todos')">
+              Todos
+            </button>
+
+            <button type="button" id="btnFiltroData" onclick="mostrarFiltroDataPedidos()">
+              Escolher data
+            </button>
+
+            <input
+              type="date"
+              id="dataFiltroPedidos"
+              class="oculto"
+              onchange="filtrarPedidosAdminPorData(this.value)"
+            />
+          </div>
+        </section>
+
+        <div id="listaPedidos" class="lista-pedidos"></div>
+      </section>
+    </main>
+
+    <div id="modalPedido" class="modal-pedido oculto">
+      <div class="modal-conteudo">
+        <button
+          type="button"
+          class="btn-fechar-modal"
+          onclick="fecharDetalhePedido()"
+        >
+          ×
+        </button>
+
+        <h2>Detalhe do pedido</h2>
+
+        <div id="conteudoDetalhePedido"></div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

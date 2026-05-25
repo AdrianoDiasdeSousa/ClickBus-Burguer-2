@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recuperar Senha - ClickBus Burguer</title>
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/recuperar-senha.css" />
+  </head>
+
+  <body>
+    <header class="topo">
+      <a href="index.html" class="area-logo">
+        <img src="img/logo-topo.png" alt="Logo ClickBus Burguer" />
+      </a>
+
+      <a href="login.html" class="botao-voltar">↩ Voltar</a>
+    </header>
+
+    <main class="pagina-recuperar">
+      <section class="recuperar-container">
+        <h1>Recuperar senha</h1>
+
+        <form onsubmit="enviarRecuperacao(event)">
+          <label for="email">Digite seu Email</label>
+
+          <div class="campo-email">
+            <input type="email" id="email" placeholder="" required />
+
+            <button type="submit">Enviar</button>
+          </div>
+        </form>
+
+        <p>Entre no seu email para redefinir a senha!</p>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

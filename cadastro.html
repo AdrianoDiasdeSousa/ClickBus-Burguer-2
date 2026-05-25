@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro - ClickBus Burguer</title>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/cadastro.css" />
+  </head>
+
+  <body>
+    <header class="topo">
+      <a href="index.html" class="area-logo">
+        <img src="img/logo-topo.png" alt="Logo ClickBus Burguer" />
+      </a>
+
+      <a href="login.html" class="botao-voltar">↩ Voltar</a>
+    </header>
+
+    <main class="pagina-cadastro">
+      <section class="cadastro-container">
+        <h1>Cadastro de usuário</h1>
+
+        <form class="form-cadastro" onsubmit="fazerCadastro(event)">
+          <label for="nome">Nome</label>
+          <input
+            type="text"
+            id="nome"
+            name="nome"
+            placeholder="Digite seu nome completo"
+            autocomplete="name"
+            required
+          />
+
+          <label for="cpf">CPF</label>
+          <input
+            type="text"
+            id="cpf"
+            placeholder="Digite seu CPF"
+            inputmode="numeric"
+            maxlength="14"
+            required
+          />
+
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Digite seu email"
+            autocomplete="email"
+            required
+          />
+
+          <label for="senha">Senha</label>
+          <input
+            type="password"
+            id="senha"
+            name="senha"
+            placeholder="Crie uma senha"
+            autocomplete="new-password"
+            minlength="6"
+            required
+          />
+
+          <label for="confirmarSenha">Confirmar senha</label>
+          <input
+            type="password"
+            id="confirmarSenha"
+            name="confirmarSenha"
+            placeholder="Confirme sua senha"
+            autocomplete="new-password"
+            minlength="6"
+            required
+          />
+
+          <label for="cep">CEP</label>
+          <input
+            type="text"
+            id="cep"
+            name="cep"
+            placeholder="Digite seu CEP"
+            inputmode="numeric"
+            maxlength="9"
+            autocomplete="postal-code"
+            required
+          />
+
+          <label for="rua">Rua / Avenida</label>
+          <input
+            type="text"
+            id="rua"
+            name="rua"
+            placeholder="Digite sua rua ou avenida"
+            autocomplete="address-line1"
+            required
+          />
+
+          <label for="numero">Número</label>
+          <input
+            type="text"
+            id="numero"
+            name="numero"
+            placeholder="Digite o número da residência"
+            autocomplete="address-line2"
+            required
+          />
+
+          <label for="bairro">Bairro</label>
+          <input
+            type="text"
+            id="bairro"
+            name="bairro"
+            placeholder="Digite seu bairro"
+            required
+          />
+
+          <label for="cidade">Cidade</label>
+          <input
+            type="text"
+            id="cidade"
+            name="cidade"
+            placeholder="Digite sua cidade"
+            autocomplete="address-level2"
+            required
+          />
+
+          <label for="estado">Estado</label>
+          <input
+            type="text"
+            id="estado"
+            name="estado"
+            placeholder="Ex: TO"
+            maxlength="2"
+            autocomplete="address-level1"
+            required
+          />
+
+          <label for="complemento">Complemento</label>
+          <input
+            type="text"
+            id="complemento"
+            name="complemento"
+            placeholder="Apartamento, casa, lote, bloco..."
+          />
+
+          <label for="referencia">Ponto de referência</label>
+          <input
+            type="text"
+            id="referencia"
+            name="referencia"
+            placeholder="Ex: perto da praça, mercado ou escola"
+          />
+
+          <label for="localizacao">Localização da entrega</label>
+          <p class="dica-localizacao-cadastro">
+            Digite seu endereço, busque no mapa e ajuste o ponto exato. Isso
+            ajuda o entregador a abrir a rota correta.
+          </p>
+
+          <div class="campo-localizacao-cadastro">
+            <input
+              type="text"
+              id="localizacao"
+              name="localizacao"
+              placeholder="Coordenadas ou link do Google Maps"
+            />
+
+            <button type="button" onclick="buscarEnderecoNoMapa('cadastro')">
+              Buscar no mapa
+            </button>
+
+            <button
+              type="button"
+              onclick="salvarLocalizacaoNoCampo('localizacao', 'cadastro')"
+            >
+              Usar localização atual
+            </button>
+          </div>
+
+          <div
+            id="mapaCadastroEndereco"
+            class="mapa-endereco-cadastro oculto"
+          ></div>
+
+          <button
+            type="button"
+            id="btnConfirmarMapaCadastro"
+            class="btn-confirmar-mapa-cadastro oculto"
+            onclick="confirmarLocalizacaoMapa('cadastro')"
+          >
+            Confirmar localização no mapa
+          </button>
+
+          <label for="telefone">Telefone</label>
+          <input
+            type="tel"
+            id="telefone"
+            name="telefone"
+            placeholder="(63) 99998-4134"
+            inputmode="numeric"
+            maxlength="15"
+            autocomplete="tel"
+            required
+          />
+
+          <button type="submit" class="botao-cadastrar">Cadastrar</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

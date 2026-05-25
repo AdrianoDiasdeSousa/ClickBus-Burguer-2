@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClickBus Burguer</title>
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/home.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <header class="topo">
+        <a href="index.html" class="area-logo">
+          <img
+            src="img/logo-topo.png"
+            alt="ClickBus Burguer"
+            class="logo-topo"
+          />
+        </a>
+
+        <nav class="menu">
+          <span
+            id="usuarioLogadoHome"
+            class="usuario-logado-home oculto"
+          ></span>
+          <a href="login.html" id="linkEntrarHome">Entrar</a>
+          <a href="cadastro.html" id="linkCadastroHome">Cadastre-se</a>
+        </nav>
+      </header>
+
+      <main class="principal">
+        <h1>Mais que hambúrguer, uma viagem de sabor!</h1>
+
+        <div class="status-home">
+          <div class="status-info-loja">
+            <div class="linha-status-loja">
+              <span>Loja agora:</span>
+              <strong id="statusLoja" data-status-loja>Verificando...</strong>
+            </div>
+            <div class="linha-horario-loja">
+              <span>Funcionamento:</span>
+              <strong data-horario-loja>Carregando...</strong>
+            </div>
+          </div>
+          <button
+            type="button"
+            id="btnAlternarStatusLoja"
+            class="btn-status-loja oculto"
+            onclick="alternarStatusManualLoja()"
+          >
+            Alternar status
+          </button>
+        </div>
+
+        <img
+          src="img/logo-principal.png"
+          alt="Bus Burguer"
+          class="logo-principal"
+        />
+      </main>
+    </div>
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

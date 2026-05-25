@@ -1,0 +1,384 @@
+/* =========================
+   PÁGINA DETALHE DO PEDIDO
+========================= */
+
+.pagina-detalhe-pedido {
+  min-height: calc(100vh - 80px);
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.25)),
+    url("../img/fundo.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-left: 6px solid #111;
+  border-right: 6px solid #111;
+  border-bottom: 6px solid #111;
+  padding: 35px 20px 60px;
+  color: #111;
+}
+
+.detalhe-container {
+  width: 760px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.detalhe-container > h1 {
+  width: 360px;
+  max-width: 100%;
+  margin: 0 auto 25px;
+  background-color: #e88700;
+  color: #111;
+  text-align: center;
+  padding: 12px 20px;
+  border-radius: 16px;
+  font-size: 30px;
+  font-weight: normal;
+}
+
+/* =========================
+   CLIENTE E TELEFONE
+========================= */
+
+.cliente-pedido {
+  width: 760px;
+  max-width: 100%;
+  margin: 0 auto 22px;
+}
+
+.cliente-card {
+  background-color: rgba(219, 239, 213, 0.92);
+  border-left: 6px solid #e88700;
+  padding: 14px 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: center;
+}
+
+.cliente-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.cliente-label {
+  color: #d87700;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.cliente-info strong {
+  color: #111;
+  font-size: 25px;
+  font-weight: normal;
+}
+
+/* =========================
+   DATA, HORA E STATUS
+========================= */
+
+.info-pedido {
+  background-color: rgba(219, 239, 213, 0.9);
+  min-height: 52px;
+  padding: 10px 18px;
+  display: grid;
+  grid-template-columns: 1.2fr 0.5fr 0.9fr;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+  font-size: 17px;
+}
+
+.status-detalhe {
+  justify-self: end;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Status visual para cliente e admin */
+
+.status-pedido,
+.select-status-detalhe {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 44px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: none;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.1;
+  color: #000;
+}
+
+.select-status-detalhe {
+  cursor: pointer;
+  outline: none;
+}
+
+.status-recebido,
+.select-status-detalhe.status-recebido {
+  background-color: #f28c00;
+  color: #000;
+}
+
+.status-producao,
+.select-status-detalhe.status-producao {
+  background-color: #f28c00;
+  color: #000;
+}
+
+.status-rota,
+.select-status-detalhe.status-rota {
+  background-color: #4d8cff;
+  color: #000;
+}
+
+.status-entregue,
+.select-status-detalhe.status-entregue {
+  background-color: #00c83b;
+  color: #000;
+}
+
+.status-cancelado,
+.select-status-detalhe.status-cancelado {
+  background-color: #ff2b2b;
+  color: #000;
+}
+
+.select-status-detalhe option {
+  background-color: #fff;
+  color: #000;
+  font-weight: bold;
+}
+
+/* =========================
+   PAGAMENTO, ENTREGA E ROTAS
+========================= */
+
+.pagamento-detalhe {
+  background-color: rgba(219, 239, 213, 0.9);
+  padding: 16px 20px;
+  margin-bottom: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.pagamento-detalhe div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pagamento-detalhe span {
+  color: #d87700;
+  font-size: 15px;
+}
+
+.pagamento-detalhe strong {
+  font-size: 19px;
+  font-weight: normal;
+}
+
+.pagamento-detalhe .endereco-detalhe,
+.pagamento-detalhe .localizacao-detalhe {
+  grid-column: 1 / -1;
+}
+
+.localizacao-detalhe a {
+  color: #4657ff;
+  text-decoration: none;
+}
+
+.localizacao-detalhe a:hover {
+  text-decoration: underline;
+}
+
+.links-rota-entrega {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.links-rota-entrega a {
+  display: inline-block;
+  background: #4353ff;
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+.links-rota-entrega a:first-child {
+  background: #f58f00;
+}
+
+/* =========================
+   BOX DOS ITENS
+========================= */
+
+.box-detalhe {
+  background-color: rgba(219, 239, 213, 0.9);
+  padding: 28px 28px 36px;
+  min-height: 260px;
+}
+
+.titulo-itens-pedido {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.titulo-itens-pedido h2 {
+  font-size: 26px;
+  margin: 0;
+  color: #111;
+  font-weight: bold;
+}
+
+.lista-itens-detalhe {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.item-detalhe-pedido {
+  display: grid;
+  grid-template-columns: 1fr 150px;
+  align-items: center;
+  gap: 18px;
+  font-size: 22px;
+}
+
+.nome-produto-detalhe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nome-produto-detalhe strong {
+  white-space: nowrap;
+  font-weight: normal;
+}
+
+.linha-pontilhada {
+  flex: 1;
+  border-bottom: 1px dashed #111;
+  transform: translateY(4px);
+}
+
+.preco-produto-detalhe {
+  color: #d87700;
+  text-align: right;
+  white-space: nowrap;
+  font-weight: normal;
+}
+
+.observacao-detalhe {
+  display: inline-block;
+  margin: 4px 0 6px;
+  padding: 6px 10px;
+  border-left: 3px solid #e88700;
+  background-color: rgba(255, 255, 255, 0.45);
+  border-radius: 8px;
+  font-size: 16px;
+  color: #333;
+}
+
+/* =========================
+   RESUMO DO PEDIDO
+========================= */
+
+.resumo-detalhe {
+  margin-top: 34px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 22px;
+}
+
+.resumo-detalhe strong {
+  font-weight: normal;
+  color: #d87700;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 768px) {
+  .pagina-detalhe-pedido {
+    padding: 25px 14px 45px;
+  }
+
+  .detalhe-container > h1 {
+    width: 100%;
+    font-size: 26px;
+  }
+
+  .cliente-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .cliente-info strong {
+    font-size: 22px;
+  }
+
+  .info-pedido {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .status-detalhe {
+    justify-self: center;
+    justify-content: center;
+  }
+
+  .pagamento-detalhe {
+    grid-template-columns: 1fr;
+  }
+
+  .box-detalhe {
+    padding: 22px 18px 28px;
+  }
+
+  .item-detalhe-pedido {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .nome-produto-detalhe {
+    display: block;
+  }
+
+  .linha-pontilhada {
+    display: none;
+  }
+
+  .preco-produto-detalhe {
+    text-align: left;
+  }
+
+  .resumo-detalhe {
+    flex-direction: column;
+    font-size: 20px;
+  }
+
+  .status-pedido,
+  .select-status-detalhe {
+    width: 100%;
+    max-width: 240px;
+  }
+}
