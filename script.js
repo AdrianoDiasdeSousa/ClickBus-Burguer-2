@@ -5212,3 +5212,73 @@ window.avancarPedido = async function () {
 
   window.location.href = "finalizar-pedido.html";
 };
+
+/* =====================================================
+   BLOQUEIO FINAL DE PEDIDO COM LOJA FECHADA
+   Deve ficar no FINAL do script.js
+===================================================== */
+
+async function verificarLojaFechadaParaPedido() {
+  try {
+    if (typeof carregarConfiguracoesLojaDaApi === "function") {
+      await carregarConfiguracoesLojaDaApi();
+    }
+  } catch (erro) {
+    console.error("Erro ao verificar status da loja:", erro);
+  }
+
+  if (typeof lojaEstaAberta === "function") {
+    return !lojaEstaAberta();
+  }
+
+  const textoStatus =
+    document.querySelector("[data-status-loja]")?.textContent ||
+    document.getElementById("statusLoja")?.textContent ||
+    "";
+
+  return textoStatus.trim().toLowerCase().includes("fechado");
+}
+
+window.avancarPedido = async function () {
+  if (typeof bloquearPedidoParaAdmin === "function" && bloquearPedidoParaAdmin()) {
+    return;
+  }
+
+  const lojaFechada = await verificarLojaFechadaParaPedido();
+
+  if (lojaFechada) {
+    mostrarAviso(
+      "A loja está fechada no momento. Não é possível fazer pedido agora.",
+      "erro",
+    );
+    return;
+  }
+
+  const produtos = carregarProdutos();
+  const observacoes =
+    typeof window.carregarObservacoesPedido === "function"
+      ? window.carregarObservacoesPedido()
+      : {};
+
+  const pedido = produtos
+    .filter((produto) => Number(produto.quantidade) > 0)
+    .map((produto) => ({
+      id: Number(produto.id),
+      nome: produto.nome,
+      descricao: produto.descricao || "",
+      preco: Number(produto.preco) || 0,
+      imagem: produto.imagem || "",
+      categoria: produto.categoria || "",
+      quantidade: Number(produto.quantidade) || 0,
+      observacao: observacoes[String(produto.id)] || "",
+    }));
+
+  if (pedido.length === 0) {
+    mostrarAviso("Escolha pelo menos um item antes de avançar.", "erro");
+    return;
+  }
+
+  localStorage.setItem("pedidoAtual", JSON.stringify(pedido));
+
+  window.location.href = "finalizar-pedido.html";
+};
