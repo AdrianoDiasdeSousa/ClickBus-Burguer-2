@@ -4946,6 +4946,7 @@ function atualizarStatusLoja() {
     iniciarAtualizacaoStatusLoja();
   }
 }
+
 document.addEventListener("DOMContentLoaded", () => {
   executarComSeguranca("iniciarAtualizacaoAutomaticaPaginas", () => {
     if (typeof iniciarAtualizacaoAutomaticaPaginas === "function") {
@@ -5059,3 +5060,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+function carregarObservacoesPedido() {
+  return {};
+}
+
+function atualizarStatusLoja() {
+  if (typeof iniciarAtualizacaoStatusLoja === "function") {
+    iniciarAtualizacaoStatusLoja();
+  }
+}
+
+function avancarPedido() {
+  const totalTexto =
+    document.getElementById("valorTotal")?.textContent || "R$ 0,00";
+
+  const totalNumerico = Number(
+    totalTexto.replace("R$", "").replace(/\./g, "").replace(",", ".").trim(),
+  );
+
+  if (!totalNumerico || totalNumerico <= 0) {
+    alert("Escolha pelo menos um item antes de avançar.");
+    return;
+  }
+
+  window.location.href = "finalizar-pedido.html";
+}
