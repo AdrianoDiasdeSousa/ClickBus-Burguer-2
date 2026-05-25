@@ -4204,7 +4204,7 @@ if (estaNaPaginaCardapio) {
     atualizarStatusLoja();
   }, 30000);
 }
-}
+
 function converterStatusTelaParaApi(statusTela) {
   const mapa = {
     "Pedido recebido": "pendente",
