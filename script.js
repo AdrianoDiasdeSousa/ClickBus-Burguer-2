@@ -2277,19 +2277,6 @@ async function avancarPedido() {
     return;
   }
 
- async function avancarPedido() {
-  if (usuarioEhAdmin()) return;
-
-  await carregarConfiguracoesLojaDaApi();
-
-  if (!lojaEstaAberta()) {
-    mostrarAviso(
-      "A loja está fechada no momento. Não estamos recebendo pedidos agora.",
-      "erro",
-    );
-    return;
-  }
-
   const produtos = carregarProdutos();
 
   const observacoes = carregarObservacoesPedido();
@@ -2321,7 +2308,6 @@ async function avancarPedido() {
 
   window.location.href = "carrinho.html";
 }
-
 
   if (!lojaEstaAberta()) {
     mostrarAviso(
