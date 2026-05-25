@@ -5282,3 +5282,80 @@ window.avancarPedido = async function () {
 
   window.location.href = "finalizar-pedido.html";
 };
+
+
+/* =====================================================
+   ALERTA SONORO PARA NOVOS PEDIDOS
+   Deve ficar no FINAL do script.js
+===================================================== */
+
+let quantidadePedidosAnteriorAlerta = null;
+let alertaSonoroLiberado = false;
+
+const somNovoPedido = new Audio(
+  "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+);
+somNovoPedido.volume = 1;
+
+function liberarSomNovoPedido() {
+  alertaSonoroLiberado = true;
+
+  somNovoPedido
+    .play()
+    .then(() => {
+      somNovoPedido.pause();
+      somNovoPedido.currentTime = 0;
+    })
+    .catch(() => {});
+}
+
+document.addEventListener("click", liberarSomNovoPedido, { once: true });
+
+function tocarSomNovoPedido() {
+  if (!alertaSonoroLiberado) return;
+
+  somNovoPedido.currentTime = 0;
+  somNovoPedido.play().catch((erro) => {
+    console.warn("O navegador bloqueou o som do alerta:", erro);
+  });
+}
+
+function contarPedidosRecebidosNaTela() {
+  const cardsPedidos = document.querySelectorAll(".pedido-card, .card-pedido");
+
+  if (cardsPedidos.length > 0) {
+    return cardsPedidos.length;
+  }
+
+  const textoNotificacao =
+    document.body.textContent.match(/Há\s+(\d+)\s+novos pedidos/i);
+
+  if (textoNotificacao) {
+    return Number(textoNotificacao[1]) || 0;
+  }
+
+  return 0;
+}
+
+function verificarNovosPedidosComSom() {
+  const estaNaPaginaPedidos = window.location.pathname.includes("pedidos.html");
+
+  if (!estaNaPaginaPedidos) return;
+
+  const quantidadeAtual = contarPedidosRecebidosNaTela();
+
+  if (quantidadePedidosAnteriorAlerta === null) {
+    quantidadePedidosAnteriorAlerta = quantidadeAtual;
+    return;
+  }
+
+  if (quantidadeAtual > quantidadePedidosAnteriorAlerta) {
+    tocarSomNovoPedido();
+    mostrarAviso("🔔 Novo pedido recebido!", "sucesso", 5000);
+  }
+
+  quantidadePedidosAnteriorAlerta = quantidadeAtual;
+}
+
+setInterval(verificarNovosPedidosComSom, 5000);
+document.addEventListener("DOMContentLoaded", verificarNovosPedidosComSom);
