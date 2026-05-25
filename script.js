@@ -4466,20 +4466,44 @@ function iniciarAtualizacaoAutomatica() {
     }, 5000);
   }
 
- if (estaNaPaginaCardapio) {
-  setInterval(() => {
-    if (typeof renderizarCardapio === "function") {
-      renderizarCardapio();
-    }
+function iniciarAtualizacaoAutomaticaPaginas() {
+  const paginaAtual = window.location.pathname;
 
-    if (typeof window.atualizarStatusLoja === "function") {
-      window.atualizarStatusLoja();
-    }
+  const estaNaPaginaPedidos = paginaAtual.includes("pedidos.html");
+  const estaNaPaginaDetalhePedido = paginaAtual.includes("detalhe-pedido.html");
+  const estaNaPaginaCardapio = paginaAtual.includes("cardapio.html");
 
-    if (typeof atualizarHorarioFunta === "function") {
-      atualizarHorarioFunta();
-    }
-  }, 5000);
+  if (estaNaPaginaPedidos) {
+    setInterval(() => {
+      if (typeof renderizarPedidos === "function") {
+        renderizarPedidos();
+      }
+    }, 5000);
+  }
+
+  if (estaNaPaginaDetalhePedido) {
+    setInterval(() => {
+      if (typeof carregarDetalhePedidoPagina === "function") {
+        carregarDetalhePedidoPagina();
+      }
+    }, 5000);
+  }
+
+  if (estaNaPaginaCardapio) {
+    setInterval(() => {
+      if (typeof renderizarCardapio === "function") {
+        renderizarCardapio();
+      }
+
+      if (typeof window.atualizarStatusLoja === "function") {
+        window.atualizarStatusLoja();
+      }
+
+      if (typeof atualizarHorarioFunta === "function") {
+        atualizarHorarioFunta();
+      }
+    }, 5000);
+  }
 }
 
 function converterStatusTelaParaApi(statusTela) {
