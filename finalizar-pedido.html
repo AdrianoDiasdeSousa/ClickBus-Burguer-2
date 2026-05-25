@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Finalizar Pedido - ClickBus Burguer</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
     <link rel="stylesheet" href="css/global.css" />
     <link rel="stylesheet" href="css/finalizar-pedido.css" />
   </head>
@@ -53,44 +56,118 @@
               Cadastrar novo endereço
             </button>
 
-            <form id="formNovoEndereco" class="form-endereco oculto" onsubmit="salvarNovoEndereco(event)">
+            <form
+              id="formNovoEndereco"
+              class="form-endereco oculto"
+              onsubmit="salvarNovoEndereco(event)"
+            >
               <label for="novoLocalizacao">Localização da entrega</label>
-              <p class="dica-localizacao">Digite o endereço, clique em buscar no mapa e ajuste o ponto exato. A localização atual continua como opção, mas no computador ela pode ser aproximada.</p>
+              <p class="dica-localizacao">
+                Digite o endereço, clique em buscar no mapa e ajuste o ponto
+                exato. A localização atual continua como opção, mas no
+                computador ela pode ser aproximada.
+              </p>
               <div class="campo-localizacao">
-                <input type="text" id="novoLocalizacao" placeholder="Coordenadas ou link do Google Maps" />
-                <button type="button" class="btn-usar-localizacao" onclick="buscarEnderecoNoMapa('novo')">Buscar no mapa</button>
-                <button type="button" class="btn-usar-localizacao btn-localizacao-atual" onclick="salvarLocalizacaoNoCampo('novoLocalizacao', 'novo')">Usar localização atual</button>
+                <input
+                  type="text"
+                  id="novoLocalizacao"
+                  placeholder="Coordenadas ou link do Google Maps"
+                />
+                <button
+                  type="button"
+                  class="btn-usar-localizacao"
+                  onclick="buscarEnderecoNoMapa('novo')"
+                >
+                  Buscar no mapa
+                </button>
+                <button
+                  type="button"
+                  class="btn-usar-localizacao btn-localizacao-atual"
+                  onclick="salvarLocalizacaoNoCampo('novoLocalizacao', 'novo')"
+                >
+                  Usar localização atual
+                </button>
               </div>
               <div id="mapaNovoEndereco" class="mapa-endereco oculto"></div>
-              <button type="button" id="btnConfirmarMapaNovo" class="btn-confirmar-mapa oculto" onclick="confirmarLocalizacaoMapa('novo')">Confirmar localização no mapa</button>
+              <button
+                type="button"
+                id="btnConfirmarMapaNovo"
+                class="btn-confirmar-mapa oculto"
+                onclick="confirmarLocalizacaoMapa('novo')"
+              >
+                Confirmar localização no mapa
+              </button>
 
               <label for="novoReferencia">Ponto de referência</label>
-              <input type="text" id="novoReferencia" placeholder="Opcional, mas ajuda o entregador. Ex: portão preto, casa azul..." />
+              <input
+                type="text"
+                id="novoReferencia"
+                placeholder="Opcional, mas ajuda o entregador. Ex: portão preto, casa azul..."
+              />
 
               <label for="novoCep">CEP</label>
-              <input type="text" id="novoCep" placeholder="Digite seu CEP" inputmode="numeric" maxlength="9" />
+              <input
+                type="text"
+                id="novoCep"
+                placeholder="Digite seu CEP"
+                inputmode="numeric"
+                maxlength="9"
+              />
 
               <label for="novoRua">Rua / Avenida</label>
-              <input type="text" id="novoRua" placeholder="Digite sua rua ou avenida" />
+              <input
+                type="text"
+                id="novoRua"
+                placeholder="Digite sua rua ou avenida"
+              />
 
               <label for="novoNumero">Número</label>
-              <input type="text" id="novoNumero" placeholder="Digite o número" />
+              <input
+                type="text"
+                id="novoNumero"
+                placeholder="Digite o número"
+              />
 
               <label for="novoBairro">Bairro</label>
-              <input type="text" id="novoBairro" placeholder="Digite seu bairro" />
+              <input
+                type="text"
+                id="novoBairro"
+                placeholder="Digite seu bairro"
+              />
 
               <label for="novoCidade">Cidade</label>
-              <input type="text" id="novoCidade" placeholder="Digite sua cidade" />
+              <input
+                type="text"
+                id="novoCidade"
+                placeholder="Digite sua cidade"
+              />
 
               <label for="novoEstado">Estado</label>
-              <input type="text" id="novoEstado" placeholder="Ex: TO" maxlength="2" />
+              <input
+                type="text"
+                id="novoEstado"
+                placeholder="Ex: TO"
+                maxlength="2"
+              />
 
               <label for="novoComplemento">Complemento</label>
-              <input type="text" id="novoComplemento" placeholder="Apartamento, casa, lote, bloco..." />
+              <input
+                type="text"
+                id="novoComplemento"
+                placeholder="Apartamento, casa, lote, bloco..."
+              />
 
               <div class="acoes-endereco">
-                <button type="submit" class="btn-salvar-endereco">Salvar endereço</button>
-                <button type="button" class="btn-cancelar-endereco" onclick="fecharFormularioEndereco()">Cancelar</button>
+                <button type="submit" class="btn-salvar-endereco">
+                  Salvar endereço
+                </button>
+                <button
+                  type="button"
+                  class="btn-cancelar-endereco"
+                  onclick="fecharFormularioEndereco()"
+                >
+                  Cancelar
+                </button>
               </div>
             </form>
 
@@ -173,7 +250,12 @@
                 <strong>Dinheiro</strong>
               </div>
 
-              <input type="radio" name="formaPagamento" value="dinheiro" onchange="alternarCampoTroco()" />
+              <input
+                type="radio"
+                name="formaPagamento"
+                value="dinheiro"
+                onchange="alternarCampoTroco()"
+              />
             </label>
 
             <label class="opcao-item pagamento-item">
@@ -197,7 +279,12 @@
                 <strong>Pix</strong>
               </div>
 
-              <input type="radio" name="formaPagamento" value="pix" onchange="alternarCampoTroco()" />
+              <input
+                type="radio"
+                name="formaPagamento"
+                value="pix"
+                onchange="alternarCampoTroco()"
+              />
             </label>
 
             <div id="campoTroco" class="campo-troco oculto">
@@ -208,7 +295,10 @@
                 inputmode="decimal"
                 placeholder="Ex: 100,00"
               />
-              <small>Digite apenas o valor, por exemplo: 100,00. Deixe em branco se não precisar.</small>
+              <small
+                >Digite apenas o valor, por exemplo: 100,00. Deixe em branco se
+                não precisar.</small
+              >
             </div>
           </div>
         </section>
@@ -234,6 +324,7 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="api.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

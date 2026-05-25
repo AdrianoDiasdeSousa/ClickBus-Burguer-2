@@ -1,12 +1,15 @@
 const API_URL = "https://clickbus-burguer-api.onrender.com/api";
 
 async function fazerRequisicaoApi(caminho, opcoes = {}) {
+  const token = localStorage.getItem("clickbus_token");
+
   const resposta = await fetch(`${API_URL}${caminho}`, {
+    ...opcoes,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(opcoes.headers || {}),
     },
-    ...opcoes,
   });
 
   let resultado = null;
