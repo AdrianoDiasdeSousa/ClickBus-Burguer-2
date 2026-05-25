@@ -2249,13 +2249,6 @@ function cadastrarNovoLanche() {
   cadastrarProdutoPorCategoria("lanche");
 }
 
-function cadastrarNovaBebida() {
-  cadastrarProdutoPorCategoria("bebida");
-}
-
-function cadastrarNovoProduto() {
-  cadastrarNovoLanche();
-}
 function carregarObservacoesPedido() {
   try {
     return JSON.parse(localStorage.getItem("observacoesPedidoAtual")) || {};
@@ -2263,6 +2256,7 @@ function carregarObservacoesPedido() {
     return {};
   }
 }
+
 async function avancarPedido() {
   if (usuarioEhAdmin()) return;
 
@@ -2307,9 +2301,6 @@ async function avancarPedido() {
 
   window.location.href = "carrinho.html";
 }
-
-function sairDoSistema() {
-
 
 function sairDoSistema() {
   limparPedidoEmAndamento();
