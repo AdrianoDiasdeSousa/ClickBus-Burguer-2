@@ -4202,7 +4202,7 @@ function iniciarAtualizacaoAutomatica() {
   if (estaNaPaginaCardapio) {
     setInterval(() => {
       atualizarStatusLoja?.();
-      carregarProdutosCardapio?.();
+      renderizarCardapio();
     }, 5000);
   }
 }
