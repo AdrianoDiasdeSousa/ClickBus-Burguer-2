@@ -5419,3 +5419,11 @@ window.editarImagemProduto = async function (id) {
     mostrarAviso("Erro de conexão ao salvar imagem.", "erro");
   }
 };
+
+   window.carregarProdutosCardapio = async function () {
+  if (typeof renderizarCardapio === "function") {
+    await renderizarCardapio();
+  }
+};
+
+window.editarImagemProduto = editarImagemProduto;
