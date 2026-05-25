@@ -4346,12 +4346,16 @@ function iniciarAtualizacaoAutomatica() {
     }, 5000);
   }
 
-  if (estaNaPaginaCardapio) {
-    setInterval(() => {
-      atualizarStatusLoja?.();
-      carregarProdutosCardapio?.();
-    }, 5000);
-  }
+ if (estaNaPaginaCardapio) {
+  setInterval(() => {
+    if (typeof atualizarStatusLoja === "function") {
+      atualizarStatusLoja();
+    }
+
+    if (typeof renderizarCardapio === "function") {
+      renderizarCardapio();
+    }
+  }, 5000);
 }
 
 function converterStatusTelaParaApi(statusTela) {
