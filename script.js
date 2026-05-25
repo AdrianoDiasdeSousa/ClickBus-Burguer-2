@@ -2255,50 +2255,6 @@ function cadastrarNovaBebida() {
 function cadastrarNovoProduto() {
   cadastrarNovoLanche();
 }
-async function avancarPedido() {
-  try {
-    await carregarConfiguracoesLojaDaApi();
-  } catch (erro) {
-    console.error("Erro ao verificar status da loja:", erro);
-  }
-
-  if (typeof lojaEstaAberta === "function" && !lojaEstaAberta()) {
-    mostrarAviso(
-      "A loja está fechada no momento. Não é possível fazer pedido agora.",
-      "erro",
-    );
-    return;
-  }
-
-  const totalTexto =
-    document.getElementById("valorTotal")?.textContent || "R$ 0,00";
-
-  const totalNumerico = Number(
-    totalTexto.replace("R$", "").replace(/\./g, "").replace(",", ".").trim(),
-  );
-
-  if (!totalNumerico || totalNumerico <= 0) {
-    alert("Escolha pelo menos um item antes de avançar.");
-    return;
-  }
-
-  window.location.href = "finalizar-pedido.html";
-}
-
-  const totalTexto =
-    document.getElementById("valorTotal")?.textContent || "R$ 0,00";
-
-  const totalNumerico = Number(
-    totalTexto.replace("R$", "").replace(/\./g, "").replace(",", ".").trim(),
-  );
-
-  if (!totalNumerico || totalNumerico <= 0) {
-    alert("Escolha pelo menos um item antes de avançar.");
-    return;
-  }
-
-  window.location.href = "finalizar-pedido.html";
-}
 
 function sairDoSistema() {
   limparPedidoEmAndamento();
@@ -3740,7 +3696,7 @@ function alternarCampoTroco() {
 }
 
 async function confirmarPedido() {
-     try {
+  try {
     await carregarConfiguracoesLojaDaApi();
   } catch (erro) {
     console.error("Erro ao verificar status da loja:", erro);
@@ -3753,19 +3709,7 @@ async function confirmarPedido() {
     );
     return;
   }
-     try {
-    await carregarConfiguracoesLojaDaApi();
-  } catch (erro) {
-    console.error("Erro ao verificar status da loja:", erro);
-  }
 
-  if (typeof lojaEstaAberta === "function" && !lojaEstaAberta()) {
-    mostrarAviso(
-      "A loja está fechada no momento. Não é possível confirmar pedido agora.",
-      "erro",
-    );
-    return;
-  }
   if (bloquearPedidoParaAdmin()) return;
 
   const pedido = carregarPedidoAtual();
