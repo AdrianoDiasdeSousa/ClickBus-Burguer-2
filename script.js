@@ -4345,7 +4345,7 @@ function iniciarAtualizacaoAutomatica() {
       carregarDetalhePedidoPagina();
     }, 5000);
   }
-
+}
   if (estaNaPaginaCardapio) {
     setInterval(() => {
       if (typeof atualizarStatusLoja === "function") {
