@@ -5086,3 +5086,104 @@ function avancarPedido() {
 
   window.location.href = "finalizar-pedido.html";
 }
+window.carregarObservacoesPedido = function () {
+  try {
+    return JSON.parse(localStorage.getItem("observacoesPedidoAtual") || "{}");
+  } catch (erro) {
+    return {};
+  }
+};
+
+window.salvarObservacoesPedido = function (observacoes) {
+  localStorage.setItem(
+    "observacoesPedidoAtual",
+    JSON.stringify(observacoes || {}),
+  );
+};
+
+window.limparObservacaoPedidoProduto = function (id) {
+  const observacoes = window.carregarObservacoesPedido();
+  delete observacoes[String(id)];
+  window.salvarObservacoesPedido(observacoes);
+};
+
+window.carregarObservacaoPagina = function () {
+  const campoObservacao = document.getElementById("campoObservacao");
+
+  if (!campoObservacao) return;
+
+  const produtoId = Number(localStorage.getItem("produtoObservacaoId"));
+  const observacoes = window.carregarObservacoesPedido();
+
+  campoObservacao.value = observacoes[String(produtoId)] || "";
+};
+
+window.salvarObservacaoPagina = function () {
+  const campoObservacao = document.getElementById("campoObservacao");
+
+  if (!campoObservacao) return;
+
+  const produtoId = Number(localStorage.getItem("produtoObservacaoId"));
+  const produtos = carregarProdutos();
+  const produto = produtos.find(
+    (item) => Number(item.id) === Number(produtoId),
+  );
+
+  if (!produto) {
+    mostrarAviso("Produto não encontrado.", "erro");
+    return;
+  }
+
+  const observacoes = window.carregarObservacoesPedido();
+  const textoObservacao = campoObservacao.value.trim();
+
+  if (textoObservacao) {
+    observacoes[String(produtoId)] = textoObservacao;
+  } else {
+    delete observacoes[String(produtoId)];
+  }
+
+  window.salvarObservacoesPedido(observacoes);
+
+  avisarENavegar(
+    textoObservacao
+      ? "Observação salva com sucesso!"
+      : "Observação removida com sucesso!",
+    "cardapio.html",
+  );
+};
+
+window.atualizarStatusLoja = function () {
+  if (typeof iniciarAtualizacaoStatusLoja === "function") {
+    iniciarAtualizacaoStatusLoja();
+  }
+};
+
+window.avancarPedido = function () {
+  if (bloquearPedidoParaAdmin()) return;
+
+  const produtos = carregarProdutos();
+  const observacoes = window.carregarObservacoesPedido();
+
+  const pedido = produtos
+    .filter((produto) => Number(produto.quantidade) > 0)
+    .map((produto) => ({
+      id: Number(produto.id),
+      nome: produto.nome,
+      descricao: produto.descricao || "",
+      preco: Number(produto.preco) || 0,
+      imagem: produto.imagem || "",
+      categoria: produto.categoria || "",
+      quantidade: Number(produto.quantidade) || 0,
+      observacao: observacoes[String(produto.id)] || "",
+    }));
+
+  if (pedido.length === 0) {
+    mostrarAviso("Escolha pelo menos um item antes de avançar.", "erro");
+    return;
+  }
+
+  localStorage.setItem("pedidoAtual", JSON.stringify(pedido));
+
+  window.location.href = "finalizar-pedido.html";
+};
