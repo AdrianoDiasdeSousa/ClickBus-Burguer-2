@@ -4,7 +4,8 @@
 
 const TEMPO_AVISO_PADRAO = 2600;
 const TEMPO_AVISO_NAVEGACAO = 1600;
-const API_BASE_URL = "https://clickbus-burguer-api.onrender.com/api";
+const API_BASE_URL =
+  typeof API_URL !== "undefined" ? API_URL : "http://localhost:3000/api";
 
 function prepararAvisosTemporarios() {
   if (document.getElementById("estiloAvisosTemporarios")) return;
@@ -2027,9 +2028,49 @@ async function editarAvisoProduto(id) {
   }
 }
 
-async function editarImagemProduto(id) {
+function editarImagemProduto(id) {
   if (!usuarioEhAdmin()) {
     mostrarAviso("Apenas o administrador pode editar imagens.", "erro");
+    return;
+  }
+
+  const produtos = carregarProdutos();
+  const produto = produtos.find((item) => item.id === id);
+
+  if (!produto) return;
+
+  const inputArquivo = document.createElement("input");
+  inputArquivo.type = "file";
+  inputArquivo.accept = "image/*";
+
+  inputArquivo.addEventListener("change", () => {
+    const arquivo = inputArquivo.files[0];
+
+    if (!arquivo) return;
+
+    const leitor = new FileReader();
+
+    leitor.onload = () => {
+      produto.imagem = leitor.result;
+
+      salvarProdutos(produtos);
+      renderizarCardapio();
+
+      mostrarAviso("Imagem atualizada com sucesso!", "sucesso");
+    };
+
+    leitor.readAsDataURL(arquivo);
+  });
+
+  inputArquivo.click();
+}
+
+async function alternarDisponibilidadeProduto(id) {
+  if (!usuarioEhAdmin()) {
+    mostrarAviso(
+      "Apenas o administrador pode alterar a disponibilidade.",
+      "erro",
+    );
     return;
   }
 
@@ -2041,36 +2082,23 @@ async function editarImagemProduto(id) {
     return;
   }
 
-  const novaImagem = prompt(
-    "Cole a URL online da imagem.\n\nExemplo:\nhttps://clickbus-burguer.onrender.com/img/produtos/carne-sol.png",
-    produto.imagem || ""
-  );
-
-  if (novaImagem === null) return;
-
-  const imageUrl = novaImagem.trim();
-
-  if (!imageUrl) {
-    mostrarAviso("Informe a URL da imagem.", "erro");
-    return;
-  }
-
-  if (!imageUrl.startsWith("https://") && !imageUrl.startsWith("http://")) {
-    mostrarAviso(
-      "Cole uma URL online começando com https:// ou http://.",
-      "erro"
-    );
-    return;
-  }
-
   const produtoAtualizado = {
     ...produto,
-    imagem: imageUrl,
+    disponivel: produto.disponivel === false,
   };
 
-  try {
-    mostrarAviso("Salvando imagem no banco de dados...", "info");
+  if (produtoAtualizado.disponivel === false) {
+    produtoAtualizado.quantidade = 0;
 
+    const pedidoAtual = JSON.parse(localStorage.getItem("pedidoAtual")) || [];
+    const pedidoAtualAtualizado = pedidoAtual.filter(
+      (item) => Number(item.id) !== Number(id),
+    );
+
+    localStorage.setItem("pedidoAtual", JSON.stringify(pedidoAtualAtualizado));
+  }
+
+  try {
     const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: "PUT",
       headers: {
@@ -2079,32 +2107,178 @@ async function editarImagemProduto(id) {
       body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
     });
 
-    let resultado = null;
-
-    try {
-      resultado = await resposta.json();
-    } catch {
-      resultado = null;
-    }
+    const resultado = await resposta.json();
 
     if (!resposta.ok) {
       mostrarAviso(
-        resultado?.erro || "Erro ao salvar imagem no banco.",
-        "erro"
+        resultado.erro || "Erro ao alterar disponibilidade.",
+        "erro",
       );
       return;
     }
 
-    produto.imagem = imageUrl;
-    salvarProdutos(produtos);
-
-    mostrarAviso("Imagem salva no banco com sucesso.", "sucesso");
+    mostrarAviso(
+      produtoAtualizado.disponivel
+        ? "Produto disponibilizado."
+        : "Produto marcado como em falta.",
+      "sucesso",
+    );
 
     await renderizarCardapio();
-  } catch (erro) {
-    console.error("Erro ao salvar imagem:", erro);
-    mostrarAviso("Erro de conexão ao salvar imagem.", "erro");
+  } catch (error) {
+    console.error("Erro ao alterar disponibilidade:", error);
+    mostrarAviso("Erro de conexão ao alterar disponibilidade.", "erro");
   }
+}
+async function excluirProduto(id) {
+  if (!usuarioEhAdmin()) {
+    mostrarAviso("Apenas o administrador pode excluir produtos.", "erro");
+    return;
+  }
+
+  const produtos = carregarProdutos();
+  const produto = produtos.find((item) => Number(item.id) === Number(id));
+
+  if (!produto) {
+    mostrarAviso("Produto não encontrado.", "erro");
+    return;
+  }
+
+  const confirmar = confirm(
+    `Tem certeza que deseja excluir o produto "${produto.nome}"?`,
+  );
+
+  if (!confirmar) {
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
+      method: "DELETE",
+    });
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      mostrarAviso(resultado.erro || "Erro ao excluir produto.", "erro");
+      return;
+    }
+
+    const pedidoAtual = JSON.parse(localStorage.getItem("pedidoAtual")) || [];
+    const pedidoAtualAtualizado = pedidoAtual.filter(
+      (item) => Number(item.id) !== Number(id),
+    );
+
+    localStorage.setItem("pedidoAtual", JSON.stringify(pedidoAtualAtualizado));
+
+    mostrarAviso("Produto excluído com sucesso!", "sucesso");
+
+    await renderizarCardapio();
+  } catch (error) {
+    console.error("Erro ao excluir produto:", error);
+    mostrarAviso("Erro de conexão ao excluir produto.", "erro");
+  }
+}
+
+async function cadastrarProdutoPorCategoria(categoria) {
+  if (!usuarioEhAdmin()) {
+    mostrarAviso("Apenas o administrador pode cadastrar produtos.", "erro");
+    return;
+  }
+
+  const tipo = categoria === "bebida" ? "bebida" : "produto";
+  const nome = prompt(`Nome do novo ${tipo}:`);
+
+  if (!nome || nome.trim() === "") {
+    mostrarAviso("O nome é obrigatório.", "erro");
+    return;
+  }
+
+  const descricao = prompt("Descrição:") || "";
+
+  const preco = prompt("Preço. Exemplo: 15,00");
+
+  if (!preco || preco.trim() === "") {
+    mostrarAviso("O preço é obrigatório.", "erro");
+    return;
+  }
+
+  const precoConvertido = Number(preco.replace(",", "."));
+
+  if (isNaN(precoConvertido) || precoConvertido <= 0) {
+    mostrarAviso("Digite um preço válido.", "erro");
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/products`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: nome.trim(),
+        description: descricao.trim(),
+        price: precoConvertido,
+        category: categoria,
+        image_url: "",
+        available: true,
+      }),
+    });
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      mostrarAviso(resultado.erro || "Erro ao cadastrar produto.", "erro");
+      return;
+    }
+
+    mostrarAviso(
+      "Item cadastrado com sucesso! Agora você pode editar a imagem dele.",
+      "sucesso",
+    );
+
+    await renderizarCardapio();
+  } catch (error) {
+    console.error("Erro ao cadastrar produto:", error);
+    mostrarAviso("Erro de conexão ao cadastrar produto.", "erro");
+  }
+}
+
+function cadastrarNovoLanche() {
+  cadastrarProdutoPorCategoria("lanche");
+}
+
+function cadastrarNovaBebida() {
+  cadastrarProdutoPorCategoria("bebida");
+}
+
+function cadastrarNovoProduto() {
+  cadastrarNovoLanche();
+}
+function avancarPedido() {
+  const totalTexto =
+    document.getElementById("valorTotal")?.textContent || "R$ 0,00";
+
+  const totalNumerico = Number(
+    totalTexto.replace("R$", "").replace(/\./g, "").replace(",", ".").trim(),
+  );
+
+  if (!totalNumerico || totalNumerico <= 0) {
+    alert("Escolha pelo menos um item antes de avançar.");
+    return;
+  }
+
+  window.location.href = "finalizar-pedido.html";
+}
+
+function sairDoSistema() {
+  limparPedidoEmAndamento();
+  localStorage.removeItem("usuarioLogado");
+  localStorage.removeItem("tipoUsuario");
+  localStorage.removeItem("nomeUsuario");
+
+  window.location.href = "login.html";
 }
 
 /* =========================
@@ -3140,22 +3314,8 @@ function sincronizarPedidoComProdutos(pedido) {
   salvarProdutos(produtos);
 }
 
-async function avancarCarrinho() {
+function avancarCarrinho() {
   if (bloquearPedidoParaAdmin()) return;
-
-  try {
-    await carregarConfiguracoesLojaDaApi();
-  } catch (erro) {
-    console.error("Erro ao verificar status da loja:", erro);
-  }
-
-  if (typeof lojaEstaAberta === "function" && !lojaEstaAberta()) {
-    mostrarAviso(
-      "A loja está fechada no momento. Não é possível fazer pedido agora.",
-      "erro",
-    );
-    return;
-  }
 
   const pedido = carregarPedidoAtual();
 
@@ -3166,6 +3326,7 @@ async function avancarCarrinho() {
 
   window.location.href = "finalizar-pedido.html";
 }
+
 /* =========================
    FINALIZAÇÃO DO PEDIDO
 ========================= */
@@ -3551,20 +3712,6 @@ function alternarCampoTroco() {
 }
 
 async function confirmarPedido() {
-  try {
-    await carregarConfiguracoesLojaDaApi();
-  } catch (erro) {
-    console.error("Erro ao verificar status da loja:", erro);
-  }
-
-  if (typeof lojaEstaAberta === "function" && !lojaEstaAberta()) {
-    mostrarAviso(
-      "A loja está fechada no momento. Não é possível confirmar pedido agora.",
-      "erro",
-    );
-    return;
-  }
-
   if (bloquearPedidoParaAdmin()) return;
 
   const pedido = carregarPedidoAtual();
@@ -4199,10 +4346,12 @@ function iniciarAtualizacaoAutomatica() {
     }, 5000);
   }
 
-if (estaNaPaginaCardapio) {
-  setInterval(() => {
-    atualizarStatusLoja();
-  }, 30000);
+  if (estaNaPaginaCardapio) {
+    setInterval(() => {
+      atualizarStatusLoja?.();
+      carregarProdutosCardapio?.();
+    }, 5000);
+  }
 }
 
 function converterStatusTelaParaApi(statusTela) {
@@ -5010,22 +5159,8 @@ window.atualizarStatusLoja = function () {
   }
 };
 
-window.avancarPedido = async function () {
+window.avancarPedido = function () {
   if (bloquearPedidoParaAdmin()) return;
-
-  try {
-    await carregarConfiguracoesLojaDaApi();
-  } catch (erro) {
-    console.error("Erro ao verificar status da loja:", erro);
-  }
-
-  if (typeof lojaEstaAberta === "function" && !lojaEstaAberta()) {
-    mostrarAviso(
-      "A loja está fechada no momento. Não é possível fazer pedido agora.",
-      "erro",
-    );
-    return;
-  }
 
   const produtos = carregarProdutos();
   const observacoes = window.carregarObservacoesPedido();
@@ -5052,263 +5187,3 @@ window.avancarPedido = async function () {
 
   window.location.href = "finalizar-pedido.html";
 };
-
-/* =====================================================
-   BLOQUEIO FINAL DE PEDIDO COM LOJA FECHADA
-   Deve ficar no FINAL do script.js
-===================================================== */
-
-async function verificarLojaFechadaParaPedido() {
-  try {
-    if (typeof carregarConfiguracoesLojaDaApi === "function") {
-      await carregarConfiguracoesLojaDaApi();
-    }
-  } catch (erro) {
-    console.error("Erro ao verificar status da loja:", erro);
-  }
-
-  if (typeof lojaEstaAberta === "function") {
-    return !lojaEstaAberta();
-  }
-
-  const textoStatus =
-    document.querySelector("[data-status-loja]")?.textContent ||
-    document.getElementById("statusLoja")?.textContent ||
-    "";
-
-  return textoStatus.trim().toLowerCase().includes("fechado");
-}
-
-window.avancarPedido = async function () {
-  if (typeof bloquearPedidoParaAdmin === "function" && bloquearPedidoParaAdmin()) {
-    return;
-  }
-
-  const lojaFechada = await verificarLojaFechadaParaPedido();
-
-  if (lojaFechada) {
-    mostrarAviso(
-      "A loja está fechada no momento. Não é possível fazer pedido agora.",
-      "erro",
-    );
-    return;
-  }
-
-  const produtos = carregarProdutos();
-  const observacoes =
-    typeof window.carregarObservacoesPedido === "function"
-      ? window.carregarObservacoesPedido()
-      : {};
-
-  const pedido = produtos
-    .filter((produto) => Number(produto.quantidade) > 0)
-    .map((produto) => ({
-      id: Number(produto.id),
-      nome: produto.nome,
-      descricao: produto.descricao || "",
-      preco: Number(produto.preco) || 0,
-      imagem: produto.imagem || "",
-      categoria: produto.categoria || "",
-      quantidade: Number(produto.quantidade) || 0,
-      observacao: observacoes[String(produto.id)] || "",
-    }));
-
-  if (pedido.length === 0) {
-    mostrarAviso("Escolha pelo menos um item antes de avançar.", "erro");
-    return;
-  }
-
-  localStorage.setItem("pedidoAtual", JSON.stringify(pedido));
-
-  window.location.href = "finalizar-pedido.html";
-};
-
-
-
-/* =====================================================
-   ALERTA SONORO DE NOVOS PEDIDOS
-   Colocar no FINAL do script.js
-===================================================== */
-
-let clickbusQtdPedidosAnterior = null;
-let clickbusSomAtivado = false;
-let clickbusUltimoSomEm = 0;
-
-function clickbusTocarBipNovoPedido() {
-  if (!clickbusSomAtivado) return;
-
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const contexto = new AudioContext();
-
-    const tocarNota = (frequencia, inicio, duracao) => {
-      const oscilador = contexto.createOscillator();
-      const ganho = contexto.createGain();
-
-      oscilador.type = "sine";
-      oscilador.frequency.value = frequencia;
-
-      ganho.gain.setValueAtTime(0.0001, contexto.currentTime + inicio);
-      ganho.gain.exponentialRampToValueAtTime(
-        0.45,
-        contexto.currentTime + inicio + 0.02,
-      );
-      ganho.gain.exponentialRampToValueAtTime(
-        0.0001,
-        contexto.currentTime + inicio + duracao,
-      );
-
-      oscilador.connect(ganho);
-      ganho.connect(contexto.destination);
-
-      oscilador.start(contexto.currentTime + inicio);
-      oscilador.stop(contexto.currentTime + inicio + duracao);
-    };
-
-    tocarNota(880, 0, 0.18);
-    tocarNota(1175, 0.22, 0.22);
-  } catch (erro) {
-    console.warn("Não foi possível tocar o som de novo pedido:", erro);
-  }
-}
-
-function clickbusCriarBotaoAtivarSom() {
-  if (!window.location.pathname.includes("pedidos.html")) return;
-  if (document.getElementById("btnAtivarSomPedidos")) return;
-
-  const botao = document.createElement("button");
-  botao.id = "btnAtivarSomPedidos";
-  botao.type = "button";
-  botao.textContent = "🔔 Ativar som";
-  botao.style.position = "fixed";
-  botao.style.right = "18px";
-  botao.style.bottom = "18px";
-  botao.style.zIndex = "99999";
-  botao.style.padding = "12px 18px";
-  botao.style.border = "none";
-  botao.style.borderRadius = "14px";
-  botao.style.background = "#f28c00";
-  botao.style.color = "#000";
-  botao.style.fontWeight = "700";
-  botao.style.fontSize = "16px";
-  botao.style.cursor = "pointer";
-  botao.style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
-
-  botao.addEventListener("click", () => {
-    clickbusSomAtivado = true;
-    localStorage.setItem("clickbus_som_pedidos_ativado", "sim");
-
-    botao.textContent = "🔔 Som ativo";
-    botao.style.background = "#34a853";
-    botao.style.color = "#fff";
-
-    clickbusTocarBipNovoPedido();
-    mostrarAviso("Som de novos pedidos ativado.", "sucesso");
-  });
-
-  document.body.appendChild(botao);
-}
-
-function clickbusContarPedidosNaPagina() {
-  if (!window.location.pathname.includes("pedidos.html")) return 0;
-
-  const textoPagina = document.body.innerText || "";
-
-  const matchNovos = textoPagina.match(/Há\s+(\d+)\s+novos pedidos/i);
-  if (matchNovos) {
-    return Number(matchNovos[1]) || 0;
-  }
-
-  const cardsPorTexto = textoPagina.match(/Pedido\s+#\d+/gi);
-  if (cardsPorTexto) {
-    return cardsPorTexto.length;
-  }
-
-  const cards = document.querySelectorAll(
-    ".pedido-card, .card-pedido, .item-pedido, [data-pedido-id]",
-  );
-
-  return cards.length;
-}
-
-function clickbusVerificarPedidosNovosComSom() {
-  if (!window.location.pathname.includes("pedidos.html")) return;
-
-  const quantidadeAtual = clickbusContarPedidosNaPagina();
-
-  if (clickbusQtdPedidosAnterior === null) {
-    clickbusQtdPedidosAnterior = quantidadeAtual;
-    return;
-  }
-
-  if (quantidadeAtual > clickbusQtdPedidosAnterior) {
-    const agora = Date.now();
-
-    if (agora - clickbusUltimoSomEm > 3000) {
-      clickbusUltimoSomEm = agora;
-      clickbusTocarBipNovoPedido();
-      mostrarAviso("🔔 Novo pedido recebido!", "sucesso", 5000);
-    }
-  }
-
-  clickbusQtdPedidosAnterior = quantidadeAtual;
-}
-
-function clickbusIniciarAlertaPedidos() {
-  if (!window.location.pathname.includes("pedidos.html")) return;
-
-  clickbusCriarBotaoAtivarSom();
-
-  if (localStorage.getItem("clickbus_som_pedidos_ativado") === "sim") {
-    clickbusSomAtivado = true;
-
-    const botao = document.getElementById("btnAtivarSomPedidos");
-    if (botao) {
-      botao.textContent = "🔔 Som ativo";
-      botao.style.background = "#34a853";
-      botao.style.color = "#fff";
-    }
-  }
-
-  clickbusVerificarPedidosNovosComSom();
-
-  setInterval(clickbusVerificarPedidosNovosComSom, 3000);
-
-  const observador = new MutationObserver(() => {
-    clickbusVerificarPedidosNovosComSom();
-  });
-
-  observador.observe(document.body, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-  });
-}
-
-document.addEventListener("DOMContentLoaded", clickbusIniciarAlertaPedidos);
-
-
-window.editarImagemProduto = async function (id) {
-  const produtos = carregarProdutos();
-  const produto = produtos.find((item) => Number(item.id) === Number(id));
-
-  if (!produto) {
-    mostrarAviso("Produto não encontrado.", "erro");
-    return;
-  }
-
-  const caminhoImagem = prompt(
-    "Cole o caminho da imagem. Exemplo: img/produtos/carne-sol.png",
-    produto.imagem || ""
-  );
-
-  if (caminhoImagem === null) return;
-
-  const imagem = caminhoImagem.trim();
-
-  if (!imagem) {
-    mostrarAviso("Nenhum caminho de imagem informado.", "erro");
-    return;
-  }
-
-}
