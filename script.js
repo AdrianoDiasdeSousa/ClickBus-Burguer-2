@@ -2028,16 +2028,19 @@ async function editarAvisoProduto(id) {
   }
 }
 
-function editarImagemProduto(id) {
+async function editarImagemProduto(id) {
   if (!usuarioEhAdmin()) {
     mostrarAviso("Apenas o administrador pode editar imagens.", "erro");
     return;
   }
 
   const produtos = carregarProdutos();
-  const produto = produtos.find((item) => item.id === id);
+  const produto = produtos.find((item) => Number(item.id) === Number(id));
 
-  if (!produto) return;
+  if (!produto) {
+    mostrarAviso("Produto não encontrado.", "erro");
+    return;
+  }
 
   const inputArquivo = document.createElement("input");
   inputArquivo.type = "file";
@@ -2050,13 +2053,38 @@ function editarImagemProduto(id) {
 
     const leitor = new FileReader();
 
-    leitor.onload = () => {
-      produto.imagem = leitor.result;
+    leitor.onload = async () => {
+      const produtoAtualizado = {
+        ...produto,
+        imagem: leitor.result,
+      };
 
-      salvarProdutos(produtos);
-      renderizarCardapio();
+      try {
+        const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
+        });
 
-      mostrarAviso("Imagem atualizada com sucesso!", "sucesso");
+        const resultado = await resposta.json();
+
+        if (!resposta.ok) {
+          mostrarAviso(
+            resultado.erro || "Erro ao salvar imagem do produto.",
+            "erro",
+          );
+          return;
+        }
+
+        mostrarAviso("Imagem atualizada com sucesso!", "sucesso");
+
+        await renderizarCardapio();
+      } catch (error) {
+        console.error("Erro ao editar imagem:", error);
+        mostrarAviso("Erro de conexão ao salvar imagem.", "erro");
+      }
     };
 
     leitor.readAsDataURL(arquivo);
@@ -2064,6 +2092,7 @@ function editarImagemProduto(id) {
 
   inputArquivo.click();
 }
+   
 
 async function alternarDisponibilidadeProduto(id) {
   if (!usuarioEhAdmin()) {
