@@ -2042,26 +2042,34 @@ async function editarImagemProduto(id) {
   }
 
   const novaImagem = prompt(
-    "Cole ou digite o caminho da imagem.\n\nExemplo:\nimg/produtos/carne-sol.png",
+    "Cole a URL online da imagem.\n\nExemplo:\nhttps://clickbus-burguer.onrender.com/img/produtos/carne-sol.png",
     produto.imagem || ""
   );
 
   if (novaImagem === null) return;
 
-  const caminhoImagem = novaImagem.trim();
+  const imageUrl = novaImagem.trim();
 
-  if (!caminhoImagem) {
-    mostrarAviso("Informe o caminho da imagem.", "erro");
+  if (!imageUrl) {
+    mostrarAviso("Informe a URL da imagem.", "erro");
+    return;
+  }
+
+  if (!imageUrl.startsWith("https://") && !imageUrl.startsWith("http://")) {
+    mostrarAviso(
+      "Cole uma URL online começando com https:// ou http://.",
+      "erro"
+    );
     return;
   }
 
   const produtoAtualizado = {
     ...produto,
-    imagem: caminhoImagem,
+    imagem: imageUrl,
   };
 
   try {
-    mostrarAviso("Salvando imagem do produto...", "info");
+    mostrarAviso("Salvando imagem no banco de dados...", "info");
 
     const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: "PUT",
@@ -2081,222 +2089,22 @@ async function editarImagemProduto(id) {
 
     if (!resposta.ok) {
       mostrarAviso(
-        resultado?.erro || "Erro ao salvar imagem do produto.",
+        resultado?.erro || "Erro ao salvar imagem no banco.",
         "erro"
       );
       return;
     }
 
-    produto.imagem = caminhoImagem;
+    produto.imagem = imageUrl;
     salvarProdutos(produtos);
 
-    mostrarAviso("Imagem do produto atualizada com sucesso.", "sucesso");
+    mostrarAviso("Imagem salva no banco com sucesso.", "sucesso");
 
     await renderizarCardapio();
-  } catch (error) {
-    console.error("Erro ao salvar imagem:", error);
+  } catch (erro) {
+    console.error("Erro ao salvar imagem:", erro);
     mostrarAviso("Erro de conexão ao salvar imagem.", "erro");
   }
-}
-async function alternarDisponibilidadeProduto(id) {
-  if (!usuarioEhAdmin()) {
-    mostrarAviso(
-      "Apenas o administrador pode alterar a disponibilidade.",
-      "erro",
-    );
-    return;
-  }
-
-  const produtos = carregarProdutos();
-  const produto = produtos.find((item) => Number(item.id) === Number(id));
-
-  if (!produto) {
-    mostrarAviso("Produto não encontrado.", "erro");
-    return;
-  }
-
-  const produtoAtualizado = {
-    ...produto,
-    disponivel: produto.disponivel === false,
-  };
-
-  if (produtoAtualizado.disponivel === false) {
-    produtoAtualizado.quantidade = 0;
-
-    const pedidoAtual = JSON.parse(localStorage.getItem("pedidoAtual")) || [];
-    const pedidoAtualAtualizado = pedidoAtual.filter(
-      (item) => Number(item.id) !== Number(id),
-    );
-
-    localStorage.setItem("pedidoAtual", JSON.stringify(pedidoAtualAtualizado));
-  }
-
-  try {
-    const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
-    });
-
-    const resultado = await resposta.json();
-
-    if (!resposta.ok) {
-      mostrarAviso(
-        resultado.erro || "Erro ao alterar disponibilidade.",
-        "erro",
-      );
-      return;
-    }
-
-    mostrarAviso(
-      produtoAtualizado.disponivel
-        ? "Produto disponibilizado."
-        : "Produto marcado como em falta.",
-      "sucesso",
-    );
-
-    await renderizarCardapio();
-  } catch (error) {
-    console.error("Erro ao alterar disponibilidade:", error);
-    mostrarAviso("Erro de conexão ao alterar disponibilidade.", "erro");
-  }
-}
-async function excluirProduto(id) {
-  if (!usuarioEhAdmin()) {
-    mostrarAviso("Apenas o administrador pode excluir produtos.", "erro");
-    return;
-  }
-
-  const produtos = carregarProdutos();
-  const produto = produtos.find((item) => Number(item.id) === Number(id));
-
-  if (!produto) {
-    mostrarAviso("Produto não encontrado.", "erro");
-    return;
-  }
-
-  const confirmar = confirm(
-    `Tem certeza que deseja excluir o produto "${produto.nome}"?`,
-  );
-
-  if (!confirmar) {
-    return;
-  }
-
-  try {
-    const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
-      method: "DELETE",
-    });
-
-    const resultado = await resposta.json();
-
-    if (!resposta.ok) {
-      mostrarAviso(resultado.erro || "Erro ao excluir produto.", "erro");
-      return;
-    }
-
-    const pedidoAtual = JSON.parse(localStorage.getItem("pedidoAtual")) || [];
-    const pedidoAtualAtualizado = pedidoAtual.filter(
-      (item) => Number(item.id) !== Number(id),
-    );
-
-    localStorage.setItem("pedidoAtual", JSON.stringify(pedidoAtualAtualizado));
-
-    mostrarAviso("Produto excluído com sucesso!", "sucesso");
-
-    await renderizarCardapio();
-  } catch (error) {
-    console.error("Erro ao excluir produto:", error);
-    mostrarAviso("Erro de conexão ao excluir produto.", "erro");
-  }
-}
-
-async function cadastrarProdutoPorCategoria(categoria) {
-  if (!usuarioEhAdmin()) {
-    mostrarAviso("Apenas o administrador pode cadastrar produtos.", "erro");
-    return;
-  }
-
-  const tipo = categoria === "bebida" ? "bebida" : "produto";
-  const nome = prompt(`Nome do novo ${tipo}:`);
-
-  if (!nome || nome.trim() === "") {
-    mostrarAviso("O nome é obrigatório.", "erro");
-    return;
-  }
-
-  const descricao = prompt("Descrição:") || "";
-
-  const preco = prompt("Preço. Exemplo: 15,00");
-
-  if (!preco || preco.trim() === "") {
-    mostrarAviso("O preço é obrigatório.", "erro");
-    return;
-  }
-
-  const precoConvertido = Number(preco.replace(",", "."));
-
-  if (isNaN(precoConvertido) || precoConvertido <= 0) {
-    mostrarAviso("Digite um preço válido.", "erro");
-    return;
-  }
-
-  try {
-    const resposta = await fetch(`${API_BASE_URL}/products`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: nome.trim(),
-        description: descricao.trim(),
-        price: precoConvertido,
-        category: categoria,
-        image_url: "",
-        available: true,
-      }),
-    });
-
-    const resultado = await resposta.json();
-
-    if (!resposta.ok) {
-      mostrarAviso(resultado.erro || "Erro ao cadastrar produto.", "erro");
-      return;
-    }
-
-    mostrarAviso(
-      "Item cadastrado com sucesso! Agora você pode editar a imagem dele.",
-      "sucesso",
-    );
-
-    await renderizarCardapio();
-  } catch (error) {
-    console.error("Erro ao cadastrar produto:", error);
-    mostrarAviso("Erro de conexão ao cadastrar produto.", "erro");
-  }
-}
-
-function cadastrarNovoLanche() {
-  cadastrarProdutoPorCategoria("lanche");
-}
-
-function cadastrarNovaBebida() {
-  cadastrarProdutoPorCategoria("bebida");
-}
-
-function cadastrarNovoProduto() {
-  cadastrarNovoLanche();
-}
-
-function sairDoSistema() {
-  limparPedidoEmAndamento();
-  localStorage.removeItem("usuarioLogado");
-  localStorage.removeItem("tipoUsuario");
-  localStorage.removeItem("nomeUsuario");
-
-  window.location.href = "login.html";
 }
 
 /* =========================
