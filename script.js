@@ -4944,23 +4944,21 @@ function iniciarAtualizacaoAutomaticaPaginas() {
     }, 5000);
   }
 
-  if (estaNaPaginaCardapio) {
-    setInterval(() => {
-      if (typeof renderizarCardapio === "function") {
-        renderizarCardapio();
-      }
+ se (estaNaPaginaCardapio) {
+  definirIntervalo(() => {
+    se (tipo de renderizarCardapio === "função") {
+      renderizarCardapio();
+    }
 
-      if (typeof atualizarStatusLoja === "function") {
-        atualizarStatusLoja();
-      }
+    if (typeof window.atualizarStatusLoja === "function") {
+      window.atualizarStatusLoja();
+    }
 
-      if (typeof atualizarHorarioFuncionamento === "function") {
-        atualizarHorarioFuncionamento();
-      }
-    }, 5000);
-  }
+    se (tipo de atualizarHorárioFunta === "função") {
+      atualizarHorárioFunta();
+    }
+  }, 5000);
 }
-
 function obterDadosCompartilhamento() {
   const titulo =
     document.getElementById("tituloCompartilhar")?.textContent?.trim() ||
