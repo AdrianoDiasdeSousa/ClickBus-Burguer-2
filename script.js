@@ -169,10 +169,13 @@ function salvarCredenciaisAdmin(credenciais) {
   );
 }
 
-function preencherContaAdministrador() {
+async function preencherContaAdministrador() {
   const areaContaAdmin = document.getElementById("areaContaAdmin");
   const emailAdminAtual = document.getElementById("emailAdminAtual");
   const novoEmailAdmin = document.getElementById("novoEmailAdmin");
+  const senhaAtualAdmin = document.getElementById("senhaAtualAdmin");
+  const novaSenhaAdmin = document.getElementById("novaSenhaAdmin");
+  const confirmarSenhaAdmin = document.getElementById("confirmarSenhaAdmin");
   const perguntaRecuperacaoAdmin = document.getElementById(
     "perguntaRecuperacaoAdmin",
   );
@@ -187,16 +190,61 @@ function preencherContaAdministrador() {
     return;
   }
 
-  const credenciais = obterCredenciaisAdmin();
-
   areaContaAdmin.classList.remove("oculto");
-  emailAdminAtual.value = credenciais.email;
+
+  const credenciaisLocais = obterCredenciaisAdmin();
+
+  emailAdminAtual.value = credenciaisLocais.email;
   novoEmailAdmin.value = "";
-  perguntaRecuperacaoAdmin.value = credenciais.perguntaRecuperacao || "";
-  respostaRecuperacaoAdmin.value = "";
+
+  if (senhaAtualAdmin) senhaAtualAdmin.value = "";
+  if (novaSenhaAdmin) novaSenhaAdmin.value = "";
+  if (confirmarSenhaAdmin) confirmarSenhaAdmin.value = "";
+  if (respostaRecuperacaoAdmin) respostaRecuperacaoAdmin.value = "";
+
+  if (perguntaRecuperacaoAdmin) {
+    perguntaRecuperacaoAdmin.value =
+      credenciaisLocais.perguntaRecuperacao || "";
+  }
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    mostrarAviso(
+      "Faça login novamente como administrador para editar a conta.",
+      "erro",
+    );
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/auth/admin-profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      throw new Error(resultado?.erro || "Não foi possível carregar o admin.");
+    }
+
+    emailAdminAtual.value = resultado.email || credenciaisLocais.email;
+
+    if (perguntaRecuperacaoAdmin) {
+      perguntaRecuperacaoAdmin.value = resultado.recovery_question || "";
+    }
+  } catch (error) {
+    console.error("Erro ao carregar conta do admin:", error);
+    mostrarAviso(
+      error.message || "Não foi possível carregar os dados do administrador.",
+      "erro",
+    );
+  }
 }
 
-function salvarContaAdministrador(event) {
+async function salvarContaAdministrador(event) {
   event.preventDefault();
 
   if (!usuarioEhAdmin()) {
@@ -204,32 +252,36 @@ function salvarContaAdministrador(event) {
     return;
   }
 
-  const credenciais = obterCredenciaisAdmin();
+  const token = localStorage.getItem("clickbus_token");
 
-  const novoEmail = document.getElementById("novoEmailAdmin").value.trim();
-  const senhaAtual = document.getElementById("senhaAtualAdmin").value;
-  const novaSenha = document.getElementById("novaSenhaAdmin").value.trim();
-  const confirmarSenha = document
-    .getElementById("confirmarSenhaAdmin")
-    .value.trim();
-  const perguntaRecuperacao = document
-    .getElementById("perguntaRecuperacaoAdmin")
-    .value.trim();
-  const respostaRecuperacao = document
-    .getElementById("respostaRecuperacaoAdmin")
-    .value.trim();
-
-  if (senhaAtual !== credenciais.senha) {
+  if (!token) {
     mostrarAviso(
-      "Digite a senha atual correta para salvar alterações.",
+      "Sua sessão expirou. Faça login novamente como administrador.",
       "erro",
     );
     return;
   }
 
-  const emailFinal = novoEmail || credenciais.email;
+  const emailAtual = document.getElementById("emailAdminAtual")?.value.trim();
+  const novoEmail = document.getElementById("novoEmailAdmin")?.value.trim();
+  const senhaAtual = document.getElementById("senhaAtualAdmin")?.value || "";
+  const novaSenha =
+    document.getElementById("novaSenhaAdmin")?.value.trim() || "";
+  const confirmarSenha =
+    document.getElementById("confirmarSenhaAdmin")?.value.trim() || "";
+  const perguntaRecuperacao =
+    document.getElementById("perguntaRecuperacaoAdmin")?.value.trim() || "";
+  const respostaRecuperacao =
+    document.getElementById("respostaRecuperacaoAdmin")?.value.trim() || "";
 
-  if (!emailFinal.includes("@") || !emailFinal.includes(".")) {
+  if (!senhaAtual) {
+    mostrarAviso("Digite a senha atual para confirmar.", "erro");
+    return;
+  }
+
+  const emailFinal = novoEmail || emailAtual;
+
+  if (!emailFinal || !emailFinal.includes("@") || !emailFinal.includes(".")) {
     mostrarAviso("Digite um email de administrador válido.", "erro");
     return;
   }
@@ -245,32 +297,63 @@ function salvarContaAdministrador(event) {
   }
 
   if (!perguntaRecuperacao || !respostaRecuperacao) {
-    mostrarAviso(
-      "Preencha a pergunta e a resposta de recuperação para não perder acesso depois.",
-      "erro",
-    );
+    mostrarAviso("Preencha a pergunta e a resposta de recuperação.", "erro");
     return;
   }
 
-  salvarCredenciaisAdmin({
-    email: emailFinal,
-    senha: novaSenha || credenciais.senha,
-    perguntaRecuperacao,
-    respostaRecuperacao: respostaRecuperacao.toLowerCase(),
-  });
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/auth/admin-profile`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        current_password: senhaAtual,
+        new_email: emailFinal,
+        new_password: novaSenha,
+        recovery_question: perguntaRecuperacao,
+        recovery_answer: respostaRecuperacao,
+      }),
+    });
 
-  localStorage.setItem("usuarioLogado", emailFinal);
-  localStorage.setItem("tipoUsuario", "admin");
-  localStorage.setItem("nomeUsuario", "Administrador");
+    const resultado = await resposta.json();
 
-  document.getElementById("emailAdminAtual").value = emailFinal;
-  document.getElementById("novoEmailAdmin").value = "";
-  document.getElementById("senhaAtualAdmin").value = "";
-  document.getElementById("novaSenhaAdmin").value = "";
-  document.getElementById("confirmarSenhaAdmin").value = "";
-  document.getElementById("respostaRecuperacaoAdmin").value = "";
+    if (!resposta.ok) {
+      throw new Error(
+        resultado?.erro || "Não foi possível salvar a conta do admin.",
+      );
+    }
 
-  mostrarAviso("Conta do administrador atualizada com sucesso.", "sucesso");
+    const usuario = resultado.user;
+
+    localStorage.setItem("clickbus_token", resultado.token);
+    localStorage.setItem("clickbus_usuario", JSON.stringify(usuario));
+    localStorage.setItem("usuarioLogado", usuario.email);
+    localStorage.setItem("tipoUsuario", "admin");
+    localStorage.setItem("nomeUsuario", "Administrador");
+
+    salvarCredenciaisAdmin({
+      email: usuario.email,
+      perguntaRecuperacao,
+      respostaRecuperacao: "",
+    });
+
+    document.getElementById("emailAdminAtual").value = usuario.email;
+    document.getElementById("novoEmailAdmin").value = "";
+    document.getElementById("senhaAtualAdmin").value = "";
+    document.getElementById("novaSenhaAdmin").value = "";
+    document.getElementById("confirmarSenhaAdmin").value = "";
+    document.getElementById("respostaRecuperacaoAdmin").value = "";
+
+    mostrarAviso("Conta do administrador atualizada com sucesso.", "sucesso");
+  } catch (error) {
+    console.error("Erro ao salvar conta do admin:", error);
+    mostrarAviso(
+      error.message || "Não foi possível salvar a conta do administrador.",
+      "erro",
+    );
+  }
 }
 
 function mudarSenhaAdministrador() {
@@ -2030,7 +2113,11 @@ async function editarAvisoProduto(id) {
   }
 }
 
-function redimensionarImagemBase64(arquivo, larguraMaxima = 700, qualidade = 0.85) {
+function redimensionarImagemBase64(
+  arquivo,
+  larguraMaxima = 700,
+  qualidade = 0.85,
+) {
   return new Promise((resolve, reject) => {
     const leitor = new FileReader();
 
@@ -2145,7 +2232,9 @@ async function editarImagemProduto(id) {
 
       if (!resposta.ok) {
         throw new Error(
-          resultado?.erro || resultado?.detalhe || "Erro ao salvar imagem na API.",
+          resultado?.erro ||
+            resultado?.detalhe ||
+            "Erro ao salvar imagem na API.",
         );
       }
 
@@ -2357,7 +2446,7 @@ function carregarObservacoesPedido() {
 function salvarObservacoesPedido(observacoes) {
   localStorage.setItem(
     "observacoesPedidoAtual",
-    JSON.stringify(observacoes || {})
+    JSON.stringify(observacoes || {}),
   );
 }
 
@@ -2391,7 +2480,10 @@ function salvarObservacaoPagina() {
   const produtoId = localStorage.getItem("produtoObservacaoId");
 
   if (!produtoId) {
-    mostrarAviso("Não foi possível identificar o produto da observação.", "erro");
+    mostrarAviso(
+      "Não foi possível identificar o produto da observação.",
+      "erro",
+    );
     return;
   }
 
@@ -2406,7 +2498,11 @@ function salvarObservacaoPagina() {
 
   salvarObservacoesPedido(observacoes);
 
-  mostrarAviso("Observação salva com sucesso.", "sucesso", TEMPO_AVISO_NAVEGACAO);
+  mostrarAviso(
+    "Observação salva com sucesso.",
+    "sucesso",
+    TEMPO_AVISO_NAVEGACAO,
+  );
 
   setTimeout(() => {
     window.location.href = "cardapio.html";
@@ -2491,12 +2587,18 @@ const perfilLojaPadrao = {
 
 let configuracoesLojaCache = {
   store_name: perfilLojaPadrao.nome,
+  category: perfilLojaPadrao.categoria,
   address: perfilLojaPadrao.endereco,
   location: perfilLojaPadrao.localizacaoLoja,
   phone: perfilLojaPadrao.telefone,
   opening_hours: perfilLojaPadrao.horario,
   business_days: perfilLojaPadrao.dias,
   manual_status: "auto",
+  sharing_title: perfilLojaPadrao.tituloCompartilhamento,
+  delivery_area: perfilLojaPadrao.cidadeEntrega,
+  published_link: perfilLojaPadrao.linkPublicado,
+  share_message_client: perfilLojaPadrao.mensagemCliente,
+  share_message_admin: perfilLojaPadrao.mensagemAdmin,
   updated_at: null,
 };
 
@@ -2512,12 +2614,23 @@ async function carregarConfiguracoesLojaDaApi() {
 
     configuracoesLojaCache = {
       store_name: configuracoes.store_name || perfilLojaPadrao.nome,
+      category: configuracoes.category || perfilLojaPadrao.categoria,
       address: configuracoes.address || perfilLojaPadrao.endereco,
       location: configuracoes.location || perfilLojaPadrao.localizacaoLoja,
       phone: configuracoes.phone || perfilLojaPadrao.telefone,
       opening_hours: configuracoes.opening_hours || perfilLojaPadrao.horario,
       business_days: configuracoes.business_days || perfilLojaPadrao.dias,
       manual_status: configuracoes.manual_status || "auto",
+      sharing_title:
+        configuracoes.sharing_title || perfilLojaPadrao.tituloCompartilhamento,
+      delivery_area:
+        configuracoes.delivery_area || perfilLojaPadrao.cidadeEntrega,
+      published_link:
+        configuracoes.published_link || perfilLojaPadrao.linkPublicado,
+      share_message_client:
+        configuracoes.share_message_client || perfilLojaPadrao.mensagemCliente,
+      share_message_admin:
+        configuracoes.share_message_admin || perfilLojaPadrao.mensagemAdmin,
       updated_at: configuracoes.updated_at || null,
     };
 
@@ -2557,12 +2670,21 @@ async function salvarConfiguracoesLojaNaApi(novasConfiguracoes) {
 
   configuracoesLojaCache = {
     store_name: settings.store_name || perfilLojaPadrao.nome,
+    category: settings.category || perfilLojaPadrao.categoria,
     address: settings.address || perfilLojaPadrao.endereco,
     location: settings.location || perfilLojaPadrao.localizacaoLoja,
     phone: settings.phone || perfilLojaPadrao.telefone,
     opening_hours: settings.opening_hours || perfilLojaPadrao.horario,
     business_days: settings.business_days || perfilLojaPadrao.dias,
     manual_status: settings.manual_status || "auto",
+    sharing_title:
+      settings.sharing_title || perfilLojaPadrao.tituloCompartilhamento,
+    delivery_area: settings.delivery_area || perfilLojaPadrao.cidadeEntrega,
+    published_link: settings.published_link || perfilLojaPadrao.linkPublicado,
+    share_message_client:
+      settings.share_message_client || perfilLojaPadrao.mensagemCliente,
+    share_message_admin:
+      settings.share_message_admin || perfilLojaPadrao.mensagemAdmin,
     updated_at: settings.updated_at || null,
   };
 
@@ -2583,23 +2705,29 @@ function controlarVisualPerfilLoja() {
   }
 }
 
-function carregarPerfilLoja() {
-  return {
-    nome: configuracoesLojaCache.store_name || perfilLojaPadrao.nome,
-    categoria: perfilLojaPadrao.categoria,
-    endereco: configuracoesLojaCache.address || perfilLojaPadrao.endereco,
-    localizacaoLoja:
-      configuracoesLojaCache.location || perfilLojaPadrao.localizacaoLoja,
-    telefone: configuracoesLojaCache.phone || perfilLojaPadrao.telefone,
-    horario: configuracoesLojaCache.opening_hours || perfilLojaPadrao.horario,
-    dias: configuracoesLojaCache.business_days || perfilLojaPadrao.dias,
-    tituloCompartilhamento: perfilLojaPadrao.tituloCompartilhamento,
-    cidadeEntrega: perfilLojaPadrao.cidadeEntrega,
-    linkPublicado: perfilLojaPadrao.linkPublicado,
-    mensagemCliente: perfilLojaPadrao.mensagemCliente,
-    mensagemAdmin: perfilLojaPadrao.mensagemAdmin,
-  };
-}
+return {
+  nome: configuracoesLojaCache.store_name || perfilLojaPadrao.nome,
+  categoria: configuracoesLojaCache.category || perfilLojaPadrao.categoria,
+  endereco: configuracoesLojaCache.address || perfilLojaPadrao.endereco,
+  localizacaoLoja:
+    configuracoesLojaCache.location || perfilLojaPadrao.localizacaoLoja,
+  telefone: configuracoesLojaCache.phone || perfilLojaPadrao.telefone,
+  horario: configuracoesLojaCache.opening_hours || perfilLojaPadrao.horario,
+  dias: configuracoesLojaCache.business_days || perfilLojaPadrao.dias,
+  tituloCompartilhamento:
+    configuracoesLojaCache.sharing_title ||
+    perfilLojaPadrao.tituloCompartilhamento,
+  cidadeEntrega:
+    configuracoesLojaCache.delivery_area || perfilLojaPadrao.cidadeEntrega,
+  linkPublicado:
+    configuracoesLojaCache.published_link || perfilLojaPadrao.linkPublicado,
+  mensagemCliente:
+    configuracoesLojaCache.share_message_client ||
+    perfilLojaPadrao.mensagemCliente,
+  mensagemAdmin:
+    configuracoesLojaCache.share_message_admin ||
+    perfilLojaPadrao.mensagemAdmin,
+};
 
 function obterStatusManualLoja() {
   return configuracoesLojaCache.manual_status || "auto";
@@ -3340,6 +3468,11 @@ async function salvarPerfilLoja(event) {
       phone: telefoneLoja,
       opening_hours: horarioLoja,
       business_days: diasLoja,
+      sharing_title: tituloCompartilhamento,
+      delivery_area: cidadeEntrega,
+      published_link: linkPublicado,
+      share_message_client: mensagemCliente,
+      share_message_admin: mensagemAdmin,
     });
   } catch (error) {
     console.error("Erro real ao salvar no servidor:", error);
@@ -3350,20 +3483,20 @@ async function salvarPerfilLoja(event) {
   const perfilAtual = carregarPerfilLoja();
 
   const perfilAtualizado = {
-  ...perfilAtual,
-  nome: nomeLoja,
-  categoria: categoriaLoja,
-  endereco: enderecoLoja,
-  localizacaoLoja,
-  telefone: telefoneLoja,
-  horario: horarioLoja,
-  dias: diasLoja,
-  tituloCompartilhamento,
-  cidadeEntrega,
-  linkPublicado,
-  mensagemCliente,
-  mensagemAdmin,
-};
+    ...perfilAtual,
+    nome: nomeLoja,
+    categoria: categoriaLoja,
+    endereco: enderecoLoja,
+    localizacaoLoja,
+    telefone: telefoneLoja,
+    horario: horarioLoja,
+    dias: diasLoja,
+    tituloCompartilhamento,
+    cidadeEntrega,
+    linkPublicado,
+    mensagemCliente,
+    mensagemAdmin,
+  };
 
   salvarPerfilLojaLocal(perfilAtualizado);
 
@@ -5091,6 +5224,61 @@ function iniciarAtualizacaoAutomaticaPaginas() {
   }
 }
 
+async function atualizarPaginaCompartilhar() {
+  const tituloCompartilhar = document.getElementById("tituloCompartilhar");
+  const descricaoCompartilhar = document.getElementById(
+    "descricaoCompartilhar",
+  );
+  const mensagemCompartilhar = document.getElementById("mensagemCompartilhar");
+  const linkLojaCompartilhar = document.getElementById("linkLojaCompartilhar");
+  const btnPedirAgoraCompartilhar = document.getElementById(
+    "btnPedirAgoraCompartilhar",
+  );
+
+  if (
+    !tituloCompartilhar &&
+    !descricaoCompartilhar &&
+    !mensagemCompartilhar &&
+    !linkLojaCompartilhar
+  ) {
+    return;
+  }
+
+  await carregarConfiguracoesLojaDaApi();
+
+  const perfil = carregarPerfilLoja();
+  const link =
+    perfil.linkPublicado || new URL("cardapio.html", window.location.href).href;
+
+  if (tituloCompartilhar) {
+    tituloCompartilhar.textContent =
+      perfil.tituloCompartilhamento || perfil.nome;
+  }
+
+  if (descricaoCompartilhar) {
+    descricaoCompartilhar.innerHTML = `
+      Faça seu pedido online agora mesmo no ${perfil.nome}!<br />
+      Seu delivery em ${perfil.cidadeEntrega || "sua região"}. Acesse a loja pelo cardápio digital.
+    `;
+  }
+
+  if (mensagemCompartilhar) {
+    mensagemCompartilhar.textContent = usuarioEhAdmin()
+      ? perfil.mensagemAdmin || perfil.mensagemCliente
+      : perfil.mensagemCliente || perfil.mensagemAdmin;
+  }
+
+  if (linkLojaCompartilhar) {
+    linkLojaCompartilhar.textContent = link;
+  }
+
+  if (btnPedirAgoraCompartilhar) {
+    btnPedirAgoraCompartilhar.href = link;
+  }
+
+  document.title = `Compartilhar Loja - ${perfil.nome}`;
+}
+
 function obterDadosCompartilhamento() {
   const titulo =
     document.getElementById("tituloCompartilhar")?.textContent?.trim() ||
@@ -5189,6 +5377,24 @@ async function copiarLinkCompartilhar() {
     dados.linkCompleto,
     "Link copiado com sucesso.",
   );
+}
+
+async function salvarDivulgacaoLoja(event) {
+  event.preventDefault();
+
+  if (!usuarioEhAdmin()) {
+    mostrarAviso(
+      "Apenas o administrador pode alterar a divulgação da loja.",
+      "erro",
+    );
+    return;
+  }
+
+  const eventoFake = {
+    preventDefault() {},
+  };
+
+  await salvarPerfilLoja(eventoFake);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
