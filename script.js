@@ -2705,6 +2705,10 @@ function controlarVisualPerfilLoja() {
   }
 }
 
+function salvarPerfilLojaLocal(perfil) {
+  localStorage.setItem("perfilLojaClickBus", JSON.stringify(perfil));
+}
+
 function carregarPerfilLoja() {
   return {
     nome: configuracoesLojaCache.store_name || perfilLojaPadrao.nome,
