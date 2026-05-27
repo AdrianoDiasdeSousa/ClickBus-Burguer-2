@@ -2435,6 +2435,10 @@ function cadastrarNovoLanche() {
   cadastrarProdutoPorCategoria("lanche");
 }
 
+function cadastrarNovaBebida() {
+  cadastrarProdutoPorCategoria("bebida");
+}
+
 function carregarObservacoesPedido() {
   try {
     return JSON.parse(localStorage.getItem("observacoesPedidoAtual")) || {};
