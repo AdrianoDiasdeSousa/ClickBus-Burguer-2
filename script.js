@@ -2705,29 +2705,31 @@ function controlarVisualPerfilLoja() {
   }
 }
 
-return {
-  nome: configuracoesLojaCache.store_name || perfilLojaPadrao.nome,
-  categoria: configuracoesLojaCache.category || perfilLojaPadrao.categoria,
-  endereco: configuracoesLojaCache.address || perfilLojaPadrao.endereco,
-  localizacaoLoja:
-    configuracoesLojaCache.location || perfilLojaPadrao.localizacaoLoja,
-  telefone: configuracoesLojaCache.phone || perfilLojaPadrao.telefone,
-  horario: configuracoesLojaCache.opening_hours || perfilLojaPadrao.horario,
-  dias: configuracoesLojaCache.business_days || perfilLojaPadrao.dias,
-  tituloCompartilhamento:
-    configuracoesLojaCache.sharing_title ||
-    perfilLojaPadrao.tituloCompartilhamento,
-  cidadeEntrega:
-    configuracoesLojaCache.delivery_area || perfilLojaPadrao.cidadeEntrega,
-  linkPublicado:
-    configuracoesLojaCache.published_link || perfilLojaPadrao.linkPublicado,
-  mensagemCliente:
-    configuracoesLojaCache.share_message_client ||
-    perfilLojaPadrao.mensagemCliente,
-  mensagemAdmin:
-    configuracoesLojaCache.share_message_admin ||
-    perfilLojaPadrao.mensagemAdmin,
-};
+function carregarPerfilLoja() {
+  return {
+    nome: configuracoesLojaCache.store_name || perfilLojaPadrao.nome,
+    categoria: configuracoesLojaCache.category || perfilLojaPadrao.categoria,
+    endereco: configuracoesLojaCache.address || perfilLojaPadrao.endereco,
+    localizacaoLoja:
+      configuracoesLojaCache.location || perfilLojaPadrao.localizacaoLoja,
+    telefone: configuracoesLojaCache.phone || perfilLojaPadrao.telefone,
+    horario: configuracoesLojaCache.opening_hours || perfilLojaPadrao.horario,
+    dias: configuracoesLojaCache.business_days || perfilLojaPadrao.dias,
+    tituloCompartilhamento:
+      configuracoesLojaCache.sharing_title ||
+      perfilLojaPadrao.tituloCompartilhamento,
+    cidadeEntrega:
+      configuracoesLojaCache.delivery_area || perfilLojaPadrao.cidadeEntrega,
+    linkPublicado:
+      configuracoesLojaCache.published_link || perfilLojaPadrao.linkPublicado,
+    mensagemCliente:
+      configuracoesLojaCache.share_message_client ||
+      perfilLojaPadrao.mensagemCliente,
+    mensagemAdmin:
+      configuracoesLojaCache.share_message_admin ||
+      perfilLojaPadrao.mensagemAdmin,
+  };
+}
 
 function obterStatusManualLoja() {
   return configuracoesLojaCache.manual_status || "auto";
