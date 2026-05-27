@@ -5141,6 +5141,61 @@ function iniciarAtualizacaoAutomaticaPaginas() {
   }
 }
 
+async function atualizarPaginaCompartilhar() {
+  const tituloCompartilhar = document.getElementById("tituloCompartilhar");
+  const descricaoCompartilhar = document.getElementById(
+    "descricaoCompartilhar",
+  );
+  const mensagemCompartilhar = document.getElementById("mensagemCompartilhar");
+  const linkLojaCompartilhar = document.getElementById("linkLojaCompartilhar");
+  const btnPedirAgoraCompartilhar = document.getElementById(
+    "btnPedirAgoraCompartilhar",
+  );
+
+  if (
+    !tituloCompartilhar &&
+    !descricaoCompartilhar &&
+    !mensagemCompartilhar &&
+    !linkLojaCompartilhar
+  ) {
+    return;
+  }
+
+  await carregarConfiguracoesLojaDaApi();
+
+  const perfil = carregarPerfilLoja();
+  const link =
+    perfil.linkPublicado || new URL("cardapio.html", window.location.href).href;
+
+  if (tituloCompartilhar) {
+    tituloCompartilhar.textContent =
+      perfil.tituloCompartilhamento || perfil.nome;
+  }
+
+  if (descricaoCompartilhar) {
+    descricaoCompartilhar.innerHTML = `
+      Faça seu pedido online agora mesmo no ${perfil.nome}!<br />
+      Seu delivery em ${perfil.cidadeEntrega || "sua região"}. Acesse a loja pelo cardápio digital.
+    `;
+  }
+
+  if (mensagemCompartilhar) {
+    mensagemCompartilhar.textContent = usuarioEhAdmin()
+      ? perfil.mensagemAdmin || perfil.mensagemCliente
+      : perfil.mensagemCliente || perfil.mensagemAdmin;
+  }
+
+  if (linkLojaCompartilhar) {
+    linkLojaCompartilhar.textContent = link;
+  }
+
+  if (btnPedirAgoraCompartilhar) {
+    btnPedirAgoraCompartilhar.href = link;
+  }
+
+  document.title = `Compartilhar Loja - ${perfil.nome}`;
+}
+
 function obterDadosCompartilhamento() {
   const titulo =
     document.getElementById("tituloCompartilhar")?.textContent?.trim() ||
