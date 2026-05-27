@@ -2074,15 +2074,15 @@ async function editarImagemProduto(id) {
     return;
   }
 
-const input = document.createElement("input");
-input.type = "file";
-input.accept = "image/*";
-input.style.display = "none";
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.style.display = "none";
 
   input.addEventListener("change", async () => {
     const arquivo = input.files[0];
-     
-     input.remove();
+
+    input.remove();
 
     if (!arquivo) return;
 
@@ -2136,7 +2136,8 @@ input.style.display = "none";
   });
 
   document.body.appendChild(input);
-input.click();
+  input.click();
+}
 
 async function alternarDisponibilidadeProduto(id) {
   if (!usuarioEhAdmin()) {
