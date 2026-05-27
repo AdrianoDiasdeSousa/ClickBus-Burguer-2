@@ -2257,6 +2257,65 @@ function carregarObservacoesPedido() {
   }
 }
 
+function salvarObservacoesPedido(observacoes) {
+  localStorage.setItem(
+    "observacoesPedidoAtual",
+    JSON.stringify(observacoes || {})
+  );
+}
+
+function carregarObservacaoPagina() {
+  const campoObservacao = document.getElementById("campoObservacao");
+
+  if (!campoObservacao) return;
+
+  const produtoId = localStorage.getItem("produtoObservacaoId");
+
+  if (!produtoId) {
+    mostrarAviso("Escolha um produto antes de adicionar observações.", "erro");
+
+    setTimeout(() => {
+      window.location.href = "cardapio.html";
+    }, TEMPO_AVISO_NAVEGACAO);
+
+    return;
+  }
+
+  const observacoes = carregarObservacoesPedido();
+
+  campoObservacao.value = observacoes[String(produtoId)] || "";
+}
+
+function salvarObservacaoPagina() {
+  const campoObservacao = document.getElementById("campoObservacao");
+
+  if (!campoObservacao) return;
+
+  const produtoId = localStorage.getItem("produtoObservacaoId");
+
+  if (!produtoId) {
+    mostrarAviso("Não foi possível identificar o produto da observação.", "erro");
+    return;
+  }
+
+  const observacoes = carregarObservacoesPedido();
+  const textoObservacao = campoObservacao.value.trim();
+
+  if (textoObservacao) {
+    observacoes[String(produtoId)] = textoObservacao;
+  } else {
+    delete observacoes[String(produtoId)];
+  }
+
+  salvarObservacoesPedido(observacoes);
+
+  mostrarAviso("Observação salva com sucesso.", "sucesso", TEMPO_AVISO_NAVEGACAO);
+
+  setTimeout(() => {
+    window.location.href = "cardapio.html";
+  }, TEMPO_AVISO_NAVEGACAO);
+}
+
 async function avancarPedido() {
   if (usuarioEhAdmin()) return;
 
