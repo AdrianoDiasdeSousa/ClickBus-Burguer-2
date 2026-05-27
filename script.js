@@ -5241,6 +5241,24 @@ async function copiarLinkCompartilhar() {
   );
 }
 
+async function salvarDivulgacaoLoja(event) {
+  event.preventDefault();
+
+  if (!usuarioEhAdmin()) {
+    mostrarAviso(
+      "Apenas o administrador pode alterar a divulgação da loja.",
+      "erro",
+    );
+    return;
+  }
+
+  const eventoFake = {
+    preventDefault() {},
+  };
+
+  await salvarPerfilLoja(eventoFake);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   executarComSeguranca("iniciarAtualizacaoAutomaticaPaginas", () => {
     if (typeof iniciarAtualizacaoAutomaticaPaginas === "function") {
