@@ -2030,7 +2030,11 @@ async function editarAvisoProduto(id) {
   }
 }
 
-function redimensionarImagemBase64(arquivo, larguraMaxima = 700, qualidade = 0.85) {
+function redimensionarImagemBase64(
+  arquivo,
+  larguraMaxima = 700,
+  qualidade = 0.85,
+) {
   return new Promise((resolve, reject) => {
     const leitor = new FileReader();
 
@@ -2145,7 +2149,9 @@ async function editarImagemProduto(id) {
 
       if (!resposta.ok) {
         throw new Error(
-          resultado?.erro || resultado?.detalhe || "Erro ao salvar imagem na API.",
+          resultado?.erro ||
+            resultado?.detalhe ||
+            "Erro ao salvar imagem na API.",
         );
       }
 
@@ -2357,7 +2363,7 @@ function carregarObservacoesPedido() {
 function salvarObservacoesPedido(observacoes) {
   localStorage.setItem(
     "observacoesPedidoAtual",
-    JSON.stringify(observacoes || {})
+    JSON.stringify(observacoes || {}),
   );
 }
 
@@ -2391,7 +2397,10 @@ function salvarObservacaoPagina() {
   const produtoId = localStorage.getItem("produtoObservacaoId");
 
   if (!produtoId) {
-    mostrarAviso("Não foi possível identificar o produto da observação.", "erro");
+    mostrarAviso(
+      "Não foi possível identificar o produto da observação.",
+      "erro",
+    );
     return;
   }
 
@@ -2406,7 +2415,11 @@ function salvarObservacaoPagina() {
 
   salvarObservacoesPedido(observacoes);
 
-  mostrarAviso("Observação salva com sucesso.", "sucesso", TEMPO_AVISO_NAVEGACAO);
+  mostrarAviso(
+    "Observação salva com sucesso.",
+    "sucesso",
+    TEMPO_AVISO_NAVEGACAO,
+  );
 
   setTimeout(() => {
     window.location.href = "cardapio.html";
@@ -2491,12 +2504,18 @@ const perfilLojaPadrao = {
 
 let configuracoesLojaCache = {
   store_name: perfilLojaPadrao.nome,
+  category: perfilLojaPadrao.categoria,
   address: perfilLojaPadrao.endereco,
   location: perfilLojaPadrao.localizacaoLoja,
   phone: perfilLojaPadrao.telefone,
   opening_hours: perfilLojaPadrao.horario,
   business_days: perfilLojaPadrao.dias,
   manual_status: "auto",
+  sharing_title: perfilLojaPadrao.tituloCompartilhamento,
+  delivery_area: perfilLojaPadrao.cidadeEntrega,
+  published_link: perfilLojaPadrao.linkPublicado,
+  share_message_client: perfilLojaPadrao.mensagemCliente,
+  share_message_admin: perfilLojaPadrao.mensagemAdmin,
   updated_at: null,
 };
 
@@ -2512,12 +2531,23 @@ async function carregarConfiguracoesLojaDaApi() {
 
     configuracoesLojaCache = {
       store_name: configuracoes.store_name || perfilLojaPadrao.nome,
+      category: configuracoes.category || perfilLojaPadrao.categoria,
       address: configuracoes.address || perfilLojaPadrao.endereco,
       location: configuracoes.location || perfilLojaPadrao.localizacaoLoja,
       phone: configuracoes.phone || perfilLojaPadrao.telefone,
       opening_hours: configuracoes.opening_hours || perfilLojaPadrao.horario,
       business_days: configuracoes.business_days || perfilLojaPadrao.dias,
       manual_status: configuracoes.manual_status || "auto",
+      sharing_title:
+        configuracoes.sharing_title || perfilLojaPadrao.tituloCompartilhamento,
+      delivery_area:
+        configuracoes.delivery_area || perfilLojaPadrao.cidadeEntrega,
+      published_link:
+        configuracoes.published_link || perfilLojaPadrao.linkPublicado,
+      share_message_client:
+        configuracoes.share_message_client || perfilLojaPadrao.mensagemCliente,
+      share_message_admin:
+        configuracoes.share_message_admin || perfilLojaPadrao.mensagemAdmin,
       updated_at: configuracoes.updated_at || null,
     };
 
@@ -2557,12 +2587,21 @@ async function salvarConfiguracoesLojaNaApi(novasConfiguracoes) {
 
   configuracoesLojaCache = {
     store_name: settings.store_name || perfilLojaPadrao.nome,
+    category: settings.category || perfilLojaPadrao.categoria,
     address: settings.address || perfilLojaPadrao.endereco,
     location: settings.location || perfilLojaPadrao.localizacaoLoja,
     phone: settings.phone || perfilLojaPadrao.telefone,
     opening_hours: settings.opening_hours || perfilLojaPadrao.horario,
     business_days: settings.business_days || perfilLojaPadrao.dias,
     manual_status: settings.manual_status || "auto",
+    sharing_title:
+      settings.sharing_title || perfilLojaPadrao.tituloCompartilhamento,
+    delivery_area: settings.delivery_area || perfilLojaPadrao.cidadeEntrega,
+    published_link: settings.published_link || perfilLojaPadrao.linkPublicado,
+    share_message_client:
+      settings.share_message_client || perfilLojaPadrao.mensagemCliente,
+    share_message_admin:
+      settings.share_message_admin || perfilLojaPadrao.mensagemAdmin,
     updated_at: settings.updated_at || null,
   };
 
@@ -2583,23 +2622,29 @@ function controlarVisualPerfilLoja() {
   }
 }
 
-function carregarPerfilLoja() {
-  return {
-    nome: configuracoesLojaCache.store_name || perfilLojaPadrao.nome,
-    categoria: perfilLojaPadrao.categoria,
-    endereco: configuracoesLojaCache.address || perfilLojaPadrao.endereco,
-    localizacaoLoja:
-      configuracoesLojaCache.location || perfilLojaPadrao.localizacaoLoja,
-    telefone: configuracoesLojaCache.phone || perfilLojaPadrao.telefone,
-    horario: configuracoesLojaCache.opening_hours || perfilLojaPadrao.horario,
-    dias: configuracoesLojaCache.business_days || perfilLojaPadrao.dias,
-    tituloCompartilhamento: perfilLojaPadrao.tituloCompartilhamento,
-    cidadeEntrega: perfilLojaPadrao.cidadeEntrega,
-    linkPublicado: perfilLojaPadrao.linkPublicado,
-    mensagemCliente: perfilLojaPadrao.mensagemCliente,
-    mensagemAdmin: perfilLojaPadrao.mensagemAdmin,
-  };
-}
+return {
+  nome: configuracoesLojaCache.store_name || perfilLojaPadrao.nome,
+  categoria: configuracoesLojaCache.category || perfilLojaPadrao.categoria,
+  endereco: configuracoesLojaCache.address || perfilLojaPadrao.endereco,
+  localizacaoLoja:
+    configuracoesLojaCache.location || perfilLojaPadrao.localizacaoLoja,
+  telefone: configuracoesLojaCache.phone || perfilLojaPadrao.telefone,
+  horario: configuracoesLojaCache.opening_hours || perfilLojaPadrao.horario,
+  dias: configuracoesLojaCache.business_days || perfilLojaPadrao.dias,
+  tituloCompartilhamento:
+    configuracoesLojaCache.sharing_title ||
+    perfilLojaPadrao.tituloCompartilhamento,
+  cidadeEntrega:
+    configuracoesLojaCache.delivery_area || perfilLojaPadrao.cidadeEntrega,
+  linkPublicado:
+    configuracoesLojaCache.published_link || perfilLojaPadrao.linkPublicado,
+  mensagemCliente:
+    configuracoesLojaCache.share_message_client ||
+    perfilLojaPadrao.mensagemCliente,
+  mensagemAdmin:
+    configuracoesLojaCache.share_message_admin ||
+    perfilLojaPadrao.mensagemAdmin,
+};
 
 function obterStatusManualLoja() {
   return configuracoesLojaCache.manual_status || "auto";
@@ -3350,20 +3395,20 @@ async function salvarPerfilLoja(event) {
   const perfilAtual = carregarPerfilLoja();
 
   const perfilAtualizado = {
-  ...perfilAtual,
-  nome: nomeLoja,
-  categoria: categoriaLoja,
-  endereco: enderecoLoja,
-  localizacaoLoja,
-  telefone: telefoneLoja,
-  horario: horarioLoja,
-  dias: diasLoja,
-  tituloCompartilhamento,
-  cidadeEntrega,
-  linkPublicado,
-  mensagemCliente,
-  mensagemAdmin,
-};
+    ...perfilAtual,
+    nome: nomeLoja,
+    categoria: categoriaLoja,
+    endereco: enderecoLoja,
+    localizacaoLoja,
+    telefone: telefoneLoja,
+    horario: horarioLoja,
+    dias: diasLoja,
+    tituloCompartilhamento,
+    cidadeEntrega,
+    linkPublicado,
+    mensagemCliente,
+    mensagemAdmin,
+  };
 
   salvarPerfilLojaLocal(perfilAtualizado);
 
