@@ -2132,7 +2132,9 @@ async function editarImagemProduto(id) {
     }
   });
 
-  input.click();
+   setTimeout(() => {
+    input.click();
+  }, 0);
 }
 
 async function alternarDisponibilidadeProduto(id) {
