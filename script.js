@@ -2028,36 +2028,110 @@ async function editarAvisoProduto(id) {
   }
 }
 
-function editarImagemProduto(id) {
-  if (!usuarioEhAdmin()) {
-    mostrarAviso("Apenas o administrador pode editar imagens.", "erro");
-    return;
-  }
-
-  const produtos = carregarProdutos();
-  const produto = produtos.find((item) => item.id === id);
-
-  if (!produto) return;
-
-  const inputArquivo = document.createElement("input");
-  inputArquivo.type = "file";
-  inputArquivo.accept = "image/*";
-
-  inputArquivo.addEventListener("change", () => {
-    const arquivo = inputArquivo.files[0];
-
-    if (!arquivo) return;
-
+function redimensionarImagemBase64(arquivo, larguraMaxima = 700, qualidade = 0.75) {
+  return new Promise((resolve, reject) => {
     const leitor = new FileReader();
 
     leitor.onload = () => {
-      produto.imagem = leitor.result;
+      const imagem = new Image();
 
-      salvarProdutos(produtos);
-      renderizarCardapio();
+      imagem.onload = () => {
+        const proporcao = Math.min(1, larguraMaxima / imagem.width);
+        const largura = Math.round(imagem.width * proporcao);
+        const altura = Math.round(imagem.height * proporcao);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = largura;
+        canvas.height = altura;
+
+        const contexto = canvas.getContext("2d");
+        contexto.drawImage(imagem, 0, 0, largura, altura);
+
+        const imagemBase64 = canvas.toDataURL("image/jpeg", qualidade);
+        resolve(imagemBase64);
+      };
+
+      imagem.onerror = () => {
+        reject(new Error("Não foi possível carregar a imagem selecionada."));
+      };
+
+      imagem.src = leitor.result;
+    };
+
+    leitor.onerror = () => {
+      reject(new Error("Não foi possível ler o arquivo selecionado."));
+    };
+
+    leitor.readAsDataURL(arquivo);
+  });
+}
+
+async function editarImagemProduto(id) {
+  if (!usuarioAdmin) {
+    mostrarAviso("Apenas administradores podem editar imagens.", "erro");
+    return;
+  }
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+
+  input.addEventListener("change", async () => {
+    const arquivo = input.files[0];
+
+    if (!arquivo) return;
+
+    try {
+      mostrarAviso("Enviando imagem...", "info");
+
+      const produtos = await carregarProdutosDaApi();
+      const produto = produtos.find((item) => String(item.id) === String(id));
+
+      if (!produto) {
+        mostrarAviso("Produto não encontrado.", "erro");
+        return;
+      }
+
+      const imagemBase64 = await redimensionarImagemBase64(arquivo);
+
+      const dadosAtualizados = {
+        name: produto.nome || produto.name,
+        description: produto.descricao || produto.description || "",
+        price: Number(produto.preco || produto.price || 0),
+        category: produto.categoria || produto.category || "lanche",
+        image_url: imagemBase64,
+        available:
+          produto.disponivel !== undefined
+            ? produto.disponivel
+            : produto.available !== undefined
+              ? produto.available
+              : true
+      };
+
+      const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dadosAtualizados)
+      });
+
+      if (!resposta.ok) {
+        throw new Error("Erro ao salvar imagem na API.");
+      }
+
+      await carregarProdutosDaApi();
+      await renderizarCardapio();
 
       mostrarAviso("Imagem atualizada com sucesso!", "sucesso");
-    };
+    } catch (erro) {
+      console.error("Erro ao editar imagem:", erro);
+      mostrarAviso("Não foi possível salvar a imagem.", "erro");
+    }
+  });
+
+  input.click();
+}
 
     leitor.readAsDataURL(arquivo);
   });
