@@ -2132,12 +2132,6 @@ async function editarImagemProduto(id) {
   input.click();
 }
 
-    leitor.readAsDataURL(arquivo);
-  });
-
-  inputArquivo.click();
-}
-
 async function alternarDisponibilidadeProduto(id) {
   if (!usuarioEhAdmin()) {
     mostrarAviso(
