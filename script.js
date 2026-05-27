@@ -3521,7 +3521,7 @@ async function salvarPerfilLoja(event) {
     );
   }
 
-  mostrarAviso("Perfil da loja salvo com sucesso.", "sucesso");
+  mostrarAviso("Alteração salva com sucesso!", "sucesso");
 }
 
 /* =========================
