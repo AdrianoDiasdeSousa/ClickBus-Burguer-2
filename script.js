@@ -2030,7 +2030,7 @@ async function editarAvisoProduto(id) {
   }
 }
 
-function redimensionarImagemBase64(arquivo, larguraMaxima = 700, qualidade = 0.75) {
+function redimensionarImagemBase64(arquivo, larguraMaxima = 700, qualidade = 0.85) {
   return new Promise((resolve, reject) => {
     const leitor = new FileReader();
 
@@ -2047,9 +2047,16 @@ function redimensionarImagemBase64(arquivo, larguraMaxima = 700, qualidade = 0.7
         canvas.height = altura;
 
         const contexto = canvas.getContext("2d");
+        contexto.clearRect(0, 0, largura, altura);
         contexto.drawImage(imagem, 0, 0, largura, altura);
 
-        const imagemBase64 = canvas.toDataURL("image/jpeg", qualidade);
+        const manterTransparencia =
+          arquivo.type === "image/png" || arquivo.type === "image/webp";
+
+        const imagemBase64 = manterTransparencia
+          ? canvas.toDataURL("image/png")
+          : canvas.toDataURL("image/jpeg", qualidade);
+
         resolve(imagemBase64);
       };
 
