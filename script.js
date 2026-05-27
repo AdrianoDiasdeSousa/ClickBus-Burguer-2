@@ -5207,3 +5207,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+executarComSeguranca("carregarObservacaoPagina", () => {
+  if (typeof carregarObservacaoPagina === "function") {
+    carregarObservacaoPagina();
+  }
+});
