@@ -3385,6 +3385,11 @@ async function salvarPerfilLoja(event) {
       phone: telefoneLoja,
       opening_hours: horarioLoja,
       business_days: diasLoja,
+      sharing_title: tituloCompartilhamento,
+      delivery_area: cidadeEntrega,
+      published_link: linkPublicado,
+      share_message_client: mensagemCliente,
+      share_message_admin: mensagemAdmin,
     });
   } catch (error) {
     console.error("Erro real ao salvar no servidor:", error);
