@@ -2110,19 +2110,36 @@ async function editarImagemProduto(id) {
             ? produto.disponivel
             : produto.available !== undefined
               ? produto.available
-              : true
+              : true,
+        display_order:
+          produto.ordem !== undefined
+            ? Number(produto.ordem)
+            : produto.display_order !== undefined
+              ? Number(produto.display_order)
+              : Number(produto.id),
+        admin_notice: produto.avisoAdmin || produto.admin_notice || "",
       };
 
       const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(dadosAtualizados)
+        body: JSON.stringify(dadosAtualizados),
       });
 
+      let resultado = null;
+
+      try {
+        resultado = await resposta.json();
+      } catch (erroJson) {
+        resultado = null;
+      }
+
       if (!resposta.ok) {
-        throw new Error("Erro ao salvar imagem na API.");
+        throw new Error(
+          resultado?.erro || resultado?.detalhe || "Erro ao salvar imagem na API.",
+        );
       }
 
       await carregarProdutosDaApi();
@@ -2131,14 +2148,13 @@ async function editarImagemProduto(id) {
       mostrarAviso("Imagem atualizada com sucesso!", "sucesso");
     } catch (erro) {
       console.error("Erro ao editar imagem:", erro);
-      mostrarAviso("Não foi possível salvar a imagem.", "erro");
+      mostrarAviso(erro.message || "Não foi possível salvar a imagem.", "erro");
     }
   });
 
   document.body.appendChild(input);
   input.click();
 }
-
 async function alternarDisponibilidadeProduto(id) {
   if (!usuarioEhAdmin()) {
     mostrarAviso(
