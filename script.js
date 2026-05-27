@@ -2069,7 +2069,7 @@ function redimensionarImagemBase64(arquivo, larguraMaxima = 700, qualidade = 0.7
 }
 
 async function editarImagemProduto(id) {
-  if (!usuarioAdmin) {
+  if (!usuarioEhAdmin()) {
     mostrarAviso("Apenas administradores podem editar imagens.", "erro");
     return;
   }
