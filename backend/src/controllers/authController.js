@@ -1,6 +1,8 @@
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const pool = require("../config/db");
+const { enviarEmailRecuperacao } = require("../services/emailService");
 
 async function ensureAdminProfileSchema() {
   await pool.query(`
@@ -11,6 +13,17 @@ async function ensureAdminProfileSchema() {
   await pool.query(`
     ALTER TABLE users
     ADD COLUMN IF NOT EXISTS recovery_answer_hash TEXT DEFAULT '';
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      used_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 }
 
@@ -320,9 +333,146 @@ async function updateAdminProfile(req, res) {
   }
 }
 
+async function forgotPassword(req, res) {
+  try {
+    await ensureAdminProfileSchema();
+
+    const email = String(req.body.email || "")
+      .trim()
+      .toLowerCase();
+
+    if (!email || !email.includes("@") || !email.includes(".")) {
+      return res.status(400).json({
+        erro: "Digite um email válido.",
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT id, name, email
+       FROM users
+       WHERE email = $1
+       LIMIT 1`,
+      [email],
+    );
+
+    // Mensagem genérica para não revelar se o email existe ou não.
+    const mensagem =
+      "Se este email estiver cadastrado, enviaremos um link para redefinir a senha.";
+
+    if (result.rows.length === 0) {
+      return res.json({ mensagem });
+    }
+
+    const user = result.rows[0];
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    await pool.query(
+      `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '30 minutes')`,
+      [user.id, tokenHash],
+    );
+
+    const frontendUrl =
+      process.env.FRONTEND_URL || "https://clickbus-burguer.onrender.com";
+
+    const link = `${frontendUrl}/redefinir-senha.html?token=${token}`;
+
+    await enviarEmailRecuperacao({
+      para: user.email,
+      nome: user.name,
+      link,
+    });
+
+    return res.json({ mensagem });
+  } catch (error) {
+    console.error("Erro ao solicitar recuperação de senha:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível enviar o email de recuperação agora.",
+    });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    await ensureAdminProfileSchema();
+
+    const token = String(req.body.token || "").trim();
+    const newPassword = String(req.body.new_password || "");
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        erro: "Token e nova senha são obrigatórios.",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        erro: "A nova senha precisa ter pelo menos 6 caracteres.",
+      });
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    const tokenResult = await pool.query(
+      `SELECT prt.id, prt.user_id
+       FROM password_reset_tokens prt
+       WHERE prt.token_hash = $1
+         AND prt.used_at IS NULL
+         AND prt.expires_at > NOW()
+       ORDER BY prt.created_at DESC
+       LIMIT 1`,
+      [tokenHash],
+    );
+
+    if (tokenResult.rows.length === 0) {
+      return res.status(400).json({
+        erro: "Link inválido ou expirado. Solicite uma nova recuperação.",
+      });
+    }
+
+    const resetToken = tokenResult.rows[0];
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await pool.query("BEGIN");
+
+    await pool.query(
+      `UPDATE users
+       SET password_hash = $1
+       WHERE id = $2`,
+      [passwordHash, resetToken.user_id],
+    );
+
+    await pool.query(
+      `UPDATE password_reset_tokens
+       SET used_at = NOW()
+       WHERE id = $1`,
+      [resetToken.id],
+    );
+
+    await pool.query("COMMIT");
+
+    return res.json({
+      mensagem: "Senha redefinida com sucesso. Já pode fazer login.",
+    });
+  } catch (error) {
+    await pool.query("ROLLBACK").catch(() => {});
+
+    console.error("Erro ao redefinir senha:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível redefinir a senha agora.",
+    });
+  }
+}
+
 module.exports = {
   register,
   login,
   getAdminProfile,
   updateAdminProfile,
+  forgotPassword,
+  resetPassword,
 };
