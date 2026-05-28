@@ -1011,65 +1011,63 @@ async function fazerCadastro(event) {
   }
 }
 
-function enviarRecuperacao(event) {
+async function enviarRecuperacao(event) {
   event.preventDefault();
 
-  const email = document.getElementById("email").value.trim();
+  const emailInput = document.getElementById("email");
+  const botao = event.target.querySelector('button[type="submit"]');
 
-  if (email === "") {
+  const email = emailInput.value.trim().toLowerCase();
+
+  if (!email || !email.includes("@") || !email.includes(".")) {
     mostrarAviso("Digite um email válido.", "erro");
     return;
   }
 
-  const credenciaisAdmin = obterCredenciaisAdmin();
+  const textoOriginalBotao = botao ? botao.textContent : "";
 
-  if (email === credenciaisAdmin.email) {
-    if (
-      !credenciaisAdmin.perguntaRecuperacao ||
-      !credenciaisAdmin.respostaRecuperacao
-    ) {
-      mostrarAviso(
-        "A recuperação do administrador ainda não foi configurada. Entre com a senha atual e configure no painel.",
-        "erro",
+  try {
+    if (botao) {
+      botao.disabled = true;
+      botao.textContent = "Enviando...";
+    }
+
+    const resposta = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const resultado = await resposta.json().catch(() => ({}));
+
+    if (!resposta.ok) {
+      throw new Error(
+        resultado.erro || "Não foi possível enviar a recuperação.",
       );
-      return;
     }
 
-    const resposta = prompt(credenciaisAdmin.perguntaRecuperacao);
-
-    if (resposta === null) return;
-
-    if (
-      resposta.trim().toLowerCase() !== credenciaisAdmin.respostaRecuperacao
-    ) {
-      mostrarAviso("Resposta de recuperação incorreta.", "erro");
-      return;
-    }
-
-    const novaSenha = prompt("Digite a nova senha do administrador:");
-
-    if (!novaSenha || novaSenha.trim().length < 4) {
-      mostrarAviso("A nova senha precisa ter pelo menos 4 caracteres.", "erro");
-      return;
-    }
-
-    const confirmarSenha = prompt("Confirme a nova senha do administrador:");
-
-    if (novaSenha !== confirmarSenha) {
-      mostrarAviso("As senhas não conferem.", "erro");
-      return;
-    }
-
-    credenciaisAdmin.senha = novaSenha.trim();
-    salvarCredenciaisAdmin(credenciaisAdmin);
     mostrarAviso(
-      "Senha do administrador redefinida com sucesso. Já pode fazer login.",
+      resultado.mensagem ||
+        "Se este email estiver cadastrado, enviaremos um link de recuperação.",
       "sucesso",
     );
-    return;
-  }
 
-  mostrarAviso("Instruções de recuperação enviadas para: " + email, "sucesso");
+    emailInput.value = "";
+  } catch (erro) {
+    console.error("Erro ao solicitar recuperação de senha:", erro);
+
+    mostrarAviso(
+      erro.message || "Erro de conexão ao solicitar recuperação.",
+      "erro",
+    );
+  } finally {
+    if (botao) {
+      botao.disabled = false;
+      botao.textContent = textoOriginalBotao || "Enviar";
+    }
+  }
 }
 
 /* =========================
