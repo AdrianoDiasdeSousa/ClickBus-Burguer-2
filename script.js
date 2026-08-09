@@ -5996,3 +5996,32 @@ document.addEventListener(
   "DOMContentLoaded",
   carregarClientesCadastrados,
 );
+// ==============================
+// PESQUISA DE CLIENTES
+// ==============================
+
+document.addEventListener("DOMContentLoaded", () => {
+  const campoPesquisa = document.getElementById("pesquisaCliente");
+
+  if (!campoPesquisa) {
+    return;
+  }
+
+  campoPesquisa.addEventListener("input", () => {
+    const termo = campoPesquisa.value
+      .trim()
+      .toLowerCase();
+
+    const cards = document.querySelectorAll(".cliente-card");
+
+    cards.forEach((card) => {
+      const nome = card
+        .querySelector("h2")
+        ?.textContent
+        .toLowerCase() || "";
+
+      card.style.display =
+        nome.includes(termo) ? "" : "none";
+    });
+  });
+});
