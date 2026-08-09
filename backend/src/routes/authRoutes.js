@@ -1,3 +1,5 @@
+const express = require("express");
+
 const {
   register,
   login,
@@ -14,8 +16,10 @@ router.post("/cadastro", register);
 router.post("/login", login);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+
 router.get("/admin-profile", getAdminProfile);
 router.put("/admin-profile", updateAdminProfile);
+
 router.get("/customers", getCustomers);
 
 module.exports = router;
