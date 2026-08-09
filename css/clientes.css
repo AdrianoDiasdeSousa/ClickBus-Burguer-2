@@ -122,19 +122,21 @@
 #mensagemClientes {
   color: #111;
 }
-.btn-sair {
-  background: #ff9800;
+
+.botao-voltar {
+  background-color: #ff9800;
   color: #111;
-  border: none;
-  border-radius: 14px;
-  padding: 10px 24px;
-  font-size: 18px;
-  font-weight: 700;
+  text-decoration: none;
+  border-radius: 20px;
+  padding: 9px 24px;
+  font-size: 19px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: bold;
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.3s;
 }
 
-.btn-sair:hover {
-  transform: scale(1.04);
-  filter: brightness(1.05);
+.botao-voltar:hover {
+  background-color: #e68600;
+  transform: scale(1.05);
 }
