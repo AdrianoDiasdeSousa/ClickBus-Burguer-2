@@ -1488,6 +1488,16 @@ async function renderizarCardapio() {
 
   const produtos = await carregarProdutosDaApi();
   const admin = usuarioEhAdmin();
+   const linkClientesAdmin =
+  document.getElementById("linkClientesAdmin");
+
+if (linkClientesAdmin) {
+  if (admin) {
+    linkClientesAdmin.classList.remove("oculto");
+  } else {
+    linkClientesAdmin.classList.add("oculto");
+  }
+}
 
   listaLanches.innerHTML = "";
   listaBebidas.innerHTML = "";
