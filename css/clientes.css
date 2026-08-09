@@ -1,0 +1,103 @@
+/* =========================
+   PÁGINA DE CLIENTES
+========================= */
+
+.pagina-clientes {
+  min-height: calc(100vh - 90px);
+  padding: 40px 20px 60px;
+  background: #151515;
+}
+
+.cabecalho-clientes {
+  width: min(1100px, 100%);
+  margin: 0 auto 30px;
+  background: #f0f7ea;
+  border-left: 6px solid #ff9800;
+  border-radius: 18px;
+  padding: 24px;
+}
+
+.cabecalho-clientes h1 {
+  margin: 0 0 10px;
+  font-size: 32px;
+}
+
+.cabecalho-clientes p {
+  margin: 0 0 18px;
+  font-size: 16px;
+}
+
+.resumo-clientes {
+  display: inline-block;
+  background: #ff9800;
+  padding: 10px 18px;
+  border-radius: 12px;
+}
+
+.resumo-clientes strong {
+  color: #111;
+}
+
+.area-clientes {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+}
+
+#mensagemClientes {
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  background: #fff3cd;
+  border: 2px solid #ff9800;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.lista-clientes {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(280px, 1fr)
+  );
+  gap: 20px;
+}
+
+.cliente-card {
+  background: #eaf5e5;
+  border-left: 5px solid #ff9800;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+}
+
+.cliente-card h2 {
+  margin: 0 0 16px;
+  font-size: 22px;
+}
+
+.cliente-card p {
+  margin: 8px 0;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.cliente-card strong {
+  color: #222;
+}
+
+@media (max-width: 600px) {
+  .pagina-clientes {
+    padding: 25px 12px 40px;
+  }
+
+  .cabecalho-clientes {
+    padding: 18px;
+  }
+
+  .cabecalho-clientes h1 {
+    font-size: 26px;
+  }
+
+  .lista-clientes {
+    grid-template-columns: 1fr;
+  }
+}
