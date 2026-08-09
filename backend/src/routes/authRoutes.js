@@ -1,4 +1,3 @@
-const express = require("express");
 const {
   register,
   login,
@@ -6,6 +5,7 @@ const {
   updateAdminProfile,
   forgotPassword,
   resetPassword,
+  getCustomers,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -16,5 +16,6 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.get("/admin-profile", getAdminProfile);
 router.put("/admin-profile", updateAdminProfile);
+router.get("/customers", getCustomers);
 
 module.exports = router;
