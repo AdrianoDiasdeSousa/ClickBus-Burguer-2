@@ -5860,3 +5860,139 @@ async function iniciarMonitorNovosPedidos() {
 document.addEventListener("DOMContentLoaded", () => {
   iniciarMonitorNovosPedidos();
 });
+
+// ==============================
+// CLIENTES CADASTRADOS
+// ==============================
+
+async function carregarClientesCadastrados() {
+  const listaClientes = document.getElementById("listaClientes");
+  const mensagemClientes = document.getElementById("mensagemClientes");
+  const totalClientes = document.getElementById("totalClientes");
+
+  if (!listaClientes || !mensagemClientes || !totalClientes) {
+    return;
+  }
+
+  if (!usuarioEhAdmin()) {
+    mensagemClientes.textContent =
+      "Apenas o administrador pode acessar esta página.";
+
+    setTimeout(() => {
+      window.location.href = "cardapio.html";
+    }, 1500);
+
+    return;
+  }
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    mensagemClientes.textContent =
+      "Sua sessão expirou. Faça login novamente.";
+
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 1500);
+
+    return;
+  }
+
+  try {
+    mensagemClientes.textContent =
+      "Carregando clientes...";
+
+    const resposta = await fetch(
+      `${API_BASE_URL}/auth/customers`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      },
+    );
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      throw new Error(
+        resultado?.erro ||
+          "Não foi possível carregar os clientes.",
+      );
+    }
+
+    const clientes =
+      Array.isArray(resultado) ? resultado : [];
+
+    totalClientes.textContent = clientes.length;
+
+    listaClientes.innerHTML = "";
+
+    if (clientes.length === 0) {
+      mensagemClientes.textContent =
+        "Nenhum cliente cadastrado.";
+      return;
+    }
+
+    mensagemClientes.textContent = "";
+
+    clientes.forEach((cliente) => {
+      const card = document.createElement("article");
+
+      card.className = "cliente-card";
+
+      const dataCadastro = cliente.created_at
+        ? new Date(cliente.created_at).toLocaleDateString(
+            "pt-BR",
+            {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            },
+          )
+        : "Não informada";
+
+      card.innerHTML = `
+        <h2>${cliente.name || "Cliente"}</h2>
+
+        <p>
+          <strong>E-mail:</strong>
+          ${cliente.email || "Não informado"}
+        </p>
+
+        <p>
+          <strong>Telefone:</strong>
+          ${cliente.phone || "Não informado"}
+        </p>
+
+        <p>
+          <strong>Endereço:</strong>
+          ${cliente.address || "Não informado"}
+        </p>
+
+        <p>
+          <strong>Cadastrado em:</strong>
+          ${dataCadastro}
+        </p>
+      `;
+
+      listaClientes.appendChild(card);
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao carregar clientes:",
+      error,
+    );
+
+    mensagemClientes.textContent =
+      error.message ||
+      "Não foi possível carregar os clientes.";
+
+    totalClientes.textContent = "0";
+  }
+}
+
+document.addEventListener(
+  "DOMContentLoaded",
+  carregarClientesCadastrados,
+);
