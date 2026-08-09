@@ -4,14 +4,17 @@
 
 body {
   margin: 0;
-  background-color: #111;
+  background: #111;
   color: #111;
   font-family: Georgia, "Times New Roman", serif;
 }
 
-/* TOPO */
+/* =========================
+   TOPO
+========================= */
 
 .topo {
+  position: relative;
   width: 100%;
   min-height: 90px;
   background-color: #8171dd;
@@ -20,6 +23,12 @@ body {
   justify-content: space-between;
   padding: 0 45px;
   box-sizing: border-box;
+  z-index: 10;
+}
+
+.area-logo {
+  display: flex;
+  align-items: center;
 }
 
 .area-logo img {
@@ -28,15 +37,24 @@ body {
   display: block;
 }
 
+/* BOTÃO VOLTAR */
+
 .botao-voltar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   background-color: #ff9800;
   color: #111;
+
   text-decoration: none;
+
   border-radius: 20px;
-  padding: 9px 24px;
+  padding: 10px 24px;
+
   font-size: 19px;
   font-weight: bold;
-  cursor: pointer;
+
   transition: 0.3s;
 }
 
@@ -45,103 +63,153 @@ body {
   transform: scale(1.05);
 }
 
-/* CONTEÚDO */
+/* =========================
+   CONTEÚDO PRINCIPAL
+========================= */
 
 .pagina-clientes {
-  width: min(1100px, 94%);
+  position: relative;
+
+  width: min(1050px, 92%);
   margin: 0 auto;
-  padding: 40px 0 60px;
-  min-height: calc(100vh - 90px);
+
+  padding: 45px 0 60px;
+
   box-sizing: border-box;
 }
 
+/* CABEÇALHO DA PÁGINA */
+
 .cabecalho-clientes {
   width: 100%;
-  margin: 0 auto 30px;
+
   background: #eaf5e5;
+
   border-left: 6px solid #ff9800;
   border-radius: 18px;
-  padding: 24px 30px;
+
+  padding: 25px 30px;
+  margin-bottom: 25px;
+
   box-sizing: border-box;
-  color: #111;
 }
 
 .cabecalho-clientes h1 {
   margin: 0 0 10px;
-  font-size: 32px;
+
   color: #111;
+
+  font-size: 32px;
 }
 
 .cabecalho-clientes p {
   margin: 0 0 18px;
-  font-size: 17px;
+
   color: #111;
+
+  font-size: 17px;
 }
 
 .resumo-clientes {
   display: inline-block;
-  background: #ff9800;
+
   padding: 10px 18px;
+
+  background-color: #ff9800;
+
   border-radius: 12px;
+
   color: #111;
 }
 
-.resumo-clientes strong {
+.resumo-clientes strong,
+.resumo-clientes span {
   color: #111;
 }
 
-/* LISTA */
+/* =========================
+   ÁREA DOS CLIENTES
+========================= */
 
 .area-clientes {
   width: 100%;
-  margin: 0 auto;
 }
+
+/* MENSAGEM */
 
 #mensagemClientes {
   width: 100%;
-  margin-bottom: 20px;
+
+  margin: 0 0 20px;
+
   padding: 14px 18px;
-  background: #fff3cd;
+
+  background-color: #fff3cd;
+
   border: 2px solid #ff9800;
   border-radius: 12px;
-  font-weight: 600;
-  color: #111;
+
   box-sizing: border-box;
+
+  color: #111;
+
+  font-weight: bold;
 }
 
 #mensagemClientes:empty {
   display: none;
 }
 
+/* =========================
+   LISTA
+========================= */
+
 .lista-clientes {
   width: 100%;
+
   display: flex;
   flex-direction: column;
+
   gap: 18px;
 }
 
+/* CARD DE CADA CLIENTE */
+
 .cliente-card {
   width: 100%;
-  background: #eaf5e5;
-  border-left: 5px solid #ff9800;
-  border-radius: 16px;
-  padding: 20px 24px;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+
+  background-color: #eaf5e5;
+
+  border-left: 6px solid #ff9800;
+  border-radius: 18px;
+
+  padding: 22px 28px;
+
   box-sizing: border-box;
+
   color: #111;
+
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
 }
 
 .cliente-card h2 {
   margin: 0 0 16px;
-  font-size: 24px;
+
   color: #111;
+
+  font-size: 24px;
 }
 
 .cliente-card p {
   margin: 9px 0;
-  line-height: 1.5;
-  word-break: break-word;
+
   color: #111;
+
+  font-size: 17px;
+
+  line-height: 1.5;
+
+  word-break: break-word;
 }
 
 .cliente-card strong,
@@ -149,11 +217,15 @@ body {
   color: #111;
 }
 
-/* RESPONSIVO */
+/* =========================
+   RESPONSIVO
+========================= */
 
 @media (max-width: 700px) {
   .topo {
-    padding: 15px 20px;
+    min-height: 80px;
+
+    padding: 12px 18px;
   }
 
   .area-logo img {
@@ -161,12 +233,14 @@ body {
   }
 
   .botao-voltar {
-    padding: 8px 18px;
-    font-size: 17px;
+    padding: 8px 17px;
+
+    font-size: 16px;
   }
 
   .pagina-clientes {
     width: 94%;
+
     padding-top: 25px;
   }
 
@@ -175,7 +249,7 @@ body {
   }
 
   .cabecalho-clientes h1 {
-    font-size: 27px;
+    font-size: 26px;
   }
 
   .cliente-card {
