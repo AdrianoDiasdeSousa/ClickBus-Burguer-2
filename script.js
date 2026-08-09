@@ -5557,9 +5557,10 @@ function criarAudioPedido() {
   const configuracao = obterConfiguracaoSomPedido();
 
   audioPedido = new Audio(configuracao.toque);
+
   audioPedido.volume = Math.min(
     1,
-    Math.max(0, configuracao.volume / 100)
+    Math.max(0, configuracao.volume / 100),
   );
 
   return audioPedido;
@@ -5567,7 +5568,10 @@ function criarAudioPedido() {
 
 function testarToquePedido() {
   if (!somPedidoAtivado) {
-    alert("O som está desativado. Ative o som para testar.");
+    mostrarAviso(
+      "O som está desativado. Ative o som para testar.",
+      "info",
+    );
     return;
   }
 
@@ -5579,9 +5583,14 @@ function testarToquePedido() {
   audioPedido = criarAudioPedido();
 
   audioPedido.play().catch((erro) => {
-    console.error("Não foi possível reproduzir o toque:", erro);
-    alert(
-      "O navegador bloqueou o áudio. Clique novamente em Testar toque."
+    console.error(
+      "Não foi possível reproduzir o toque:",
+      erro,
+    );
+
+    mostrarAviso(
+      "O navegador bloqueou o áudio. Clique novamente em Testar toque.",
+      "erro",
     );
   });
 }
@@ -5591,7 +5600,7 @@ function alternarSomPedido() {
 
   localStorage.setItem(
     "somPedidoAtivado",
-    String(somPedidoAtivado)
+    String(somPedidoAtivado),
   );
 
   atualizarBotaoSomPedido();
@@ -5603,7 +5612,8 @@ function alternarSomPedido() {
 }
 
 function atualizarBotaoSomPedido() {
-  const botao = document.getElementById("btnSomPedido");
+  const botao =
+    document.getElementById("btnSomPedido");
 
   if (!botao) {
     return;
@@ -5626,47 +5636,227 @@ function configurarControlesSomPedido() {
   const valorVolume =
     document.getElementById("valorVolumePedido");
 
-  if (!seletorToque || !controleVolume || !valorVolume) {
+  // Em páginas que não possuem os controles,
+  // simplesmente não faz nada.
+  if (
+    !seletorToque ||
+    !controleVolume ||
+    !valorVolume
+  ) {
     return;
   }
 
-  const configuracao = obterConfiguracaoSomPedido();
+  const configuracao =
+    obterConfiguracaoSomPedido();
 
   seletorToque.value = configuracao.toque;
   controleVolume.value = configuracao.volume;
-  valorVolume.textContent = `${configuracao.volume}%`;
+  valorVolume.textContent =
+    `${configuracao.volume}%`;
 
   atualizarBotaoSomPedido();
 
-  seletorToque.addEventListener("change", () => {
-    localStorage.setItem(
-      "toquePedido",
-      seletorToque.value
-    );
+  seletorToque.addEventListener(
+    "change",
+    () => {
+      localStorage.setItem(
+        "toquePedido",
+        seletorToque.value,
+      );
 
-    if (audioPedido) {
-      audioPedido.pause();
-      audioPedido = null;
-    }
-  });
+      if (audioPedido) {
+        audioPedido.pause();
+        audioPedido.currentTime = 0;
+        audioPedido = null;
+      }
+    },
+  );
 
-  controleVolume.addEventListener("input", () => {
-    const volume = Number(controleVolume.value);
+  controleVolume.addEventListener(
+    "input",
+    () => {
+      const volume =
+        Number(controleVolume.value);
 
-    valorVolume.textContent = `${volume}%`;
+      valorVolume.textContent =
+        `${volume}%`;
 
-    localStorage.setItem(
-      "volumePedido",
-      String(volume)
-    );
+      localStorage.setItem(
+        "volumePedido",
+        String(volume),
+      );
 
-    if (audioPedido) {
-      audioPedido.volume = volume / 100;
-    }
-  });
+      if (audioPedido) {
+        audioPedido.volume =
+          Math.min(
+            1,
+            Math.max(0, volume / 100),
+          );
+      }
+    },
+  );
 }
 
 document.addEventListener(
   "DOMContentLoaded",
-  configurarControlesSomPedido
+  configurarControlesSomPedido,
 );
+
+// ==============================
+// DETECÇÃO AUTOMÁTICA DE NOVOS PEDIDOS
+// ==============================
+
+let ultimoPedidoConhecidoId = null;
+let monitorPedidosIniciado = false;
+
+async function buscarPedidosParaAlerta() {
+  if (!usuarioEhAdmin()) {
+    return [];
+  }
+
+  const token = localStorage.getItem("clickbus_token");
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/orders`, {
+      headers: token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {},
+      cache: "no-store",
+    });
+
+    if (!resposta.ok) {
+      console.error(
+        "Não foi possível verificar novos pedidos:",
+        resposta.status,
+      );
+
+      return [];
+    }
+
+    const pedidos = await resposta.json();
+
+    return Array.isArray(pedidos) ? pedidos : [];
+  } catch (erro) {
+    console.error("Erro ao verificar novos pedidos:", erro);
+    return [];
+  }
+}
+
+function obterMaiorIdPedido(pedidos) {
+  if (!Array.isArray(pedidos) || pedidos.length === 0) {
+    return null;
+  }
+
+  const ids = pedidos
+    .map((pedido) => Number(pedido.id))
+    .filter((id) => Number.isFinite(id));
+
+  if (ids.length === 0) {
+    return null;
+  }
+
+  return Math.max(...ids);
+}
+
+function tocarAlertaNovoPedido() {
+  if (!somPedidoAtivado) {
+    return;
+  }
+
+  if (audioPedido) {
+    audioPedido.pause();
+    audioPedido.currentTime = 0;
+  }
+
+  audioPedido = criarAudioPedido();
+
+  audioPedido.play().catch((erro) => {
+    console.error(
+      "O navegador bloqueou o alerta sonoro:",
+      erro,
+    );
+  });
+}
+
+async function verificarNovoPedido() {
+  if (!usuarioEhAdmin()) {
+    return;
+  }
+
+  const pedidos = await buscarPedidosParaAlerta();
+
+  if (!pedidos.length) {
+    return;
+  }
+
+  const maiorIdAtual = obterMaiorIdPedido(pedidos);
+
+  if (maiorIdAtual === null) {
+    return;
+  }
+
+  // Primeira consulta:
+  // apenas registra o pedido mais recente.
+  // Não toca para pedidos antigos.
+  if (ultimoPedidoConhecidoId === null) {
+    ultimoPedidoConhecidoId = maiorIdAtual;
+    return;
+  }
+
+  if (maiorIdAtual > ultimoPedidoConhecidoId) {
+    const quantidadeNovos = pedidos.filter(
+      (pedido) =>
+        Number(pedido.id) > ultimoPedidoConhecidoId,
+    ).length;
+
+    ultimoPedidoConhecidoId = maiorIdAtual;
+
+    tocarAlertaNovoPedido();
+
+    mostrarAviso(
+      quantidadeNovos > 1
+        ? `🔔 ${quantidadeNovos} novos pedidos recebidos!`
+        : "🔔 Novo pedido recebido!",
+      "sucesso",
+      6000,
+    );
+
+    // Atualiza automaticamente a lista da página de pedidos.
+    if (typeof renderizarPedidos === "function") {
+      await renderizarPedidos();
+    }
+  }
+}
+
+async function iniciarMonitorNovosPedidos() {
+  if (monitorPedidosIniciado) {
+    return;
+  }
+
+  if (!usuarioEhAdmin()) {
+    return;
+  }
+
+  const estaNaPaginaPedidos =
+    window.location.pathname.includes("pedidos.html");
+
+  if (!estaNaPaginaPedidos) {
+    return;
+  }
+
+  monitorPedidosIniciado = true;
+
+  // Registra o último pedido existente sem tocar.
+  await verificarNovoPedido();
+
+  // Verifica novos pedidos a cada 5 segundos.
+  setInterval(() => {
+    verificarNovoPedido();
+  }, 5000);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  iniciarMonitorNovosPedidos();
+});
