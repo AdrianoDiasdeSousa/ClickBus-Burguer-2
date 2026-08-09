@@ -32,45 +32,50 @@
 
     <!-- CONTEÚDO -->
     <main class="pagina-clientes">
-  <section class="cabecalho-clientes">
-    <h1>Clientes cadastrados</h1>
+      <section class="cabecalho-clientes">
+        <h1>Clientes cadastrados</h1>
 
-    <p>
-      Lista de clientes cadastrados no ClickBus Burguer.
-    </p>
+        <p>
+          Lista de clientes cadastrados no ClickBus Burguer.
+        </p>
 
-    <div class="resumo-clientes">
-      <strong>
-        Total de clientes:
-        <span id="totalClientes">0</span>
-      </strong>
-    </div>
+        <div class="resumo-clientes">
+          <strong>
+            Total de clientes:
+            <span id="totalClientes">0</span>
+          </strong>
+        </div>
 
-    <div class="pesquisa-clientes">
-  <label for="pesquisaCliente" class="campo-pesquisa-clientes">
-    <span class="icone-pesquisa">🔎</span>
+        <div class="pesquisa-clientes">
+          <label
+            for="pesquisaCliente"
+            class="campo-pesquisa-clientes"
+          >
+            <span class="icone-pesquisa">🔎</span>
 
-    <input
-      type="text"
-      id="pesquisaCliente"
-      placeholder="Pesquisar cliente pelo nome..."
-      autocomplete="off"
-    />
-  </label>
-</div>
-  </section>
+            <input
+              type="text"
+              id="pesquisaCliente"
+              placeholder="Pesquisar cliente pelo nome..."
+              autocomplete="off"
+            />
+          </label>
+        </div>
+      </section>
 
-  <section class="area-clientes">
-    <div id="mensagemClientes">
-      Carregando clientes...
-    </div>
+      <section class="area-clientes">
+        <div id="mensagemClientes">
+          Carregando clientes...
+        </div>
 
-    <div
-      id="listaClientes"
-      class="lista-clientes"
-    ></div>
-  </section>
-</main>
+        <div
+          id="listaClientes"
+          class="lista-clientes"
+        ></div>
+      </section>
+    </main>
 
-<script src="api.js"></script>
-<script src="script.js?v=20260809"></script>
+    <script src="api.js"></script>
+    <script src="script.js?v=20260809"></script>
+  </body>
+</html>
