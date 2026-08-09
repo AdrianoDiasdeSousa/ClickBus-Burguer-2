@@ -101,3 +101,24 @@
     grid-template-columns: 1fr;
   }
 }
+/* Corrige a cor dos textos da página de clientes */
+
+.pagina-clientes,
+.cabecalho-clientes,
+.cabecalho-clientes h1,
+.cabecalho-clientes p,
+.area-clientes,
+.cliente-card,
+.cliente-card h2,
+.cliente-card p,
+.cliente-card span {
+  color: #111;
+}
+
+.cliente-card strong {
+  color: #111;
+}
+
+#mensagemClientes {
+  color: #111;
+}
