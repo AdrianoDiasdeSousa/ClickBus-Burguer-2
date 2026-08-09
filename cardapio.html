@@ -3,10 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Cardápio - ClickBus Burguer</title>
+
     <link rel="stylesheet" href="css/global.css" />
     <link rel="stylesheet" href="css/cardapio.css" />
-    <link rel="icon" href="data:,">
+
+    <link rel="icon" href="data:," />
   </head>
 
   <body>
@@ -17,72 +20,197 @@
 
       <nav class="menu-topo">
         <span>Sem pedido mínimo</span>
+
         <a href="pedidos.html">📋 Pedidos</a>
-        <a href="perfil-loja.html">Perfil da loja</a>
+
+        <a href="perfil-loja.html">
+          Perfil da loja
+        </a>
+
         <a
           href="compartilhar.html"
           class="btn-compartilhar"
           title="Compartilhar loja"
         >
-          <img src="img/icone-compartilhar.svg" alt="Compartilhar" />
+          <img
+            src="img/icone-compartilhar.svg"
+            alt="Compartilhar"
+          />
         </a>
       </nav>
 
-      <button type="button" class="btn-sair" onclick="sairDoSistema()">
+      <button
+        type="button"
+        class="btn-sair"
+        onclick="sairDoSistema()"
+      >
         X Sair
       </button>
     </header>
 
     <main class="pagina-cardapio">
       <section class="boas-vindas">
-        <h1 id="saudacaoUsuario">Olá!</h1>
+        <h1 id="saudacaoUsuario">
+          Olá!
+        </h1>
+
         <p>
           Bem-vindo ao Bus Burguer, onde cada lanche é uma nova rota de sabor.
         </p>
       </section>
 
-      <section class="status-cardapio" aria-label="Status da loja">
+      <section
+        class="status-cardapio"
+        aria-label="Status da loja"
+      >
         <div>
           <span>Loja agora:</span>
-          <strong data-status-loja>Verificando...</strong>
+
+          <strong data-status-loja>
+            Verificando...
+          </strong>
         </div>
+
         <div>
           <span>Funcionamento:</span>
-          <strong data-horario-loja>Carregando...</strong>
+
+          <strong data-horario-loja>
+            Carregando...
+          </strong>
         </div>
       </section>
 
-      <section id="areaAdmin" class="area-admin oculto">
-        <h2>Modo administrador</h2>
+      <section
+        id="areaAdmin"
+        class="area-admin oculto"
+      >
+        <h2>
+          Modo administrador
+        </h2>
+
         <p>
           Você pode editar produtos, preços, imagens e cadastrar novos itens no
           cardápio.
         </p>
 
         <div class="botoes-admin-cardapio">
-          <button type="button" onclick="cadastrarNovoLanche()">
+          <button
+            type="button"
+            onclick="cadastrarNovoLanche()"
+          >
             Novo produto
           </button>
 
-          <button type="button" onclick="cadastrarNovaBebida()">
+          <button
+            type="button"
+            onclick="cadastrarNovaBebida()"
+          >
             Nova bebida
           </button>
+        </div>
+
+        <div class="config-alerta-pedidos">
+          <h3>
+            🔔 Alerta de novos pedidos
+          </h3>
+
+          <div class="config-alerta-linha">
+            <label for="toquePedido">
+              Toque:
+            </label>
+
+            <select id="toquePedido">
+              <option value="audio/som1.mp3">
+                Som 1
+              </option>
+
+              <option value="audio/som2.mp3">
+                Som 2
+              </option>
+
+              <option value="audio/som3.mp3">
+                Som 3
+              </option>
+
+              <option value="audio/som4.mp3">
+                Som 4
+              </option>
+            </select>
+
+            <button
+              type="button"
+              onclick="testarToquePedido()"
+            >
+              ▶ Testar toque
+            </button>
+          </div>
+
+          <div class="config-alerta-linha">
+            <label for="volumePedido">
+              Volume:
+              <span id="valorVolumePedido">
+                70%
+              </span>
+            </label>
+
+            <input
+              type="range"
+              id="volumePedido"
+              min="0"
+              max="100"
+              step="1"
+              value="70"
+            />
+          </div>
+
+          <div class="config-alerta-linha">
+            <button
+              type="button"
+              id="btnSomPedido"
+              onclick="alternarSomPedido()"
+            >
+              🔊 Som ativado
+            </button>
+          </div>
         </div>
       </section>
 
       <section class="secao-cardapio">
-        <h2>Lanches</h2>
-        <div id="listaLanches" class="lista-produtos"></div>
+        <h2>
+          Lanches
+        </h2>
+
+        <div
+          id="listaLanches"
+          class="lista-produtos"
+        ></div>
       </section>
 
       <section class="secao-cardapio">
-        <h2>Bebidas</h2>
-        <div id="listaBebidas" class="lista-produtos"></div>
+        <h2>
+          Bebidas
+        </h2>
+
+        <div
+          id="listaBebidas"
+          class="lista-produtos"
+        ></div>
       </section>
 
       <section class="barra-total">
-        <button type="button" onclick="avancarPedido()">Avançar</button>
-        <strong>Valor Total: <span id="valorTotal">R$ 0,00</span></strong>
+        <button
+          type="button"
+          onclick="avancarPedido()"
+        >
+          Avançar
+        </button>
+
+        <strong>
+          Valor Total:
+          <span id="valorTotal">
+            R$ 0,00
+          </span>
+        </strong>
       </section>
     </main>
 
