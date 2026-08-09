@@ -122,3 +122,19 @@
 #mensagemClientes {
   color: #111;
 }
+.btn-sair {
+  background: #ff9800;
+  color: #111;
+  border: none;
+  border-radius: 14px;
+  padding: 10px 24px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-sair:hover {
+  transform: scale(1.04);
+  filter: brightness(1.05);
+}
