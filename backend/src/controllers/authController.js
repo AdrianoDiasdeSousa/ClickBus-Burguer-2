@@ -468,6 +468,34 @@ async function resetPassword(req, res) {
   }
 }
 
+async function getCustomers(req, res) {
+  try {
+    // Garante que somente o administrador tenha acesso.
+    await obterUsuarioAdminAutenticado(req);
+
+    const result = await pool.query(`
+      SELECT
+        id,
+        name,
+        email,
+        phone,
+        address,
+        created_at
+      FROM users
+      WHERE role = 'cliente'
+      ORDER BY created_at DESC
+    `);
+
+    return res.json(result.rows);
+  } catch (error) {
+    console.error("Erro ao buscar clientes:", error);
+
+    return res.status(error.statusCode || 500).json({
+      erro: error.message || "Erro interno ao buscar clientes.",
+    });
+  }
+}
+
 module.exports = {
   register,
   login,
@@ -475,4 +503,5 @@ module.exports = {
   updateAdminProfile,
   forgotPassword,
   resetPassword,
+  getCustomers,
 };
