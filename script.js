@@ -5524,3 +5524,149 @@ executarComSeguranca("carregarObservacaoPagina", () => {
     carregarObservacaoPagina();
   }
 });
+
+// ==============================
+// ALERTA SONORO DE NOVOS PEDIDOS
+// ==============================
+
+let somPedidoAtivado = true;
+let audioPedido = null;
+
+function obterConfiguracaoSomPedido() {
+  const toqueSalvo =
+    localStorage.getItem("toquePedido") || "audio/som1.mp3";
+
+  const volumeSalvo =
+    Number(localStorage.getItem("volumePedido") ?? 70);
+
+  const somAtivadoSalvo =
+    localStorage.getItem("somPedidoAtivado");
+
+  somPedidoAtivado =
+    somAtivadoSalvo === null
+      ? true
+      : somAtivadoSalvo === "true";
+
+  return {
+    toque: toqueSalvo,
+    volume: volumeSalvo,
+  };
+}
+
+function criarAudioPedido() {
+  const configuracao = obterConfiguracaoSomPedido();
+
+  audioPedido = new Audio(configuracao.toque);
+  audioPedido.volume = Math.min(
+    1,
+    Math.max(0, configuracao.volume / 100)
+  );
+
+  return audioPedido;
+}
+
+function testarToquePedido() {
+  if (!somPedidoAtivado) {
+    alert("O som está desativado. Ative o som para testar.");
+    return;
+  }
+
+  if (audioPedido) {
+    audioPedido.pause();
+    audioPedido.currentTime = 0;
+  }
+
+  audioPedido = criarAudioPedido();
+
+  audioPedido.play().catch((erro) => {
+    console.error("Não foi possível reproduzir o toque:", erro);
+    alert(
+      "O navegador bloqueou o áudio. Clique novamente em Testar toque."
+    );
+  });
+}
+
+function alternarSomPedido() {
+  somPedidoAtivado = !somPedidoAtivado;
+
+  localStorage.setItem(
+    "somPedidoAtivado",
+    String(somPedidoAtivado)
+  );
+
+  atualizarBotaoSomPedido();
+
+  if (!somPedidoAtivado && audioPedido) {
+    audioPedido.pause();
+    audioPedido.currentTime = 0;
+  }
+}
+
+function atualizarBotaoSomPedido() {
+  const botao = document.getElementById("btnSomPedido");
+
+  if (!botao) {
+    return;
+  }
+
+  if (somPedidoAtivado) {
+    botao.textContent = "🔊 Som ativado";
+  } else {
+    botao.textContent = "🔇 Som desativado";
+  }
+}
+
+function configurarControlesSomPedido() {
+  const seletorToque =
+    document.getElementById("toquePedido");
+
+  const controleVolume =
+    document.getElementById("volumePedido");
+
+  const valorVolume =
+    document.getElementById("valorVolumePedido");
+
+  if (!seletorToque || !controleVolume || !valorVolume) {
+    return;
+  }
+
+  const configuracao = obterConfiguracaoSomPedido();
+
+  seletorToque.value = configuracao.toque;
+  controleVolume.value = configuracao.volume;
+  valorVolume.textContent = `${configuracao.volume}%`;
+
+  atualizarBotaoSomPedido();
+
+  seletorToque.addEventListener("change", () => {
+    localStorage.setItem(
+      "toquePedido",
+      seletorToque.value
+    );
+
+    if (audioPedido) {
+      audioPedido.pause();
+      audioPedido = null;
+    }
+  });
+
+  controleVolume.addEventListener("input", () => {
+    const volume = Number(controleVolume.value);
+
+    valorVolume.textContent = `${volume}%`;
+
+    localStorage.setItem(
+      "volumePedido",
+      String(volume)
+    );
+
+    if (audioPedido) {
+      audioPedido.volume = volume / 100;
+    }
+  });
+}
+
+document.addEventListener(
+  "DOMContentLoaded",
+  configurarControlesSomPedido
+);
