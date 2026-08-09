@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Clientes - ClickBus Burguer</title>
+
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/clientes.css" />
+
+    <link rel="icon" href="data:," />
+  </head>
+
+  <body>
+    <header class="topo">
+      <a href="cardapio.html" class="area-logo">
+        <img src="img/logo-topo.png" alt="Logo ClickBus Burguer" />
+      </a>
+
+      <button
+        type="button"
+        class="btn-sair"
+        onclick="window.location.href='cardapio.html'"
+      >
+        ← Voltar
+      </button>
+    </header>
+
+    <main class="pagina-clientes">
+      <section class="cabecalho-clientes">
+        <h1>Clientes cadastrados</h1>
+
+        <p>
+          Lista de clientes cadastrados no ClickBus Burguer.
+        </p>
+
+        <div class="resumo-clientes">
+          <strong>
+            Total de clientes:
+            <span id="totalClientes">0</span>
+          </strong>
+        </div>
+      </section>
+
+      <section class="area-clientes">
+        <div id="mensagemClientes">
+          Carregando clientes...
+        </div>
+
+        <div
+          id="listaClientes"
+          class="lista-clientes"
+        ></div>
+      </section>
+    </main>
+
+    <script src="api.js"></script>
+    <script src="script.js?v=20260809"></script>
+  </body>
+</html>
