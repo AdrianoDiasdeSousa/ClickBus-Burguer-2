@@ -375,7 +375,7 @@ async function forgotPassword(req, res) {
     );
 
     const frontendUrl =
-      process.env.FRONTEND_URL || "https://clickbus-burguer.onrender.com";
+      process.env.FRONTEND_URL || "https://click-bus-burguer.vercel.app";
 
     const link = `${frontendUrl}/redefinir-senha.html?token=${token}`;
 
