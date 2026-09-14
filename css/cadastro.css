@@ -185,6 +185,12 @@
   margin-bottom: 12px;
 }
 
+.campo-senha-cadastro {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
 .campo-senha-cadastro input {
   width: 100%;
   height: 42px;
@@ -195,10 +201,10 @@
 .campo-senha-cadastro .botao-ver-senha {
   position: absolute;
   top: 50%;
-  right: 8px;
+  right: 10px;
   transform: translateY(-50%);
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: transparent !important;
   color: #333;
@@ -209,10 +215,6 @@
   line-height: 1;
 }
 
-.campo-senha-cadastro .botao-ver-senha:hover {
-  background: transparent !important;
-  opacity: 0.7;
-}
 .campo-senha-cadastro .botao-ver-senha:hover {
   background: transparent !important;
   opacity: 0.7;
