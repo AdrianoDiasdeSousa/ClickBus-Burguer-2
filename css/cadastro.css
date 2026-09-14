@@ -173,30 +173,33 @@
 }
 
 .campo-senha-cadastro {
-  display: flex;
-  align-items: center;
+  position: relative;
   width: 100%;
-  background: #ddd;
   margin-bottom: 12px;
 }
 
 .campo-senha-cadastro input {
-  flex: 1;
-  border: none;
-  margin: 0;
-  background: #ddd;
+  width: 100%;
+  padding-right: 55px;
+  box-sizing: border-box;
 }
 
 .campo-senha-cadastro .botao-ver-senha {
-  width: 58px;
-  height: 42px;
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
   border: none;
-  background: #4b4dfb;
-  color: #fff;
-  font-size: 18px;
+  background: transparent;
   cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
 }
 
 .campo-senha-cadastro .botao-ver-senha:hover {
-  background: #3537d8;
+  opacity: 0.8;
 }
