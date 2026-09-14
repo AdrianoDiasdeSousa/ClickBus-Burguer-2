@@ -58,24 +58,46 @@ Esse link expira em 30 minutos.
 Se você não solicitou isso, ignore este email.
     `,
     html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #222;">
-        <h2>Redefinir senha</h2>
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
+        <h2 style="margin-bottom: 20px;">Redefinir senha</h2>
 
         <p>Olá${nome ? `, ${nome}` : ""}.</p>
 
         <p>Recebemos uma solicitação para redefinir sua senha no ClickBus Burguer.</p>
 
-        <p>Para criar uma nova senha, clique no link abaixo:</p>
+        <p>Clique no botão abaixo para criar uma nova senha:</p>
 
-        <p>
-          <a href="${link}">
-            Redefinir minha senha
-          </a>
-        </p>
-
-        <p>Esse link expira em 30 minutos.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0;">
+          <tr>
+            <td
+              bgcolor="#ff9800"
+              style="
+                border-radius: 8px;
+                background: #ff9800;
+                text-align: center;
+              "
+            >
+              <a
+                href="${link}"
+                style="
+                  display: inline-block;
+                  padding: 12px 18px;
+                  font-family: Arial, sans-serif;
+                  font-size: 16px;
+                  font-weight: bold;
+                  color: #000000;
+                  text-decoration: none;
+                  border-radius: 8px;
+                "
+              >
+                Redefinir senha
+              </a>
+            </td>
+          </tr>
+        </table>
 
         <p>Se você não solicitou isso, ignore este email.</p>
+        <p>Esse link expira em 30 minutos.</p>
       </div>
     `,
   });
