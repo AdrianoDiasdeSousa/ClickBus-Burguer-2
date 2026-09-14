@@ -178,6 +178,13 @@
   margin-bottom: 12px;
 }
 
+.campo-senha-cadastro {
+  position: relative;
+  width: 420px;
+  max-width: 100%;
+  margin-bottom: 12px;
+}
+
 .campo-senha-cadastro input {
   width: 100%;
   height: 42px;
@@ -202,6 +209,10 @@
   line-height: 1;
 }
 
+.campo-senha-cadastro .botao-ver-senha:hover {
+  background: transparent !important;
+  opacity: 0.7;
+}
 .campo-senha-cadastro .botao-ver-senha:hover {
   background: transparent !important;
   opacity: 0.7;
