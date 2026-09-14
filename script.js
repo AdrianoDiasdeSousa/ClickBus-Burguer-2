@@ -6035,3 +6035,57 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+async function redefinirSenha(event) {
+  event.preventDefault();
+
+  const parametros = new URLSearchParams(window.location.search);
+  const token = parametros.get("token");
+
+  const novaSenha = document.getElementById("novaSenha")?.value || "";
+  const confirmarSenha = document.getElementById("confirmarSenha")?.value || "";
+
+  if (!token) {
+    mostrarAviso("Link de recuperação inválido ou expirado.", "erro");
+    return;
+  }
+
+  if (novaSenha.length < 6) {
+    mostrarAviso("A senha precisa ter pelo menos 6 caracteres.", "erro");
+    return;
+  }
+
+  if (novaSenha !== confirmarSenha) {
+    mostrarAviso("As senhas não conferem.", "erro");
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token,
+        new_password: novaSenha,
+      }),
+    });
+
+    const resultado = await resposta.json().catch(() => ({}));
+
+    if (!resposta.ok) {
+      mostrarAviso(resultado.erro || "Erro ao redefinir senha.", "erro");
+      return;
+    }
+
+    mostrarAviso("Senha redefinida com sucesso! Redirecionando...", "sucesso");
+
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 2000);
+  } catch (error) {
+    console.error("Erro ao redefinir senha:", error);
+    mostrarAviso("Erro de conexão ao redefinir senha.", "erro");
+  }
+}
