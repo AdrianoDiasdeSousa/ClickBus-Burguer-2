@@ -171,3 +171,32 @@
 .btn-confirmar-mapa-cadastro.oculto {
   display: none;
 }
+
+.campo-senha-cadastro {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: #ddd;
+  margin-bottom: 12px;
+}
+
+.campo-senha-cadastro input {
+  flex: 1;
+  border: none;
+  margin: 0;
+  background: #ddd;
+}
+
+.campo-senha-cadastro .botao-ver-senha {
+  width: 58px;
+  height: 42px;
+  border: none;
+  background: #4b4dfb;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.campo-senha-cadastro .botao-ver-senha:hover {
+  background: #3537d8;
+}
