@@ -58,26 +58,48 @@
           />
 
           <label for="senha">Senha</label>
-          <input
-            type="password"
-            id="senha"
-            name="senha"
-            placeholder="Crie uma senha"
-            autocomplete="new-password"
-            minlength="6"
-            required
-          />
+<div class="campo-senha-cadastro">
+  <input
+    type="password"
+    id="senha"
+    name="senha"
+    placeholder="Crie uma senha"
+    autocomplete="new-password"
+    minlength="6"
+    required
+  />
 
-          <label for="confirmarSenha">Confirmar senha</label>
-          <input
-            type="password"
-            id="confirmarSenha"
-            name="confirmarSenha"
-            placeholder="Confirme sua senha"
-            autocomplete="new-password"
-            minlength="6"
-            required
-          />
+  <button
+    type="button"
+    class="botao-ver-senha"
+    onclick="alternarVisibilidadeSenha('senha', this)"
+    title="Mostrar ou ocultar senha"
+  >
+    👁️
+  </button>
+</div>
+
+<label for="confirmarSenha">Confirmar senha</label>
+<div class="campo-senha-cadastro">
+  <input
+    type="password"
+    id="confirmarSenha"
+    name="confirmarSenha"
+    placeholder="Confirme sua senha"
+    autocomplete="new-password"
+    minlength="6"
+    required
+  />
+
+  <button
+    type="button"
+    class="botao-ver-senha"
+    onclick="alternarVisibilidadeSenha('confirmarSenha', this)"
+    title="Mostrar ou ocultar senha"
+  >
+    👁️
+  </button>
+</div>
 
           <label for="cep">CEP</label>
           <input
