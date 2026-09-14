@@ -29,20 +29,39 @@ async function enviarEmailRecuperacao({ para, nome, link }) {
   await transporter.sendMail({
     from,
     to: para,
-    subject: "Recuperação de senha - ClickBus Burguer",
+    replyTo: process.env.EMAIL_USER,
+    subject: "Redefinir senha do ClickBus Burguer",
+    text: `
+Olá${nome ? `, ${nome}` : ""}.
+
+Recebemos uma solicitação para redefinir sua senha no ClickBus Burguer.
+
+Use este link para criar uma nova senha:
+${link}
+
+Esse link expira em 30 minutos.
+
+Se você não solicitou isso, ignore este email.
+    `,
     html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-        <h2>Recuperação de senha</h2>
+      <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #222;">
+        <h2>Redefinir senha</h2>
+
         <p>Olá${nome ? `, ${nome}` : ""}.</p>
+
         <p>Recebemos uma solicitação para redefinir sua senha no ClickBus Burguer.</p>
-        <p>Clique no botão abaixo para criar uma nova senha:</p>
+
+        <p>Para criar uma nova senha, clique no link abaixo:</p>
+
         <p>
-          <a href="${link}" style="background:#ff9800;color:#000;padding:12px 18px;text-decoration:none;border-radius:8px;font-weight:bold;">
-            Redefinir senha
+          <a href="${link}">
+            Redefinir minha senha
           </a>
         </p>
-        <p>Se você não solicitou isso, ignore este email.</p>
+
         <p>Esse link expira em 30 minutos.</p>
+
+        <p>Se você não solicitou isso, ignore este email.</p>
       </div>
     `,
   });
