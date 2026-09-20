@@ -2479,8 +2479,19 @@ function carregarObservacaoPagina() {
     return;
   }
 
-  const observacoes = carregarObservacoesPedido();
+  const tituloObservacoes = document.getElementById("tituloObservacoes");
+  const produtos = carregarProdutos();
+  const produto = produtos.find(
+    (item) => String(item.id) === String(produtoId),
+  );
 
+  if (tituloObservacoes) {
+    tituloObservacoes.textContent = produto
+      ? `Observações — ${produto.nome}`
+      : "Observações";
+  }
+
+  const observacoes = carregarObservacoesPedido();
   campoObservacao.value = observacoes[String(produtoId)] || "";
 }
 
