@@ -139,9 +139,14 @@
 }
 
 .dica-localizacao-cadastro {
-  font-size: 16px;
-  margin: -4px 0 8px;
-  color: #555;
+  width: 100%;
+  display: block;
+  text-align: left;
+  font-size: 15px;
+  line-height: 1.35;
+  margin: -4px 0 10px 0;
+  color: #d8d8d8;
+  opacity: 0.95;
 }
 
 .mapa-endereco-cadastro {
@@ -170,19 +175,6 @@
 .mapa-endereco-cadastro.oculto,
 .btn-confirmar-mapa-cadastro.oculto {
   display: none;
-}
-
-.campo-senha-cadastro {
-  position: relative;
-  width: 100%;
-  margin-bottom: 12px;
-}
-
-.campo-senha-cadastro {
-  position: relative;
-  width: 420px;
-  max-width: 100%;
-  margin-bottom: 12px;
 }
 
 .campo-senha-cadastro {
