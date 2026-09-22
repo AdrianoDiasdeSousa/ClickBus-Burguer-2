@@ -1,0 +1,276 @@
+@media (max-width: 768px) {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .topo {
+    height: auto;
+    min-height: 70px;
+    padding: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .topo .area-logo img,
+  .area-logo img {
+    max-width: 120px;
+    height: auto;
+  }
+
+  .topo nav,
+  .menu,
+  .navegacao {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    font-size: 16px;
+    width: 100%;
+  }
+
+  .topo a,
+  .topo button {
+    font-size: 16px;
+  }
+
+  main,
+  .pagina-cardapio,
+  .pagina-cadastro,
+  .pagina-login,
+  .pagina-recuperar,
+  .pagina-carrinho,
+  .pagina-finalizar,
+  .pagina-observacoes,
+  .pagina-pedidos,
+  .pagina-clientes,
+  .pagina-perfil-loja,
+  .pagina-compartilhar {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .cadastro-container,
+  .login-container,
+  .recuperar-container,
+  .cardapio-container,
+  .carrinho-container,
+  .finalizar-container,
+  .observacoes-container,
+  .pedidos-container,
+  .clientes-container,
+  .perfil-loja-container,
+  .compartilhar-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+  }
+
+  input,
+  textarea,
+  select {
+    width: 100%;
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  button {
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: 30px;
+    text-align: center;
+  }
+
+  h2 {
+    font-size: 24px;
+    text-align: center;
+  }
+
+  h3 {
+    font-size: 20px;
+  }
+
+  .status-loja {
+    width: 95%;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+    padding: 12px;
+  }
+
+  .card-produto,
+  .item-cardapio,
+  .produto-card,
+  .produto {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 16px;
+  }
+
+  .produto-info,
+  .info-produto,
+  .dados-produto {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .produto-info h3,
+  .info-produto h3,
+  .dados-produto h3 {
+    font-size: 22px;
+    text-align: left;
+  }
+
+  .produto-info p,
+  .info-produto p,
+  .dados-produto p {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .produto-info img,
+  .info-produto img,
+  .imagem-produto,
+  .produto img {
+    display: block;
+    max-width: 180px;
+    width: 60%;
+    height: auto;
+    margin: 12px auto;
+  }
+
+  .area-quantidade,
+  .quantidade-produto,
+  .controle-quantidade {
+    width: 100%;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .area-quantidade button,
+  .quantidade-produto button,
+  .controle-quantidade button {
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
+  }
+
+  .area-quantidade input,
+  .quantidade-produto input,
+  .controle-quantidade input {
+    width: 55px;
+    height: 44px;
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .campo-senha-cadastro,
+  .campo-email,
+  .campo-localizacao-cadastro {
+    width: 100%;
+  }
+
+  .campo-senha-cadastro {
+    position: relative;
+  }
+
+  .campo-senha-cadastro input {
+    width: 100%;
+    padding-right: 50px;
+  }
+
+  .campo-senha-cadastro .botao-ver-senha {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent !important;
+    color: #333;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+  }
+
+  .campo-localizacao-cadastro {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .campo-localizacao-cadastro button {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .mapa-endereco-cadastro {
+    width: 100%;
+    height: 280px;
+  }
+
+  table {
+    width: 100%;
+    display: block;
+    overflow-x: auto;
+  }
+
+  .botao-cadastrar,
+  .botao-voltar,
+  .botao-avancar,
+  .botao-finalizar,
+  .botao-login {
+    width: 100%;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .topo {
+    justify-content: center;
+  }
+
+  .topo .area-logo img,
+  .area-logo img {
+    max-width: 110px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+
+  .produto-info h3,
+  .info-produto h3,
+  .dados-produto h3 {
+    font-size: 20px;
+  }
+
+  .produto-info p,
+  .info-produto p,
+  .dados-produto p {
+    font-size: 15px;
+  }
+
+  .produto-info img,
+  .info-produto img,
+  .imagem-produto,
+  .produto img {
+    width: 70%;
+    max-width: 160px;
+  }
+}
