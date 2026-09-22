@@ -104,17 +104,27 @@
   padding: 14px 20px;
   border: none;
   border-radius: 18px;
-  background: linear-gradient(135deg, #5a6bff, #3246ff);
-  color: #fff;
+  background: linear-gradient(135deg, #ff9800, #ff6d00);
+  color: #111;
   font-size: 22px;
   font-family: Georgia, "Times New Roman", serif;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(61, 80, 255, 0.38);
+  box-shadow: 0 10px 24px rgba(255, 152, 0, 0.38);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
-    opacity 0.2s ease;
+    filter 0.2s ease;
+}
+
+.botao-salvar-senha:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(255, 152, 0, 0.48);
+  filter: brightness(1.05);
+}
+
+.botao-salvar-senha:active {
+  transform: scale(0.98);
 }
 
 .botao-salvar-senha:hover {
