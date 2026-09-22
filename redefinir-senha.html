@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Redefinir Senha - ClickBus Burguer</title>
     <link rel="stylesheet" href="css/global.css" />
-    <link rel="stylesheet" href="css/recuperar-senha.css" />
+    <link rel="stylesheet" href="css/redefinir-senha.css" />
   </head>
 
   <body>
@@ -17,14 +17,14 @@
       <a href="login.html" class="botao-voltar">↩ Voltar</a>
     </header>
 
-    <main class="pagina-recuperar">
-      <section class="recuperar-container">
+    <main class="pagina-redefinir">
+      <section class="redefinir-container">
         <h1>Redefinir senha</h1>
 
-        <form onsubmit="redefinirSenha(event)">
+        <form class="form-redefinir" onsubmit="redefinirSenha(event)">
           <label for="novaSenha">Nova senha</label>
 
-          <div class="campo-email">
+          <div class="campo-senha-redefinir">
             <input
               type="password"
               id="novaSenha"
@@ -36,16 +36,18 @@
 
             <button
               type="button"
+              class="botao-ver-senha"
               onclick="alternarVisibilidadeSenha('novaSenha', this)"
               title="Mostrar ou ocultar senha"
+              aria-label="Mostrar senha"
             >
-              👁
+              👁️
             </button>
           </div>
 
           <label for="confirmarSenha">Confirmar nova senha</label>
 
-          <div class="campo-email">
+          <div class="campo-senha-redefinir">
             <input
               type="password"
               id="confirmarSenha"
@@ -57,17 +59,23 @@
 
             <button
               type="button"
+              class="botao-ver-senha"
               onclick="alternarVisibilidadeSenha('confirmarSenha', this)"
               title="Mostrar ou ocultar senha"
+              aria-label="Mostrar senha"
             >
-              👁
+              👁️
             </button>
           </div>
 
-          <button type="submit">Salvar nova senha</button>
+          <button type="submit" class="botao-salvar-senha">
+            Salvar nova senha
+          </button>
         </form>
 
-        <p>Depois de salvar, faça login com sua nova senha.</p>
+        <p class="texto-login-nova-senha">
+          Depois de salvar, faça login com sua nova senha.
+        </p>
       </section>
     </main>
 
