@@ -3,31 +3,63 @@
     box-sizing: border-box;
   }
 
+  html,
   body {
+    width: 100%;
     overflow-x: hidden;
   }
 
+  body {
+    margin: 0;
+  }
+
+  /* TOPO MOBILE */
   .topo {
+    width: 100%;
     height: auto;
-    min-height: 70px;
-    padding: 10px;
-    flex-wrap: wrap;
+    min-height: 76px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
     gap: 10px;
+  }
+
+  .topo .area-logo {
+    width: auto;
+    max-width: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
   }
 
   .topo .area-logo img,
   .area-logo img {
     max-width: 120px;
     height: auto;
+    display: block;
+  }
+
+  .topo .botao-voltar {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 10px 18px;
+    border-radius: 18px;
+    font-size: 18px;
+    white-space: nowrap;
   }
 
   .topo nav,
   .menu,
   .navegacao {
+    display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
-    font-size: 16px;
+    gap: 8px;
+    font-size: 15px;
     width: 100%;
   }
 
@@ -36,6 +68,7 @@
     font-size: 16px;
   }
 
+  /* ESTRUTURA GERAL */
   main,
   .pagina-cardapio,
   .pagina-cadastro,
@@ -68,6 +101,27 @@
     padding: 10px;
   }
 
+  h1 {
+    font-size: 30px;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 24px;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  h3 {
+    font-size: 20px;
+  }
+
+  p,
+  label {
+    font-size: 18px;
+  }
+
   input,
   textarea,
   select {
@@ -80,20 +134,18 @@
     max-width: 100%;
   }
 
-  h1 {
-    font-size: 30px;
-    text-align: center;
+  /* BOTÕES GERAIS */
+  .botao-cadastrar,
+  .botao-avancar,
+  .botao-finalizar,
+  .botao-login {
+    width: 100%;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  h2 {
-    font-size: 24px;
-    text-align: center;
-  }
-
-  h3 {
-    font-size: 20px;
-  }
-
+  /* STATUS DA LOJA */
   .status-loja {
     width: 95%;
     flex-direction: column;
@@ -102,6 +154,7 @@
     padding: 12px;
   }
 
+  /* CARDÁPIO */
   .card-produto,
   .item-cardapio,
   .produto-card,
@@ -170,6 +223,7 @@
     text-align: center;
   }
 
+  /* CAMPOS DE SENHA */
   .campo-senha-cadastro,
   .campo-email,
   .campo-localizacao-cadastro {
@@ -202,6 +256,12 @@
     line-height: 1;
   }
 
+  .campo-senha-cadastro .botao-ver-senha:hover {
+    background: transparent !important;
+    opacity: 0.7;
+  }
+
+  /* LOCALIZAÇÃO / MAPA */
   .campo-localizacao-cadastro {
     display: flex;
     flex-direction: column;
@@ -218,40 +278,42 @@
     height: 280px;
   }
 
+  /* TABELAS */
   table {
     width: 100%;
     display: block;
     overflow-x: auto;
   }
-
-  .botao-cadastrar,
-  .botao-voltar,
-  .botao-avancar,
-  .botao-finalizar,
-  .botao-login {
-    width: 100%;
-    max-width: 320px;
-    margin-left: auto;
-    margin-right: auto;
-  }
 }
 
 @media (max-width: 480px) {
   .topo {
-    justify-content: center;
+    min-height: 72px;
+    padding: 8px 12px;
   }
 
   .topo .area-logo img,
   .area-logo img {
-    max-width: 110px;
+    max-width: 105px;
+  }
+
+  .topo .botao-voltar {
+    padding: 9px 16px;
+    font-size: 16px;
+    border-radius: 16px;
   }
 
   h1 {
-    font-size: 26px;
+    font-size: 28px;
   }
 
   h2 {
     font-size: 22px;
+  }
+
+  p,
+  label {
+    font-size: 17px;
   }
 
   .produto-info h3,
