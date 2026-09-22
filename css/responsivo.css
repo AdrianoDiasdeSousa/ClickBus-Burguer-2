@@ -51,68 +51,76 @@
     flex-shrink: 0;
   }
 
-  /* TOPO DO CARDÁPIO */
-  .topo:has(.menu-topo) {
+  /* TOPO DO CARDÁPIO NO CELULAR */
+  .topo .menu-topo {
+    width: 100%;
+  }
+
+  body:has(.pagina-cardapio) .topo,
+  body:has(.cardapio-container) .topo {
     min-height: auto;
-    padding: 10px 12px;
-    display: grid;
-    grid-template-columns: 110px 1fr 110px;
-    grid-template-areas:
-      "logo menu sair"
-      "logo menu sair";
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
 
-  .topo:has(.menu-topo) .area-logo {
-    grid-area: logo;
+  body:has(.pagina-cardapio) .topo .area-logo,
+  body:has(.cardapio-container) .topo .area-logo {
+    width: 100%;
     justify-content: center;
+    flex: none;
   }
 
-  .topo:has(.menu-topo) .area-logo img {
-    max-width: 105px;
+  body:has(.pagina-cardapio) .topo .area-logo img,
+  body:has(.cardapio-container) .topo .area-logo img {
+    max-width: 150px;
   }
 
   .menu-topo {
-    grid-area: menu;
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
+    gap: 8px;
     align-items: center;
     justify-items: center;
-    gap: 6px 8px;
-    text-align: center;
   }
 
   .menu-topo span,
-  .menu-topo a {
+  .menu-topo a,
+  .menu-topo button {
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 15px;
     line-height: 1.1;
     text-align: center;
-    padding: 2px 4px;
-    min-height: auto;
+    text-decoration: none;
     white-space: normal;
   }
 
   .menu-topo span {
     grid-column: 1 / 3;
-    font-size: 14px;
+    font-size: 15px;
   }
 
-  .menu-topo a {
-    text-decoration: none;
+  .menu-topo .oculto {
+    display: none !important;
   }
 
-  .topo .botao-sair,
-  .botao-sair {
-    grid-area: sair;
+  .botao-sair,
+  .menu-topo .botao-sair,
+  .menu-topo .sair {
     width: 100%;
-    min-width: 95px;
-    max-width: 110px;
-    padding: 10px 8px;
-    border-radius: 20px;
+    min-width: 0;
+    max-width: none;
+    padding: 9px 8px;
+    border-radius: 18px;
     font-size: 16px;
-    text-align: center;
     white-space: nowrap;
   }
 
@@ -337,35 +345,40 @@
     border-radius: 16px;
   }
 
-  .topo:has(.menu-topo) {
-    grid-template-columns: 92px 1fr 96px;
-    padding: 8px 8px;
-    gap: 6px;
+  body:has(.pagina-cardapio) .topo,
+  body:has(.cardapio-container) .topo {
+    padding: 10px 8px;
+    gap: 8px;
   }
 
-  .topo:has(.menu-topo) .area-logo img {
-    max-width: 88px;
+  body:has(.pagina-cardapio) .topo .area-logo img,
+  body:has(.cardapio-container) .topo .area-logo img {
+    max-width: 135px;
   }
 
   .menu-topo {
-    gap: 5px;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
   }
 
   .menu-topo span,
-  .menu-topo a {
+  .menu-topo a,
+  .menu-topo button {
+    min-height: 36px;
     font-size: 14px;
+    padding: 6px 6px;
   }
 
   .menu-topo span {
-    font-size: 13px;
+    grid-column: 1 / 3;
+    font-size: 14px;
   }
 
-  .topo .botao-sair,
-  .botao-sair {
-    min-width: 88px;
-    max-width: 96px;
-    padding: 8px 6px;
+  .botao-sair,
+  .menu-topo .botao-sair,
+  .menu-topo .sair {
     font-size: 14px;
+    border-radius: 16px;
   }
 
   h1 {
