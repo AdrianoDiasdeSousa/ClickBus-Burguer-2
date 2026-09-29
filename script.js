@@ -5973,29 +5973,40 @@ async function carregarClientesCadastrados() {
           )
         : "Não informada";
 
-      card.innerHTML = `
-        <h2>${cliente.name || "Cliente"}</h2>
+   card.innerHTML = `
+  <h2>${cliente.name || "Cliente"}</h2>
 
-        <p>
-          <strong>E-mail:</strong>
-          ${cliente.email || "Não informado"}
-        </p>
+  <p>
+    <strong>E-mail:</strong>
+    ${cliente.email || "Não informado"}
+  </p>
 
-        <p>
-          <strong>Telefone:</strong>
-          ${cliente.phone || "Não informado"}
-        </p>
+  <p>
+    <strong>Telefone:</strong>
+    ${cliente.phone || "Não informado"}
+  </p>
 
-        <p>
-          <strong>Endereço:</strong>
-          ${cliente.address || "Não informado"}
-        </p>
+  <p>
+    <strong>Endereço:</strong>
+    ${cliente.address || "Não informado"}
+  </p>
 
-        <p>
-          <strong>Cadastrado em:</strong>
-          ${dataCadastro}
-        </p>
-      `;
+  <p>
+    <strong>Cadastrado em:</strong>
+    ${dataCadastro}
+  </p>
+
+  <div class="acoes-cliente">
+    <button
+      type="button"
+      class="botao-excluir-cliente"
+      data-cliente-id="${cliente.id}"
+      data-cliente-nome="${cliente.name || "Cliente"}"
+    >
+      🗑 Excluir cliente
+    </button>
+  </div>
+`;
 
       listaClientes.appendChild(card);
     });
@@ -6013,10 +6024,101 @@ async function carregarClientesCadastrados() {
   }
 }
 
+
+async function excluirCliente(clienteId, clienteNome) {
+  if (!usuarioEhAdmin()) {
+    mostrarAviso(
+      "Apenas o administrador pode excluir clientes.",
+      "erro",
+    );
+    return;
+  }
+
+  const confirmar = window.confirm(
+    `Tem certeza que deseja excluir o cliente "${clienteNome}"?`,
+  );
+
+  if (!confirmar) {
+    return;
+  }
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    mostrarAviso(
+      "Sua sessão expirou. Faça login novamente.",
+      "erro",
+    );
+    return;
+  }
+
+  try {
+    const resposta = await fetch(
+      `${API_BASE_URL}/auth/customers/${clienteId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+   const resultado = await resposta.json().catch(() => ({}));
+
+    if (!resposta.ok) {
+      throw new Error(
+        resultado?.erro ||
+          "Não foi possível excluir o cliente.",
+      );
+    }
+
+    mostrarAviso(
+      "Cliente excluído com sucesso.",
+      "sucesso",
+    );
+
+    await carregarClientesCadastrados();
+  } catch (error) {
+    console.error("Erro ao excluir cliente:", error);
+
+    mostrarAviso(
+      error.message ||
+        "Não foi possível excluir o cliente.",
+      "erro",
+    );
+  }
+}
+
+
 document.addEventListener(
   "DOMContentLoaded",
   carregarClientesCadastrados,
 );
+
+document.addEventListener("click", (event) => {
+  const botao = event.target.closest(
+    ".botao-excluir-cliente",
+  );
+
+  if (!botao) {
+    return;
+  }
+
+  const clienteId = botao.dataset.clienteId;
+  const clienteNome =
+    botao.dataset.clienteNome || "Cliente";
+
+  if (!clienteId) {
+    mostrarAviso(
+      "Não foi possível identificar o cliente.",
+      "erro",
+    );
+    return;
+  }
+
+  excluirCliente(clienteId, clienteNome);
+});
+
 // ==============================
 // PESQUISA DE CLIENTES
 // ==============================
