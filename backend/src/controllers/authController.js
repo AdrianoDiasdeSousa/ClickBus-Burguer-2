@@ -496,6 +496,51 @@ async function getCustomers(req, res) {
   }
 }
 
+async function deleteCustomer(req, res) {
+  try {
+    // Garante que somente o administrador tenha acesso.
+    await obterUsuarioAdminAutenticado(req);
+
+    const customerId = Number(req.params.id);
+
+    if (!Number.isInteger(customerId) || customerId <= 0) {
+      return res.status(400).json({
+        erro: "Cliente inválido.",
+      });
+    }
+
+    const customerResult = await pool.query(
+      `SELECT id, name, email
+       FROM users
+       WHERE id = $1 AND role = 'cliente'
+       LIMIT 1`,
+      [customerId],
+    );
+
+    if (customerResult.rows.length === 0) {
+      return res.status(404).json({
+        erro: "Cliente não encontrado.",
+      });
+    }
+
+    await pool.query(
+      `DELETE FROM users
+       WHERE id = $1 AND role = 'cliente'`,
+      [customerId],
+    );
+
+    return res.json({
+      mensagem: "Cliente excluído com sucesso.",
+    });
+  } catch (error) {
+    console.error("Erro ao excluir cliente:", error);
+
+    return res.status(error.statusCode || 500).json({
+      erro: error.message || "Erro interno ao excluir cliente.",
+    });
+  }
+}
+
 module.exports = {
   register,
   login,
@@ -504,4 +549,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   getCustomers,
+  deleteCustomer,
 };
