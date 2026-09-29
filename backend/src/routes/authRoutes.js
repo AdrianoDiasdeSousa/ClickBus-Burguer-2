@@ -8,6 +8,7 @@ const {
   forgotPassword,
   resetPassword,
   getCustomers,
+  deleteCustomer,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -21,5 +22,6 @@ router.get("/admin-profile", getAdminProfile);
 router.put("/admin-profile", updateAdminProfile);
 
 router.get("/customers", getCustomers);
+router.delete("/customers/:id", deleteCustomer);
 
 module.exports = router;
