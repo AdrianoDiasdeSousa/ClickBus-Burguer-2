@@ -3620,9 +3620,10 @@ function renderizarCarrinho() {
         <button
           type="button"
           class="btn-remover"
-          onclick="diminuirItemCarrinho(${item.id})"
+          aria-label="${Number(item.quantidade) > 1 ? 'Diminuir quantidade' : 'Remover produto'}"
+       onclick="diminuirItemCarrinho(${item.id})"
         >
-          🗑
+          ${Number(item.quantidade) > 1 ? '−' : '🗑️'}
         </button>
 
         <span>${Number(item.quantidade) || 0}</span>
@@ -3678,6 +3679,14 @@ function aumentarItemCarrinho(id) {
   renderizarCarrinho();
 }
 
+
+function limparObservacaoPedidoProduto(id) {
+  const observacoes = carregarObservacoesPedido();
+  delete observacoes[String(id)];
+  salvarObservacoesPedido(observacoes);
+}
+
+
 function diminuirItemCarrinho(id) {
   const pedido = carregarPedidoAtual();
   const item = pedido.find((produto) => produto.id === id);
@@ -3698,7 +3707,7 @@ function diminuirItemCarrinho(id) {
   sincronizarPedidoComProdutos(pedidoAtualizado);
   renderizarCarrinho();
 }
-
+ 
 function limparCarrinho() {
   const confirmar = confirm("Deseja limpar todo o carrinho?");
 

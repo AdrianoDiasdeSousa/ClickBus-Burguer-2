@@ -115,10 +115,17 @@
   color: #d87700;
 }
 
-.controle-carrinho .btn-remover {
-  color: #999;
-  font-size: 22px;
+
+.controle-carrinho .btn-remover[aria-label="Diminuir quantidade"] {
+  color: #d87700;
+  font-size: 28px;
 }
+
+.controle-carrinho .btn-remover[aria-label="Remover produto"] {
+  color: #d87700;
+  font-size: 16px;
+}
+  
 
 .controle-carrinho span {
   font-size: 28px;
