@@ -1488,6 +1488,11 @@ async function renderizarCardapio() {
 
   const produtos = await carregarProdutosDaApi();
   const admin = usuarioEhAdmin();
+   const linkCarrinhoTopo = document.getElementById("linkCarrinhoTopo");
+
+if (linkCarrinhoTopo) {
+  linkCarrinhoTopo.classList.toggle("oculto", admin);
+}
    const linkClientesAdmin =
   document.getElementById("linkClientesAdmin");
 
