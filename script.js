@@ -1645,12 +1645,21 @@ function alterarQuantidade(id, valor) {
   produto.quantidade = Number(produto.quantidade) || 0;
   produto.quantidade += valor;
 
-  if (produto.quantidade < 0) {
-    produto.quantidade = 0;
-  }
+ 
+if (produto.quantidade < 0) {
+  produto.quantidade = 0;
+}
 
-  salvarProdutos(produtos);
-  renderizarCardapio();
+if (produto.quantidade === 0) {
+  const observacoes = carregarObservacoesPedido();
+
+  delete observacoes[String(produto.id)];
+
+  salvarObservacoesPedido(observacoes);
+}
+
+salvarProdutos(produtos);
+renderizarCardapio();
 }
 
 function digitarQuantidade(id, valor) {
@@ -1678,9 +1687,19 @@ function digitarQuantidade(id, valor) {
     produto.quantidade = quantidade;
   }
 
+  
+  if (produto.quantidade === 0) {
+    const observacoes = carregarObservacoesPedido();
+
+    delete observacoes[String(produto.id)];
+
+    salvarObservacoesPedido(observacoes);
+  }
+
   salvarProdutos(produtos);
   atualizarTotal();
 }
+
 
 function atualizarTotal() {
   if (usuarioEhAdmin()) {
