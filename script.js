@@ -2567,7 +2567,7 @@ function carregarObservacaoPagina() {
     const campo = document.createElement("textarea");
     campo.className = "campo-observacao-individual";
     campo.id = `observacaoUnidade${indice}`;
-    campo.placeholder = "Ex.: Sem cebola, sem milho...";
+    campo.placeholder = "Ex.: Tirar milho, batata palha, etc.";
     campo.value = unidades[indice] || "";
 
     rotulo.htmlFor = campo.id;
