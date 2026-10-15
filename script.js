@@ -4051,6 +4051,26 @@ function diminuirItemCarrinho(id) {
   renderizarCarrinho();
 }
 
+function limparCarrinho() {
+  const confirmar = confirm("Deseja limpar todo o carrinho?");
+
+  if (!confirmar) return;
+
+  localStorage.removeItem("pedidoAtual");
+  localStorage.removeItem("observacoesPedidoAtual");
+  localStorage.removeItem("produtoObservacaoId");
+  localStorage.removeItem("origemObservacoes");
+
+  const produtos = carregarProdutos();
+
+  produtos.forEach((produto) => {
+    produto.quantidade = 0;
+  });
+
+  salvarProdutos(produtos);
+  renderizarCarrinho();
+}
+
 function sincronizarPedidoComProdutos(pedido) {
   const produtos = carregarProdutos();
 
