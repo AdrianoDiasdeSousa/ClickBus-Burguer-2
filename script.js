@@ -2654,18 +2654,34 @@ async function avancarPedido() {
       (produto) =>
         Number(produto.quantidade) > 0 && produto.disponivel !== false,
     )
-    .map((produto) => {
-      const itemPedido = { ...produto };
-      const observacao = observacoes[String(produto.id)] || "";
+    
+.map((produto) => {
+  const itemPedido = { ...produto };
+  const quantidade = Number(produto.quantidade) || 0;
 
-      if (observacao) {
-        itemPedido.observacao = observacao;
-      } else {
-        delete itemPedido.observacao;
-      }
+  const valorSalvo = observacoes[String(produto.id)];
 
-      return itemPedido;
-    });
+  const observacoesIndividuais = Array.isArray(valorSalvo)
+    ? valorSalvo.slice(0, quantidade)
+    : Array.from(
+        { length: quantidade },
+        (_, indice) =>
+          indice === 0 && typeof valorSalvo === "string"
+            ? valorSalvo
+            : ""
+      );
+
+  while (observacoesIndividuais.length < quantidade) {
+    observacoesIndividuais.push("");
+  }
+
+  itemPedido.observacoesIndividuais = observacoesIndividuais;
+
+  delete itemPedido.observacao;
+
+  return itemPedido;
+});
+
 
   if (itensSelecionados.length === 0) {
     mostrarAviso("Selecione pelo menos um item antes de avançar.", "erro");
