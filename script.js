@@ -1488,6 +1488,11 @@ async function renderizarCardapio() {
 
   const produtos = await carregarProdutosDaApi();
   const admin = usuarioEhAdmin();
+   const linkCarrinhoTopo = document.getElementById("linkCarrinhoTopo");
+
+if (linkCarrinhoTopo) {
+  linkCarrinhoTopo.classList.toggle("oculto", admin);
+}
    const linkClientesAdmin =
   document.getElementById("linkClientesAdmin");
 
@@ -1560,10 +1565,10 @@ if (linkClientesAdmin) {
           <strong>${formatarMoeda(Number(produto.preco) || 0)}</strong>
 
           ${
-            !admin && produto.categoria === "lanche"
-              ? `<button type="button" class="btn-observacoes" onclick="adicionarObservacao(${produto.id})">Observações</button>`
-              : ""
-          }
+  !admin
+    ? `<button type="button" class="btn-observacoes" onclick="adicionarObservacao(${produto.id})">Observações</button>`
+    : ""
+}
 
           ${
             admin
@@ -1629,6 +1634,23 @@ if (linkClientesAdmin) {
   atualizarTotal();
 }
 
+function sincronizarObservacoesComQuantidade(id, quantidade) {
+  const observacoes = carregarObservacoesPedido();
+  const chave = String(id);
+  const valorAtual = observacoes[chave];
+
+  const novaQuantidade = Math.max(0, Math.trunc(Number(quantidade) || 0));
+
+  if (novaQuantidade === 0) {
+    delete observacoes[chave];
+  } else if (Array.isArray(valorAtual)) {
+    observacoes[chave] = valorAtual.slice(0, novaQuantidade);
+  }
+
+  salvarObservacoesPedido(observacoes);
+}
+
+
 function alterarQuantidade(id, valor) {
   if (bloquearPedidoParaAdmin()) return;
 
@@ -1645,12 +1667,18 @@ function alterarQuantidade(id, valor) {
   produto.quantidade = Number(produto.quantidade) || 0;
   produto.quantidade += valor;
 
-  if (produto.quantidade < 0) {
-    produto.quantidade = 0;
-  }
+ 
+if (produto.quantidade < 0) {
+  produto.quantidade = 0;
+}
 
-  salvarProdutos(produtos);
-  renderizarCardapio();
+sincronizarObservacoesComQuantidade(
+  produto.id,
+  produto.quantidade
+);
+
+salvarProdutos(produtos);
+renderizarCardapio();
 }
 
 function digitarQuantidade(id, valor) {
@@ -1678,9 +1706,16 @@ function digitarQuantidade(id, valor) {
     produto.quantidade = quantidade;
   }
 
+  
+ sincronizarObservacoesComQuantidade(
+  produto.id,
+  produto.quantidade
+);
+
   salvarProdutos(produtos);
   atualizarTotal();
 }
+
 
 function atualizarTotal() {
   if (usuarioEhAdmin()) {
@@ -1704,10 +1739,25 @@ function atualizarTotal() {
   }
 }
 
+
 function adicionarObservacao(id) {
-  localStorage.setItem("produtoObservacaoId", id);
+  const produtos = carregarProdutos();
+  const produto = produtos.find(
+    (item) => String(item.id) === String(id)
+  );
+
+  if (!produto || Number(produto.quantidade) <= 0) {
+    mostrarAviso(
+      "Adicione pelo menos uma unidade antes de incluir observações.",
+      "erro"
+    );
+    return;
+  }
+
+  localStorage.setItem("produtoObservacaoId", String(id));
   window.location.href = "observacoes.html";
 }
+  
 
 function obterCardProdutoMaisProximo(elemento) {
   return elemento?.closest?.(".produto-admin") || null;
@@ -2462,74 +2512,171 @@ function salvarObservacoesPedido(observacoes) {
   );
 }
 
-function carregarObservacaoPagina() {
-  const campoObservacao = document.getElementById("campoObservacao");
 
-  if (!campoObservacao) return;
+function carregarObservacaoPagina() {
+  const container = document.getElementById(
+    "camposObservacoesIndividuais"
+  );
+
+  if (!container) return;
 
   const produtoId = localStorage.getItem("produtoObservacaoId");
+const veioDoCarrinho =
+  localStorage.getItem("origemObservacoes") === "carrinho";
 
-  if (!produtoId) {
-    mostrarAviso("Escolha um produto antes de adicionar observações.", "erro");
+const produtos = carregarProdutos();
+const produto = produtos.find(
+  (item) => String(item.id) === String(produtoId)
+);
 
-    setTimeout(() => {
-      window.location.href = "cardapio.html";
-    }, TEMPO_AVISO_NAVEGACAO);
+const pedido = veioDoCarrinho ? carregarPedidoAtual() : [];
+const itemCarrinho = veioDoCarrinho
+  ? pedido.find((item) => String(item.id) === String(produtoId))
+  : null;
 
+const quantidade = veioDoCarrinho
+  ? Number(itemCarrinho?.quantidade) || 0
+  : Number(produto?.quantidade) || 0;
+
+  if (!produtoId || !produto || quantidade <= 0) {
+    mostrarAviso(
+      "Selecione pelo menos uma unidade do produto.",
+      "erro"
+    );
+     
+   avisarENavegar(
+  veioDoCarrinho
+    ? "Volte ao carrinho e confira o produto."
+    : "Volte ao cardápio e selecione o produto.",
+  veioDoCarrinho ? "carrinho.html" : "cardapio.html",
+  "erro"
+);
     return;
   }
 
-  const tituloObservacoes = document.getElementById("tituloObservacoes");
-  const produtos = carregarProdutos();
-  const produto = produtos.find(
-    (item) => String(item.id) === String(produtoId),
-  );
+  const titulo = document.getElementById("tituloObservacoes");
 
-  if (tituloObservacoes) {
-    tituloObservacoes.textContent = produto
-      ? `Observações — ${produto.nome}`
-      : "Observações";
+  if (titulo) {
+    titulo.textContent = `Observações — ${produto.nome}`;
   }
 
   const observacoes = carregarObservacoesPedido();
-  campoObservacao.value = observacoes[String(produtoId)] || "";
+
+const valorSalvo =
+  veioDoCarrinho && Array.isArray(itemCarrinho?.observacoesIndividuais)
+    ? itemCarrinho.observacoesIndividuais
+    : observacoes[String(produtoId)];
+
+  const unidades = Array.isArray(valorSalvo)
+    ? valorSalvo.slice(0, quantidade)
+    : Array.from(
+        { length: quantidade },
+        (_, indice) =>
+          indice === 0 && typeof valorSalvo === "string"
+            ? valorSalvo
+            : ""
+      );
+
+  container.replaceChildren();
+
+  for (let indice = 0; indice < quantidade; indice++) {
+    const grupo = document.createElement("div");
+    grupo.className = "grupo-observacao";
+
+    const rotulo = document.createElement("label");
+    rotulo.textContent = `Unidade ${indice + 1}`;
+
+    const campo = document.createElement("textarea");
+    campo.className = "campo-observacao-individual";
+    campo.id = `observacaoUnidade${indice}`;
+    campo.placeholder = "Ex.: Tirar milho, batata palha, etc.";
+    campo.value = unidades[indice] || "";
+
+    rotulo.htmlFor = campo.id;
+
+    grupo.append(rotulo, campo);
+    container.appendChild(grupo);
+  }
 }
 
-function salvarObservacaoPagina() {
-  const campoObservacao = document.getElementById("campoObservacao");
 
-  if (!campoObservacao) return;
+function salvarObservacaoPagina() {
+  const container = document.getElementById(
+    "camposObservacoesIndividuais"
+  );
+
+  if (!container) return;
 
   const produtoId = localStorage.getItem("produtoObservacaoId");
+  const origem = localStorage.getItem("origemObservacoes");
+  const veioDoCarrinho = origem === "carrinho";
 
-  if (!produtoId) {
+  const produtos = carregarProdutos();
+  const produto = produtos.find(
+    (item) => String(item.id) === String(produtoId)
+  );
+
+  const pedido = veioDoCarrinho ? carregarPedidoAtual() : [];
+  const itemCarrinho = veioDoCarrinho
+    ? pedido.find((item) => String(item.id) === String(produtoId))
+    : null;
+
+  const quantidade = veioDoCarrinho
+    ? Number(itemCarrinho?.quantidade) || 0
+    : Number(produto?.quantidade) || 0;
+
+  if (!produtoId || !produto || quantidade <= 0 ||
+      (veioDoCarrinho && !itemCarrinho)) {
+    mostrarAviso("Produto ou quantidade inválida.", "erro");
+    return;
+  }
+
+  const campos = Array.from(
+    container.querySelectorAll(".campo-observacao-individual")
+  );
+
+  if (campos.length !== quantidade) {
     mostrarAviso(
-      "Não foi possível identificar o produto da observação.",
-      "erro",
+      "A quantidade mudou. Reabra as observações.",
+      "erro"
     );
     return;
   }
 
+  const unidades = campos.map((campo) => campo.value.trim());
   const observacoes = carregarObservacoesPedido();
-  const textoObservacao = campoObservacao.value.trim();
 
-  if (textoObservacao) {
-    observacoes[String(produtoId)] = textoObservacao;
+  if (unidades.some((texto) => texto !== "")) {
+    observacoes[String(produtoId)] = [...unidades];
   } else {
     delete observacoes[String(produtoId)];
   }
 
   salvarObservacoesPedido(observacoes);
 
+  if (veioDoCarrinho) {
+    itemCarrinho.observacoesIndividuais = [...unidades];
+    delete itemCarrinho.observacao;
+    salvarPedidoAtual(pedido);
+  }
+
+  localStorage.removeItem("origemObservacoes");
+
   mostrarAviso(
-    "Observação salva com sucesso.",
+    "Observações salvas com sucesso.",
     "sucesso",
-    TEMPO_AVISO_NAVEGACAO,
+    TEMPO_AVISO_NAVEGACAO
   );
 
   setTimeout(() => {
-    window.location.href = "cardapio.html";
+    window.location.href = veioDoCarrinho
+      ? "carrinho.html"
+      : "cardapio.html";
   }, TEMPO_AVISO_NAVEGACAO);
+}
+
+async function abrirCarrinhoDoCardapio() {
+  await avancarPedido();
 }
 
 async function avancarPedido() {
@@ -2554,23 +2701,39 @@ async function avancarPedido() {
       (produto) =>
         Number(produto.quantidade) > 0 && produto.disponivel !== false,
     )
-    .map((produto) => {
-      const itemPedido = { ...produto };
-      const observacao = observacoes[String(produto.id)] || "";
+    
+.map((produto) => {
+  const itemPedido = { ...produto };
+  const quantidade = Number(produto.quantidade) || 0;
 
-      if (observacao) {
-        itemPedido.observacao = observacao;
-      } else {
-        delete itemPedido.observacao;
-      }
+  const valorSalvo = observacoes[String(produto.id)];
 
-      return itemPedido;
-    });
+  const observacoesIndividuais = Array.isArray(valorSalvo)
+    ? valorSalvo.slice(0, quantidade)
+    : Array.from(
+        { length: quantidade },
+        (_, indice) =>
+          indice === 0 && typeof valorSalvo === "string"
+            ? valorSalvo
+            : ""
+      );
 
-  if (itensSelecionados.length === 0) {
-    mostrarAviso("Selecione pelo menos um item antes de avançar.", "erro");
-    return;
+  while (observacoesIndividuais.length < quantidade) {
+    observacoesIndividuais.push("");
   }
+
+  itemPedido.observacoesIndividuais = observacoesIndividuais;
+
+  delete itemPedido.observacao;
+
+  return itemPedido;
+});
+
+
+ if (itensSelecionados.length === 0) {
+  mostrarAviso("Seu carrinho está vazio.", "erro");
+  return;
+}
 
   localStorage.setItem("pedidoAtual", JSON.stringify(itensSelecionados));
 
@@ -3563,6 +3726,38 @@ function salvarPedidoAtual(pedido) {
   localStorage.setItem("pedidoAtual", JSON.stringify(pedido));
 }
 
+function escaparHTML(texto) {
+  return String(texto).replace(/[&<>"']/g, (caractere) => {
+    const entidades = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    };
+
+    return entidades[caractere];
+  });
+}
+
+function abrirObservacoesCarrinho(id) {
+  const pedido = carregarPedidoAtual();
+
+  const item = pedido.find(
+    (produto) => String(produto.id) === String(id)
+  );
+
+  if (!item || Number(item.quantidade) <= 0) {
+    mostrarAviso("Produto não encontrado no carrinho.", "erro");
+    return;
+  }
+
+  localStorage.setItem("produtoObservacaoId", String(id));
+  localStorage.setItem("origemObservacoes", "carrinho");
+
+  window.location.href = "observacoes.html";
+}
+
 function renderizarCarrinho() {
   const listaCarrinho = document.getElementById("listaCarrinho");
   const valorTotalCarrinho = document.getElementById("valorTotalCarrinho");
@@ -3596,43 +3791,107 @@ function renderizarCarrinho() {
   }
 
   pedido.forEach((item) => {
-    const linha = document.createElement("div");
-    linha.className = "item-carrinho";
+  const linha = document.createElement("div");
+  linha.className = "item-carrinho";
 
-    linha.innerHTML = `
-      <div class="nome-item">
-        <span class="check-item">✓</span>
-        <div class="texto-item-carrinho">
-          <span>${item.nome}</span>
-          ${
-            item.observacao
-              ? `<small class="observacao-carrinho">Obs: ${item.observacao}</small>`
-              : ""
-          }
+  const quantidade = Math.max(0, Number(item.quantidade) || 0);
+
+  const observacoes = Array.isArray(item.observacoesIndividuais)
+    ? item.observacoesIndividuais.slice(0, quantidade)
+    : Array.from({ length: quantidade }, (_, indice) =>
+        indice === 0 && typeof item.observacao === "string"
+          ? item.observacao
+          : ""
+      );
+
+  while (observacoes.length < quantidade) {
+    observacoes.push("");
+  }
+
+ const temObservacoes = observacoes.some(
+  (observacao) => typeof observacao === "string" && observacao.trim()
+);
+
+      const unidadesHTML = temObservacoes
+  ? observacoes
+      .map((observacao, indice) => `
+        <div class="unidade-carrinho">
+          <button
+            type="button"
+            class="btn-excluir-unidade"
+            data-indice="${indice}"
+            aria-label="Excluir unidade ${indice + 1}"
+            title="Excluir unidade ${indice + 1}"
+          >
+            🗑️
+          </button>
+
+          <div class="texto-unidade-carrinho">
+            <strong>Unidade ${indice + 1}</strong>
+            <small class="observacao-carrinho">
+              ${
+                typeof observacao === "string" && observacao.trim()
+                  ? escaparHTML(observacao)
+                  : "Sem observação"
+              }
+            </small>
+          </div>
         </div>
-      </div>
+      `)
+      .join("")
+  : "";
 
-      <div class="preco-item">
-        ${formatarMoeda(Number(item.preco) || 0)}
-      </div>
+     linha.innerHTML = `
+  <div class="coluna-info-item">
+    <div class="nome-item">
+      <div class="texto-item-carrinho">
+        <span class="titulo-produto-carrinho">${escaparHTML(item.nome)}</span>
+        ${unidadesHTML}
 
-      <div class="controle-carrinho">
         <button
-          type="button"
-          class="btn-remover"
-          aria-label="${Number(item.quantidade) > 1 ? 'Diminuir quantidade' : 'Remover produto'}"
-       onclick="diminuirItemCarrinho(${item.id})"
-        >
-          ${Number(item.quantidade) > 1 ? '−' : '🗑️'}
-        </button>
-
-        <span>${Number(item.quantidade) || 0}</span>
-
-        <button type="button" onclick="aumentarItemCarrinho(${item.id})">
-          ＋
-        </button>
+  type="button"
+  class="btn-adicionar-observacao-carrinho"
+  onclick="abrirObservacoesCarrinho(${Number(item.id)})"
+>
+  ${temObservacoes ? "✏️ Editar observações" : "✏️ Adicionar observação"}
+</button>
       </div>
-    `;
+    </div>
+  </div>
+
+  <div class="preco-item">
+    ${formatarMoeda(Number(item.preco) || 0)}
+  </div>
+
+  <div class="controle-carrinho">
+  ${!temObservacoes ? `
+    <button
+      type="button"
+      class="btn-remover"
+      aria-label="${quantidade > 1 ? 'Diminuir quantidade' : 'Remover produto'}"
+      onclick="diminuirItemCarrinho(${Number(item.id)})"
+    >
+      ${quantidade > 1 ? '−' : '🗑️'}
+    </button>
+  ` : ""}
+
+  <span>${quantidade}</span>
+
+  <button
+    type="button"
+    onclick="aumentarItemCarrinho(${Number(item.id)})"
+    aria-label="Adicionar uma unidade"
+  >
+    ＋
+  </button>
+</div>
+`;
+
+        linha.querySelectorAll(".btn-excluir-unidade").forEach((botao) => {
+      botao.addEventListener("click", () => {
+        excluirUnidadeCarrinho(item.id, Number(botao.dataset.indice));
+      });
+    });
 
     listaCarrinho.appendChild(linha);
   });
@@ -3687,27 +3946,114 @@ function limparObservacaoPedidoProduto(id) {
 }
 
 
-function diminuirItemCarrinho(id) {
+function excluirUnidadeCarrinho(id, indiceUnidade) {
   const pedido = carregarPedidoAtual();
-  const item = pedido.find((produto) => produto.id === id);
+  const item = pedido.find(
+    (produto) => String(produto.id) === String(id)
+  );
 
   if (!item) return;
 
-  item.quantidade = Number(item.quantidade) || 0;
-  item.quantidade -= 1;
+  const quantidade = Number(item.quantidade) || 0;
+  const indice = Number(indiceUnidade);
 
-  let pedidoAtualizado = pedido;
-
-  if (item.quantidade <= 0) {
-    pedidoAtualizado = pedido.filter((produto) => produto.id !== id);
-    limparObservacaoPedidoProduto(id);
+  if (!Number.isInteger(indice) || indice < 0 || indice >= quantidade) {
+    return;
   }
+
+  const unidades = Array.isArray(item.observacoesIndividuais)
+    ? [...item.observacoesIndividuais]
+    : Array.from({ length: quantidade }, (_, i) =>
+        i === 0 ? String(item.observacao || "") : ""
+      );
+
+  while (unidades.length < quantidade) {
+    unidades.push("");
+  }
+
+  unidades.splice(indice, 1);
+  item.quantidade = quantidade - 1;
+
+  const observacoes = carregarObservacoesPedido();
+  const chave = String(id);
+
+  if (item.quantidade === 0) {
+  delete observacoes[chave];
+} else {
+  item.observacoesIndividuais = unidades;
+  observacoes[chave] = [...unidades];
+}
+
+delete item.observacao;
+
+  salvarObservacoesPedido(observacoes);
+
+  const pedidoAtualizado = item.quantidade === 0
+    ? pedido.filter((produto) => String(produto.id) !== String(id))
+    : pedido;
 
   salvarPedidoAtual(pedidoAtualizado);
   sincronizarPedidoComProdutos(pedidoAtualizado);
   renderizarCarrinho();
 }
- 
+  
+
+function diminuirItemCarrinho(id) {
+  const pedido = carregarPedidoAtual();
+
+  const item = pedido.find(
+    (produto) => String(produto.id) === String(id)
+  );
+
+  if (!item) return;
+
+  const quantidade = Number(item.quantidade) || 0;
+
+  const unidades = Array.isArray(item.observacoesIndividuais)
+    ? item.observacoesIndividuais
+    : [];
+
+  const temObservacoes = unidades.some(
+    (texto) => typeof texto === "string" && texto.trim()
+  ) || (
+    typeof item.observacao === "string" &&
+    item.observacao.trim()
+  );
+
+  if (temObservacoes) {
+    mostrarAviso(
+      "Escolha a unidade que deseja excluir pela lixeira.",
+      "erro"
+    );
+    return;
+  }
+
+  item.quantidade = Math.max(0, quantidade - 1);
+
+  const observacoes = carregarObservacoesPedido();
+  const chave = String(id);
+
+  if (item.quantidade === 0) {
+    delete observacoes[chave];
+  } else {
+    item.observacoesIndividuais = Array(item.quantidade).fill("");
+    delete observacoes[chave];
+  }
+
+  delete item.observacao;
+  salvarObservacoesPedido(observacoes);
+
+  const pedidoAtualizado = item.quantidade === 0
+    ? pedido.filter(
+        (produto) => String(produto.id) !== String(id)
+      )
+    : pedido;
+
+  salvarPedidoAtual(pedidoAtualizado);
+  sincronizarPedidoComProdutos(pedidoAtualizado);
+  renderizarCarrinho();
+}
+
 function limparCarrinho() {
   const confirmar = confirm("Deseja limpar todo o carrinho?");
 
@@ -3715,6 +4061,8 @@ function limparCarrinho() {
 
   localStorage.removeItem("pedidoAtual");
   localStorage.removeItem("observacoesPedidoAtual");
+  localStorage.removeItem("produtoObservacaoId");
+  localStorage.removeItem("origemObservacoes");
 
   const produtos = carregarProdutos();
 

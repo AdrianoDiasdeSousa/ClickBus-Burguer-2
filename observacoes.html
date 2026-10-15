@@ -15,16 +15,18 @@
         <img src="img/logo-topo.png" alt="Logo ClickBus Burguer" />
       </a>
 
-      <a href="cardapio.html" class="botao-voltar">↩ Voltar</a>
+      <a href="cardapio.html" id="botaoVoltarObservacoes" class="botao-voltar">
+  ↩ Voltar
+</a>
     </header>
 
     <main class="pagina-observacoes">
       <section class="observacoes-container">
        <h1 id="tituloObservacoes">Observações</h1>
-        <textarea
-          id="campoObservacao"
-          placeholder="Ex.: Tirar milho, batata palha, etc."
-        ></textarea>
+  <div
+  id="camposObservacoesIndividuais"
+  class="campos-observacoes-individuais"
+  ></div>
 
         <div class="botoes-observacoes">
           <a href="cardapio.html" class="btn-continuar">
@@ -43,5 +45,16 @@
     </main>
 
     <script src="script.js"></script>
+    <script>
+  const botaoVoltar = document.getElementById("botaoVoltarObservacoes");
+
+  if (localStorage.getItem("origemObservacoes") === "carrinho") {
+    botaoVoltar.href = "carrinho.html";
+  }
+
+  botaoVoltar.addEventListener("click", () => {
+    localStorage.removeItem("origemObservacoes");
+  });
+</script>
   </body>
 </html>
