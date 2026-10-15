@@ -1629,6 +1629,23 @@ if (linkClientesAdmin) {
   atualizarTotal();
 }
 
+function sincronizarObservacoesComQuantidade(id, quantidade) {
+  const observacoes = carregarObservacoesPedido();
+  const chave = String(id);
+  const valorAtual = observacoes[chave];
+
+  const novaQuantidade = Math.max(0, Math.trunc(Number(quantidade) || 0));
+
+  if (novaQuantidade === 0) {
+    delete observacoes[chave];
+  } else if (Array.isArray(valorAtual)) {
+    observacoes[chave] = valorAtual.slice(0, novaQuantidade);
+  }
+
+  salvarObservacoesPedido(observacoes);
+}
+
+
 function alterarQuantidade(id, valor) {
   if (bloquearPedidoParaAdmin()) return;
 
@@ -1650,13 +1667,10 @@ if (produto.quantidade < 0) {
   produto.quantidade = 0;
 }
 
-if (produto.quantidade === 0) {
-  const observacoes = carregarObservacoesPedido();
-
-  delete observacoes[String(produto.id)];
-
-  salvarObservacoesPedido(observacoes);
-}
+sincronizarObservacoesComQuantidade(
+  produto.id,
+  produto.quantidade
+);
 
 salvarProdutos(produtos);
 renderizarCardapio();
@@ -1688,13 +1702,10 @@ function digitarQuantidade(id, valor) {
   }
 
   
-  if (produto.quantidade === 0) {
-    const observacoes = carregarObservacoesPedido();
-
-    delete observacoes[String(produto.id)];
-
-    salvarObservacoesPedido(observacoes);
-  }
+ sincronizarObservacoesComQuantidade(
+  produto.id,
+  produto.quantidade
+);
 
   salvarProdutos(produtos);
   atualizarTotal();
