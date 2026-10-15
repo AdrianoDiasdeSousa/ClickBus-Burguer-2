@@ -3679,6 +3679,20 @@ function salvarPedidoAtual(pedido) {
   localStorage.setItem("pedidoAtual", JSON.stringify(pedido));
 }
 
+function escaparHTML(texto) {
+  return String(texto).replace(/[&<>"']/g, (caractere) => {
+    const entidades = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    };
+
+    return entidades[caractere];
+  });
+}
+
 function renderizarCarrinho() {
   const listaCarrinho = document.getElementById("listaCarrinho");
   const valorTotalCarrinho = document.getElementById("valorTotalCarrinho");
@@ -3720,11 +3734,26 @@ function renderizarCarrinho() {
         <span class="check-item">✓</span>
         <div class="texto-item-carrinho">
           <span>${item.nome}</span>
-          ${
-            item.observacao
-              ? `<small class="observacao-carrinho">Obs: ${item.observacao}</small>`
-              : ""
-          }
+          
+${
+  Array.isArray(item.observacoesIndividuais)
+    ? item.observacoesIndividuais
+        .slice(0, Number(item.quantidade) || 0)
+        .map((observacao, indice) =>
+          observacao.trim()
+            ? `<small class="observacao-carrinho">
+                 Unidade ${indice + 1}: ${escaparHTML(observacao)}
+               </small>`
+            : ""
+        )
+        .join("")
+    : typeof item.observacao === "string" && item.observacao.trim()
+      ? `<small class="observacao-carrinho">
+           Obs: ${escaparHTML(item.observacao)}
+         </small>`
+      : ""
+}
+
         </div>
       </div>
 
