@@ -4580,19 +4580,36 @@ async function confirmarPedido() {
     change_for: changeFor,
     total_amount: totalValor,
     notes: "",
-    items: pedido.map((item) => {
-      const observacao = item.observacao || observacoes[String(item.id)] || "";
+    
+items: pedido.flatMap((item) => {
+  const quantidade = Math.max(0, Math.trunc(Number(item.quantidade) || 0));
+  const preco = Number(item.preco) || 0;
 
-      return {
-        product_id: Number(item.id) || null,
-        product_name: item.nome,
-        quantity: Number(item.quantidade) || 0,
-        unit_price: Number(item.preco) || 0,
-        subtotal: (Number(item.preco) || 0) * (Number(item.quantidade) || 0),
-        observation: observacao,
-      };
-    }),
-  };
+  const valorSalvo = observacoes[String(item.id)];
+
+  const observacoesIndividuais = Array.isArray(item.observacoesIndividuais)
+    ? item.observacoesIndividuais
+    : Array.isArray(valorSalvo)
+      ? valorSalvo
+      : Array.from({ length: quantidade }, (_, indice) =>
+          indice === 0
+            ? String(item.observacao || valorSalvo || "")
+            : ""
+        );
+
+  return Array.from({ length: quantidade }, (_, indice) => ({
+    product_id: Number(item.id) || null,
+    product_name: item.nome,
+    quantity: 1,
+    unit_price: preco,
+    subtotal: preco,
+    observation:
+      typeof observacoesIndividuais[indice] === "string"
+        ? observacoesIndividuais[indice].trim()
+        : "",
+  }));
+}),
+ };
 
   const botaoConfirmar = document.querySelector(
     'button[onclick="confirmarPedido()"]',
