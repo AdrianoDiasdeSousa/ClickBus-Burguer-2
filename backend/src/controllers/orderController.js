@@ -125,6 +125,7 @@ async function listOrders(req, res) {
               'subtotal', oi.subtotal,
               'observation', oi.observation
             )
+            ORDER BY oi.id ASC
           ) FILTER (WHERE oi.id IS NOT NULL),
           '[]'
         ) AS items
