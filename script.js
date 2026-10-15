@@ -5195,6 +5195,42 @@ async function alterarStatusPedido(id, novoStatus) {
   }
 }
 
+
+function agruparItensDetalhePedido(itens) {
+  const grupos = new Map();
+
+  (Array.isArray(itens) ? itens : []).forEach((item) => {
+    const chave = `${item.id ?? ""}|${item.nome ?? ""}|${item.preco ?? ""}`;
+    const quantidade = Math.max(0, Math.trunc(Number(item.quantidade) || 0));
+    const preco = Number(item.preco) || 0;
+
+    if (!grupos.has(chave)) {
+      grupos.set(chave, {
+        nome: item.nome,
+        quantidade: 0,
+        subtotal: 0,
+        observacoes: [],
+      });
+    }
+
+    const grupo = grupos.get(chave);
+
+    grupo.quantidade += quantidade;
+    grupo.subtotal += quantidade * preco;
+
+    for (let indice = 0; indice < quantidade; indice++) {
+      grupo.observacoes.push(
+        indice === 0 && typeof item.observacao === "string"
+          ? item.observacao
+          : ""
+      );
+    }
+  });
+
+  return Array.from(grupos.values());
+}
+
+
 async function carregarDetalhePedidoPagina() {
   const estaNaPaginaDetalhe = window.location.pathname.includes(
     "detalhe-pedido.html",
