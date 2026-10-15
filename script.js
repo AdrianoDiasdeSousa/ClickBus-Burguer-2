@@ -3840,19 +3840,13 @@ function renderizarCarrinho() {
         <span class="titulo-produto-carrinho">${escaparHTML(item.nome)}</span>
         ${unidadesHTML}
 
-        ${
-          !temObservacoes
-            ? `
-              <button
-                type="button"
-                class="btn-adicionar-observacao-carrinho"
-                onclick="abrirObservacoesCarrinho(${Number(item.id)})"
-              >
-                ✏️ Adicionar observação
-              </button>
-            `
-            : ""
-        }
+        <button
+  type="button"
+  class="btn-adicionar-observacao-carrinho"
+  onclick="abrirObservacoesCarrinho(${Number(item.id)})"
+>
+  ${temObservacoes ? "✏️ Editar observações" : "✏️ Adicionar observação"}
+</button>
       </div>
     </div>
   </div>
