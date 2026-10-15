@@ -3731,7 +3731,6 @@ function renderizarCarrinho() {
 
     linha.innerHTML = `
       <div class="nome-item">
-        <span class="check-item">✓</span>
         <div class="texto-item-carrinho">
           <span>${item.nome}</span>
           
