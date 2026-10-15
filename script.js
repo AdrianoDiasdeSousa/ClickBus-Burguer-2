@@ -1560,10 +1560,10 @@ if (linkClientesAdmin) {
           <strong>${formatarMoeda(Number(produto.preco) || 0)}</strong>
 
           ${
-            !admin && produto.categoria === "lanche"
-              ? `<button type="button" class="btn-observacoes" onclick="adicionarObservacao(${produto.id})">Observações</button>`
-              : ""
-          }
+  !admin
+    ? `<button type="button" class="btn-observacoes" onclick="adicionarObservacao(${produto.id})">Observações</button>`
+    : ""
+}
 
           ${
             admin
