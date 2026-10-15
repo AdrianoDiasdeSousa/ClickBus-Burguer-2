@@ -3856,21 +3856,27 @@ function renderizarCarrinho() {
   </div>
 
   <div class="controle-carrinho">
+  ${!temObservacoes ? `
     <button
       type="button"
       class="btn-remover"
-      aria-label="${Number(item.quantidade) > 1 ? 'Diminuir quantidade' : 'Remover produto'}"
-      onclick="diminuirItemCarrinho(${item.id})"
+      aria-label="${quantidade > 1 ? 'Diminuir quantidade' : 'Remover produto'}"
+      onclick="diminuirItemCarrinho(${Number(item.id)})"
     >
-      ${Number(item.quantidade) > 1 ? '−' : '🗑️'}
+      ${quantidade > 1 ? '−' : '🗑️'}
     </button>
+  ` : ""}
 
-    <span>${Number(item.quantidade) || 0}</span>
+  <span>${quantidade}</span>
 
-    <button type="button" onclick="aumentarItemCarrinho(${item.id})">
-      ＋
-    </button>
-  </div>
+  <button
+    type="button"
+    onclick="aumentarItemCarrinho(${Number(item.id)})"
+    aria-label="Adicionar uma unidade"
+  >
+    ＋
+  </button>
+</div>
 `;
 
         linha.querySelectorAll(".btn-excluir-unidade").forEach((botao) => {
@@ -3986,40 +3992,57 @@ delete item.observacao;
 
 function diminuirItemCarrinho(id) {
   const pedido = carregarPedidoAtual();
-  const item = pedido.find((produto) => produto.id === id);
+
+  const item = pedido.find(
+    (produto) => String(produto.id) === String(id)
+  );
 
   if (!item) return;
 
-  item.quantidade = Number(item.quantidade) || 0;
-  item.quantidade -= 1;
+  const quantidade = Number(item.quantidade) || 0;
 
-  let pedidoAtualizado = pedido;
+  const unidades = Array.isArray(item.observacoesIndividuais)
+    ? item.observacoesIndividuais
+    : [];
 
-  if (item.quantidade <= 0) {
-    pedidoAtualizado = pedido.filter((produto) => produto.id !== id);
-    limparObservacaoPedidoProduto(id);
+  const temObservacoes = unidades.some(
+    (texto) => typeof texto === "string" && texto.trim()
+  ) || (
+    typeof item.observacao === "string" &&
+    item.observacao.trim()
+  );
+
+  if (temObservacoes) {
+    mostrarAviso(
+      "Escolha a unidade que deseja excluir pela lixeira.",
+      "erro"
+    );
+    return;
   }
+
+  item.quantidade = Math.max(0, quantidade - 1);
+
+  const observacoes = carregarObservacoesPedido();
+  const chave = String(id);
+
+  if (item.quantidade === 0) {
+    delete observacoes[chave];
+  } else {
+    item.observacoesIndividuais = Array(item.quantidade).fill("");
+    delete observacoes[chave];
+  }
+
+  delete item.observacao;
+  salvarObservacoesPedido(observacoes);
+
+  const pedidoAtualizado = item.quantidade === 0
+    ? pedido.filter(
+        (produto) => String(produto.id) !== String(id)
+      )
+    : pedido;
 
   salvarPedidoAtual(pedidoAtualizado);
   sincronizarPedidoComProdutos(pedidoAtualizado);
-  renderizarCarrinho();
-}
- 
-function limparCarrinho() {
-  const confirmar = confirm("Deseja limpar todo o carrinho?");
-
-  if (!confirmar) return;
-
-  localStorage.removeItem("pedidoAtual");
-  localStorage.removeItem("observacoesPedidoAtual");
-
-  const produtos = carregarProdutos();
-
-  produtos.forEach((produto) => {
-    produto.quantidade = 0;
-  });
-
-  salvarProdutos(produtos);
   renderizarCarrinho();
 }
 
