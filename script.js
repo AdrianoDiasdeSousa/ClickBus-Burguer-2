@@ -2516,23 +2516,36 @@ function carregarObservacaoPagina() {
   if (!container) return;
 
   const produtoId = localStorage.getItem("produtoObservacaoId");
-  const produtos = carregarProdutos();
-  const produto = produtos.find(
-    (item) => String(item.id) === String(produtoId)
-  );
+const veioDoCarrinho =
+  localStorage.getItem("origemObservacoes") === "carrinho";
 
-  const quantidade = Number(produto?.quantidade) || 0;
+const produtos = carregarProdutos();
+const produto = produtos.find(
+  (item) => String(item.id) === String(produtoId)
+);
+
+const pedido = veioDoCarrinho ? carregarPedidoAtual() : [];
+const itemCarrinho = veioDoCarrinho
+  ? pedido.find((item) => String(item.id) === String(produtoId))
+  : null;
+
+const quantidade = veioDoCarrinho
+  ? Number(itemCarrinho?.quantidade) || 0
+  : Number(produto?.quantidade) || 0;
 
   if (!produtoId || !produto || quantidade <= 0) {
     mostrarAviso(
       "Selecione pelo menos uma unidade do produto.",
       "erro"
     );
-    avisarENavegar(
-      "Volte ao cardápio e selecione o produto.",
-      "cardapio.html",
-      "erro"
-    );
+     
+   avisarENavegar(
+  veioDoCarrinho
+    ? "Volte ao carrinho e confira o produto."
+    : "Volte ao cardápio e selecione o produto.",
+  veioDoCarrinho ? "carrinho.html" : "cardapio.html",
+  "erro"
+);
     return;
   }
 
@@ -2543,7 +2556,11 @@ function carregarObservacaoPagina() {
   }
 
   const observacoes = carregarObservacoesPedido();
-  const valorSalvo = observacoes[String(produtoId)];
+
+const valorSalvo =
+  veioDoCarrinho && Array.isArray(itemCarrinho?.observacoesIndividuais)
+    ? itemCarrinho.observacoesIndividuais
+    : observacoes[String(produtoId)];
 
   const unidades = Array.isArray(valorSalvo)
     ? valorSalvo.slice(0, quantidade)
@@ -2577,6 +2594,7 @@ function carregarObservacaoPagina() {
   }
 }
 
+
 function salvarObservacaoPagina() {
   const container = document.getElementById(
     "camposObservacoesIndividuais"
@@ -2585,14 +2603,25 @@ function salvarObservacaoPagina() {
   if (!container) return;
 
   const produtoId = localStorage.getItem("produtoObservacaoId");
+  const origem = localStorage.getItem("origemObservacoes");
+  const veioDoCarrinho = origem === "carrinho";
+
   const produtos = carregarProdutos();
   const produto = produtos.find(
     (item) => String(item.id) === String(produtoId)
   );
 
-  const quantidade = Number(produto?.quantidade) || 0;
+  const pedido = veioDoCarrinho ? carregarPedidoAtual() : [];
+  const itemCarrinho = veioDoCarrinho
+    ? pedido.find((item) => String(item.id) === String(produtoId))
+    : null;
 
-  if (!produtoId || !produto || quantidade <= 0) {
+  const quantidade = veioDoCarrinho
+    ? Number(itemCarrinho?.quantidade) || 0
+    : Number(produto?.quantidade) || 0;
+
+  if (!produtoId || !produto || quantidade <= 0 ||
+      (veioDoCarrinho && !itemCarrinho)) {
     mostrarAviso("Produto ou quantidade inválida.", "erro");
     return;
   }
@@ -2613,12 +2642,20 @@ function salvarObservacaoPagina() {
   const observacoes = carregarObservacoesPedido();
 
   if (unidades.some((texto) => texto !== "")) {
-    observacoes[String(produtoId)] = unidades;
+    observacoes[String(produtoId)] = [...unidades];
   } else {
     delete observacoes[String(produtoId)];
   }
 
   salvarObservacoesPedido(observacoes);
+
+  if (veioDoCarrinho) {
+    itemCarrinho.observacoesIndividuais = [...unidades];
+    delete itemCarrinho.observacao;
+    salvarPedidoAtual(pedido);
+  }
+
+  localStorage.removeItem("origemObservacoes");
 
   mostrarAviso(
     "Observações salvas com sucesso.",
@@ -2627,7 +2664,9 @@ function salvarObservacaoPagina() {
   );
 
   setTimeout(() => {
-    window.location.href = "cardapio.html";
+    window.location.href = veioDoCarrinho
+      ? "carrinho.html"
+      : "cardapio.html";
   }, TEMPO_AVISO_NAVEGACAO);
 }
 
@@ -3693,6 +3732,24 @@ function escaparHTML(texto) {
   });
 }
 
+function abrirObservacoesCarrinho(id) {
+  const pedido = carregarPedidoAtual();
+
+  const item = pedido.find(
+    (produto) => String(produto.id) === String(id)
+  );
+
+  if (!item || Number(item.quantidade) <= 0) {
+    mostrarAviso("Produto não encontrado no carrinho.", "erro");
+    return;
+  }
+
+  localStorage.setItem("produtoObservacaoId", String(id));
+  localStorage.setItem("origemObservacoes", "carrinho");
+
+  window.location.href = "observacoes.html";
+}
+
 function renderizarCarrinho() {
   const listaCarrinho = document.getElementById("listaCarrinho");
   const valorTotalCarrinho = document.getElementById("valorTotalCarrinho");
@@ -3726,35 +3783,58 @@ function renderizarCarrinho() {
   }
 
   pedido.forEach((item) => {
-    const linha = document.createElement("div");
-    linha.className = "item-carrinho";
+  const linha = document.createElement("div");
+  linha.className = "item-carrinho";
 
-    linha.innerHTML = `
-      <div class="nome-item">
-        <div class="texto-item-carrinho">
-          <span>${item.nome}</span>
-          
-${
-  Array.isArray(item.observacoesIndividuais)
-    ? item.observacoesIndividuais
-        .slice(0, Number(item.quantidade) || 0)
-        .map((observacao, indice) =>
-          observacao.trim()
-            ? `<small class="observacao-carrinho">
-                 Unidade ${indice + 1}: ${escaparHTML(observacao)}
-               </small>`
-            : ""
-        )
-        .join("")
-    : typeof item.observacao === "string" && item.observacao.trim()
-      ? `<small class="observacao-carrinho">
-           Obs: ${escaparHTML(item.observacao)}
-         </small>`
-      : ""
-}
+  const quantidade = Math.max(0, Number(item.quantidade) || 0);
 
+  const observacoes = Array.isArray(item.observacoesIndividuais)
+    ? item.observacoesIndividuais.slice(0, quantidade)
+    : Array.from({ length: quantidade }, (_, indice) =>
+        indice === 0 && typeof item.observacao === "string"
+          ? item.observacao
+          : ""
+      );
+
+  while (observacoes.length < quantidade) {
+    observacoes.push("");
+  }
+
+ const temObservacoes = observacoes.some(
+  (observacao) => typeof observacao === "string" && observacao.trim()
+);
+
+const unidadesHTML = temObservacoes ? observacoes
+    .map((observacao, indice) => `
+      <div class="unidade-carrinho">
+        <div class="texto-unidade-carrinho">
+          <strong>Unidade ${indice + 1}</strong>
+          <small class="observacao-carrinho">
+            ${typeof observacao === "string" && observacao.trim()
+              ? escaparHTML(observacao)
+              : "Sem observação"}
+          </small>
         </div>
+
+        <button
+          type="button"
+          class="btn-excluir-unidade"
+          data-indice="${indice}"
+          aria-label="Excluir unidade ${indice + 1}"
+        >
+          🗑️
+        </button>
       </div>
+    `)
+   .join("") : "";
+
+ linha.innerHTML = `
+  <div class="nome-item">
+    <div class="texto-item-carrinho">
+      <span>${escaparHTML(item.nome)}</span>
+      ${unidadesHTML}
+    </div>
+  </div>
 
       <div class="preco-item">
         ${formatarMoeda(Number(item.preco) || 0)}
@@ -3772,11 +3852,27 @@ ${
 
         <span>${Number(item.quantidade) || 0}</span>
 
-        <button type="button" onclick="aumentarItemCarrinho(${item.id})">
+                <button type="button" onclick="aumentarItemCarrinho(${item.id})">
           ＋
         </button>
       </div>
+
+      ${!temObservacoes ? `
+        <button
+          type="button"
+          class="btn-adicionar-observacao-carrinho"
+          onclick="abrirObservacoesCarrinho(${Number(item.id)})"
+        >
+          ✏️ Adicionar observação
+        </button>
+      ` : ""}
     `;
+
+        linha.querySelectorAll(".btn-excluir-unidade").forEach((botao) => {
+      botao.addEventListener("click", () => {
+        excluirUnidadeCarrinho(item.id, Number(botao.dataset.indice));
+      });
+    });
 
     listaCarrinho.appendChild(linha);
   });
@@ -3830,6 +3926,58 @@ function limparObservacaoPedidoProduto(id) {
   salvarObservacoesPedido(observacoes);
 }
 
+
+function excluirUnidadeCarrinho(id, indiceUnidade) {
+  const pedido = carregarPedidoAtual();
+  const item = pedido.find(
+    (produto) => String(produto.id) === String(id)
+  );
+
+  if (!item) return;
+
+  const quantidade = Number(item.quantidade) || 0;
+  const indice = Number(indiceUnidade);
+
+  if (!Number.isInteger(indice) || indice < 0 || indice >= quantidade) {
+    return;
+  }
+
+  const unidades = Array.isArray(item.observacoesIndividuais)
+    ? [...item.observacoesIndividuais]
+    : Array.from({ length: quantidade }, (_, i) =>
+        i === 0 ? String(item.observacao || "") : ""
+      );
+
+  while (unidades.length < quantidade) {
+    unidades.push("");
+  }
+
+  unidades.splice(indice, 1);
+  item.quantidade = quantidade - 1;
+
+  const observacoes = carregarObservacoesPedido();
+  const chave = String(id);
+
+  if (item.quantidade === 0) {
+  delete observacoes[chave];
+} else {
+  item.observacoesIndividuais = unidades;
+  observacoes[chave] = [...unidades];
+}
+
+delete item.observacao;
+
+  salvarObservacoesPedido(observacoes);
+
+  const pedidoAtualizado = item.quantidade === 0
+    ? pedido.filter((produto) => String(produto.id) !== String(id))
+    : pedido;
+
+  salvarPedidoAtual(pedidoAtualizado);
+  sincronizarPedidoComProdutos(pedidoAtualizado);
+  renderizarCarrinho();
+}
+  
 
 function diminuirItemCarrinho(id) {
   const pedido = carregarPedidoAtual();
