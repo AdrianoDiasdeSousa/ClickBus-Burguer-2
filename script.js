@@ -2477,59 +2477,113 @@ function salvarObservacoesPedido(observacoes) {
   );
 }
 
+
 function carregarObservacaoPagina() {
-  const campoObservacao = document.getElementById("campoObservacao");
-
-  if (!campoObservacao) return;
-
-  const produtoId = localStorage.getItem("produtoObservacaoId");
-
-  if (!produtoId) {
-    mostrarAviso("Escolha um produto antes de adicionar observações.", "erro");
-
-    setTimeout(() => {
-      window.location.href = "cardapio.html";
-    }, TEMPO_AVISO_NAVEGACAO);
-
-    return;
-  }
-
-  const tituloObservacoes = document.getElementById("tituloObservacoes");
-  const produtos = carregarProdutos();
-  const produto = produtos.find(
-    (item) => String(item.id) === String(produtoId),
+  const container = document.getElementById(
+    "camposObservacoesIndividuais"
   );
 
-  if (tituloObservacoes) {
-    tituloObservacoes.textContent = produto
-      ? `Observações — ${produto.nome}`
-      : "Observações";
-  }
-
-  const observacoes = carregarObservacoesPedido();
-  campoObservacao.value = observacoes[String(produtoId)] || "";
-}
-
-function salvarObservacaoPagina() {
-  const campoObservacao = document.getElementById("campoObservacao");
-
-  if (!campoObservacao) return;
+  if (!container) return;
 
   const produtoId = localStorage.getItem("produtoObservacaoId");
+  const produtos = carregarProdutos();
+  const produto = produtos.find(
+    (item) => String(item.id) === String(produtoId)
+  );
 
-  if (!produtoId) {
+  const quantidade = Number(produto?.quantidade) || 0;
+
+  if (!produtoId || !produto || quantidade <= 0) {
     mostrarAviso(
-      "Não foi possível identificar o produto da observação.",
-      "erro",
+      "Selecione pelo menos uma unidade do produto.",
+      "erro"
+    );
+    avisarENavegar(
+      "Volte ao cardápio e selecione o produto.",
+      "cardapio.html",
+      "erro"
     );
     return;
   }
 
-  const observacoes = carregarObservacoesPedido();
-  const textoObservacao = campoObservacao.value.trim();
+  const titulo = document.getElementById("tituloObservacoes");
 
-  if (textoObservacao) {
-    observacoes[String(produtoId)] = textoObservacao;
+  if (titulo) {
+    titulo.textContent = `Observações — ${produto.nome}`;
+  }
+
+  const observacoes = carregarObservacoesPedido();
+  const valorSalvo = observacoes[String(produtoId)];
+
+  const unidades = Array.isArray(valorSalvo)
+    ? valorSalvo.slice(0, quantidade)
+    : Array.from(
+        { length: quantidade },
+        (_, indice) =>
+          indice === 0 && typeof valorSalvo === "string"
+            ? valorSalvo
+            : ""
+      );
+
+  container.replaceChildren();
+
+  for (let indice = 0; indice < quantidade; indice++) {
+    const grupo = document.createElement("div");
+    grupo.className = "grupo-observacao";
+
+    const rotulo = document.createElement("label");
+    rotulo.textContent = `Unidade ${indice + 1}`;
+
+    const campo = document.createElement("textarea");
+    campo.className = "campo-observacao-individual";
+    campo.id = `observacaoUnidade${indice}`;
+    campo.placeholder = "Ex.: Sem cebola, sem milho...";
+    campo.value = unidades[indice] || "";
+
+    rotulo.htmlFor = campo.id;
+
+    grupo.append(rotulo, campo);
+    container.appendChild(grupo);
+  }
+}
+
+function salvarObservacaoPagina() {
+  const container = document.getElementById(
+    "camposObservacoesIndividuais"
+  );
+
+  if (!container) return;
+
+  const produtoId = localStorage.getItem("produtoObservacaoId");
+  const produtos = carregarProdutos();
+  const produto = produtos.find(
+    (item) => String(item.id) === String(produtoId)
+  );
+
+  const quantidade = Number(produto?.quantidade) || 0;
+
+  if (!produtoId || !produto || quantidade <= 0) {
+    mostrarAviso("Produto ou quantidade inválida.", "erro");
+    return;
+  }
+
+  const campos = Array.from(
+    container.querySelectorAll(".campo-observacao-individual")
+  );
+
+  if (campos.length !== quantidade) {
+    mostrarAviso(
+      "A quantidade mudou. Reabra as observações.",
+      "erro"
+    );
+    return;
+  }
+
+  const unidades = campos.map((campo) => campo.value.trim());
+  const observacoes = carregarObservacoesPedido();
+
+  if (unidades.some((texto) => texto !== "")) {
+    observacoes[String(produtoId)] = unidades;
   } else {
     delete observacoes[String(produtoId)];
   }
@@ -2537,15 +2591,16 @@ function salvarObservacaoPagina() {
   salvarObservacoesPedido(observacoes);
 
   mostrarAviso(
-    "Observação salva com sucesso.",
+    "Observações salvas com sucesso.",
     "sucesso",
-    TEMPO_AVISO_NAVEGACAO,
+    TEMPO_AVISO_NAVEGACAO
   );
 
   setTimeout(() => {
     window.location.href = "cardapio.html";
   }, TEMPO_AVISO_NAVEGACAO);
 }
+
 
 async function avancarPedido() {
   if (usuarioEhAdmin()) return;
