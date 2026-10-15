@@ -3804,69 +3804,80 @@ function renderizarCarrinho() {
   (observacao) => typeof observacao === "string" && observacao.trim()
 );
 
-const unidadesHTML = temObservacoes ? observacoes
-    .map((observacao, indice) => `
-      <div class="unidade-carrinho">
-        <div class="texto-unidade-carrinho">
-          <strong>Unidade ${indice + 1}</strong>
-          <small class="observacao-carrinho">
-            ${typeof observacao === "string" && observacao.trim()
-              ? escaparHTML(observacao)
-              : "Sem observação"}
-          </small>
+      const unidadesHTML = temObservacoes
+  ? observacoes
+      .map((observacao, indice) => `
+        <div class="unidade-carrinho">
+          <button
+            type="button"
+            class="btn-excluir-unidade"
+            data-indice="${indice}"
+            aria-label="Excluir unidade ${indice + 1}"
+            title="Excluir unidade ${indice + 1}"
+          >
+            🗑️
+          </button>
+
+          <div class="texto-unidade-carrinho">
+            <strong>Unidade ${indice + 1}</strong>
+            <small class="observacao-carrinho">
+              ${
+                typeof observacao === "string" && observacao.trim()
+                  ? escaparHTML(observacao)
+                  : "Sem observação"
+              }
+            </small>
+          </div>
         </div>
+      `)
+      .join("")
+  : "";
 
-        <button
-          type="button"
-          class="btn-excluir-unidade"
-          data-indice="${indice}"
-          aria-label="Excluir unidade ${indice + 1}"
-        >
-          🗑️
-        </button>
+     linha.innerHTML = `
+  <div class="coluna-info-item">
+    <div class="nome-item">
+      <div class="texto-item-carrinho">
+        <span class="titulo-produto-carrinho">${escaparHTML(item.nome)}</span>
+        ${unidadesHTML}
+
+        ${
+          !temObservacoes
+            ? `
+              <button
+                type="button"
+                class="btn-adicionar-observacao-carrinho"
+                onclick="abrirObservacoesCarrinho(${Number(item.id)})"
+              >
+                ✏️ Adicionar observação
+              </button>
+            `
+            : ""
+        }
       </div>
-    `)
-   .join("") : "";
-
- linha.innerHTML = `
-  <div class="nome-item">
-    <div class="texto-item-carrinho">
-      <span>${escaparHTML(item.nome)}</span>
-      ${unidadesHTML}
     </div>
   </div>
 
-      <div class="preco-item">
-        ${formatarMoeda(Number(item.preco) || 0)}
-      </div>
+  <div class="preco-item">
+    ${formatarMoeda(Number(item.preco) || 0)}
+  </div>
 
-      <div class="controle-carrinho">
-        <button
-          type="button"
-          class="btn-remover"
-          aria-label="${Number(item.quantidade) > 1 ? 'Diminuir quantidade' : 'Remover produto'}"
-       onclick="diminuirItemCarrinho(${item.id})"
-        >
-          ${Number(item.quantidade) > 1 ? '−' : '🗑️'}
-        </button>
+  <div class="controle-carrinho">
+    <button
+      type="button"
+      class="btn-remover"
+      aria-label="${Number(item.quantidade) > 1 ? 'Diminuir quantidade' : 'Remover produto'}"
+      onclick="diminuirItemCarrinho(${item.id})"
+    >
+      ${Number(item.quantidade) > 1 ? '−' : '🗑️'}
+    </button>
 
-        <span>${Number(item.quantidade) || 0}</span>
+    <span>${Number(item.quantidade) || 0}</span>
 
-                <button type="button" onclick="aumentarItemCarrinho(${item.id})">
-          ＋
-        </button>
-      </div>
-
-      ${!temObservacoes ? `
-        <button
-          type="button"
-          class="btn-adicionar-observacao-carrinho"
-          onclick="abrirObservacoesCarrinho(${Number(item.id)})"
-        >
-          ✏️ Adicionar observação
-        </button>
-      ` : ""}
-    `;
+    <button type="button" onclick="aumentarItemCarrinho(${item.id})">
+      ＋
+    </button>
+  </div>
+`;
 
         linha.querySelectorAll(".btn-excluir-unidade").forEach((botao) => {
       botao.addEventListener("click", () => {
