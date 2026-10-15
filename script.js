@@ -2730,10 +2730,10 @@ async function avancarPedido() {
 });
 
 
-  if (itensSelecionados.length === 0) {
-    mostrarAviso("Selecione pelo menos um item antes de avançar.", "erro");
-    return;
-  }
+ if (itensSelecionados.length === 0) {
+  mostrarAviso("Seu carrinho está vazio.", "erro");
+  return;
+}
 
   localStorage.setItem("pedidoAtual", JSON.stringify(itensSelecionados));
 
