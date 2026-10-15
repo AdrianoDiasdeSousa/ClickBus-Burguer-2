@@ -2675,6 +2675,9 @@ function salvarObservacaoPagina() {
   }, TEMPO_AVISO_NAVEGACAO);
 }
 
+async function abrirCarrinhoDoCardapio() {
+  await avancarPedido();
+}
 
 async function avancarPedido() {
   if (usuarioEhAdmin()) return;
