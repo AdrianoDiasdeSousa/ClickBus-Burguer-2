@@ -1704,10 +1704,25 @@ function atualizarTotal() {
   }
 }
 
+
 function adicionarObservacao(id) {
-  localStorage.setItem("produtoObservacaoId", id);
+  const produtos = carregarProdutos();
+  const produto = produtos.find(
+    (item) => String(item.id) === String(id)
+  );
+
+  if (!produto || Number(produto.quantidade) <= 0) {
+    mostrarAviso(
+      "Adicione pelo menos uma unidade antes de incluir observações.",
+      "erro"
+    );
+    return;
+  }
+
+  localStorage.setItem("produtoObservacaoId", String(id));
   window.location.href = "observacoes.html";
 }
+  
 
 function obterCardProdutoMaisProximo(elemento) {
   return elemento?.closest?.(".produto-admin") || null;
