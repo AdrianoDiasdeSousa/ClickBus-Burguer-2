@@ -5310,38 +5310,47 @@ async function carregarDetalhePedidoPagina() {
     }
 
     if (itensDetalhePedido) {
+       const itensAgrupados = agruparItensDetalhePedido(pedido.itens);
       itensDetalhePedido.innerHTML = `
     <div class="titulo-itens-pedido">
       <h2>ITENS DO PEDIDO</h2>
     </div>
 
     <div class="lista-itens-detalhe">
-      ${pedido.itens
-        .map((item) => {
-          const quantidade = Number(item.quantidade) || 0;
-          const preco = Number(item.preco) || 0;
-          const subtotal = quantidade * preco;
+     
+${itensAgrupados
+  .map((item) => {
+    const temObservacoes = item.observacoes.some(
+      (texto) => typeof texto === "string" && texto.trim()
+    );
 
-          return `
-            <div class="item-detalhe-pedido">
-              <div class="nome-produto-detalhe">
-                <strong>${quantidade}x ${item.nome}</strong>
-                <span class="linha-pontilhada"></span>
+    return `
+      <div class="item-detalhe-pedido">
+        <div class="nome-produto-detalhe">
+          <strong>${item.quantidade}x ${escaparHTML(item.nome)}</strong>
+          <span class="linha-pontilhada"></span>
+        </div>
+
+        <strong class="preco-produto-detalhe">
+          ${formatarMoeda(item.subtotal)}
+        </strong>
+      </div>
+
+      ${temObservacoes
+        ? item.observacoes
+            .map((observacao, indice) => `
+              <div class="observacao-detalhe">
+                Unidade ${indice + 1}:
+                ${typeof observacao === "string" && observacao.trim()
+                  ? escaparHTML(observacao)
+                  : "Sem observação"}
               </div>
-
-              <strong class="preco-produto-detalhe">
-                ${formatarMoeda(subtotal)}
-              </strong>
-            </div>
-
-            ${
-              item.observacao
-                ? `<div class="observacao-detalhe">Obs: ${item.observacao}</div>`
-                : ""
-            }
-          `;
-        })
-        .join("")}
+            `)
+            .join("")
+        : ""}
+    `;
+  })
+  .join("")}
     </div>
   `;
     }
