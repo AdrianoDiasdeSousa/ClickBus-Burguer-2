@@ -1,5 +1,9 @@
 const pool = require("../config/db");
 
+const {
+  obterUsuarioAdminAutenticado,
+} = require("./authController");
+
 async function createOrder(req, res) {
   const client = await pool.connect();
 
@@ -197,8 +201,34 @@ async function updateOrderStatus(req, res) {
   }
 }
 
+async function limparPedidosFinalizados(req, res) {
+  try {
+    await obterUsuarioAdminAutenticado(req);
+
+    const resultado = await pool.query(
+      `DELETE FROM orders
+       WHERE status IN ('finalizado', 'cancelado')
+       RETURNING id`
+    );
+
+    return res.json({
+      mensagem: "Pedidos concluídos e cancelados excluídos com sucesso.",
+      quantidadeExcluida: resultado.rowCount,
+    });
+  } catch (error) {
+    console.error("Erro ao limpar pedidos:", error);
+
+    return res.status(error.statusCode || 500).json({
+      erro: error.statusCode
+        ? error.message
+        : "Erro interno ao limpar pedidos.",
+    });
+  }
+}
+
 module.exports = {
   createOrder,
   listOrders,
   updateOrderStatus,
+  limparPedidosFinalizados,
 };

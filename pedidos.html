@@ -26,9 +26,26 @@
 
         <section id="filtrosPedidosAdmin" class="filtros-pedidos-admin oculto">
           <div class="filtros-topo">
-            <strong id="tituloFiltroPedidos">Pedidos de hoje</strong>
-            <span id="resumoFiltroPedidos">0 pedidos encontrados</span>
-          </div>
+  <strong id="tituloFiltroPedidos">Pedidos de hoje</strong>
+  <span id="resumoFiltroPedidos">0 pedidos encontrados</span>
+
+  <details class="menu-opcoes-pedidos">
+    <summary aria-label="Opções administrativas" title="Opções administrativas">
+      ⋯
+    </summary>
+
+    <div class="menu-opcoes-conteudo">
+      <button
+        type="button"
+        class="btn-limpar-pedidos"
+        onclick="limparPedidosFinalizadosAdmin()"
+      >
+        🗑 Limpar pedidos concluídos
+      </button>
+      <small>Somente entregues e cancelados</small>
+    </div>
+  </details>
+</div>
 
           <div class="botoes-filtro-pedidos">
             <button type="button" id="btnFiltroHoje" onclick="filtrarPedidosAdmin('hoje')">

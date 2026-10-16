@@ -550,4 +550,5 @@ module.exports = {
   resetPassword,
   getCustomers,
   deleteCustomer,
+  obterUsuarioAdminAutenticado,
 };

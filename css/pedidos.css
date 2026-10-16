@@ -418,3 +418,79 @@
 #dataFiltroPedidos.oculto {
   display: none !important;
 }
+/* MENU DISCRETO DE OPÇÕES DO ADMINISTRADOR */
+
+.menu-opcoes-pedidos {
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.menu-opcoes-pedidos summary {
+  list-style: none;
+  cursor: pointer;
+  border: 1px solid rgba(70, 87, 255, 0.2);
+  background: transparent;
+  border-radius: 10px;
+  padding: 5px 11px;
+  font-size: 25px;
+  line-height: 1;
+  color: #333;
+  transition: background 0.2s;
+}
+
+.menu-opcoes-pedidos summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu-opcoes-pedidos summary:hover,
+.menu-opcoes-pedidos[open] summary {
+  background: rgba(70, 87, 255, 0.08);
+}
+
+.menu-opcoes-conteudo {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: 245px;
+  max-width: calc(100vw - 40px);
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  color: #242424;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  text-align: left;
+}
+
+.menu-opcoes-conteudo .btn-limpar-pedidos {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #fff1f1;
+  color: #9e3030;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.menu-opcoes-conteudo .btn-limpar-pedidos:hover {
+  background: #ffe2e2;
+}
+
+.menu-opcoes-conteudo small {
+  display: block;
+  margin-top: 8px;
+  color: #777;
+  font-size: 12px;
+}
+
+/* Ajuste do menu no celular */
+
+@media (max-width: 800px) {
+  .menu-opcoes-pedidos {
+    align-self: flex-end;
+  }
+}

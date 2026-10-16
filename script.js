@@ -5195,6 +5195,72 @@ async function alterarStatusPedido(id, novoStatus) {
   }
 }
 
+async function limparPedidosFinalizadosAdmin() {
+  if (!usuarioEhAdmin()) {
+    mostrarAviso("Apenas o administrador pode limpar pedidos.", "erro");
+    return;
+  }
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    mostrarAviso("Faça login novamente como administrador.", "erro");
+    return;
+  }
+
+  const confirmar = confirm(
+    "Deseja excluir permanentemente todos os pedidos entregues e cancelados?\n\n" +
+    "Pedidos em andamento serão preservados.\n\n" +
+    "Essa ação não pode ser desfeita."
+  );
+
+  if (!confirmar) return;
+
+  const botao = document.getElementById("btnLimparPedidosAdmin");
+
+  if (botao) {
+    botao.disabled = true;
+    botao.textContent = "Limpando pedidos...";
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/orders/finalizados`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      mostrarAviso(resultado.erro || "Erro ao limpar pedidos.", "erro");
+      return;
+    }
+
+    const quantidade = Number(resultado.quantidadeExcluida) || 0;
+
+    mostrarAviso(
+      quantidade === 0
+        ? "Nenhum pedido concluído ou cancelado para limpar."
+        : `${quantidade} pedido(s) excluído(s) com sucesso.`,
+      "sucesso"
+    );
+
+    const menu = document.querySelector(".menu-opcoes-pedidos");
+    if (menu) menu.removeAttribute("open");
+
+    await renderizarPedidos();
+  } catch (error) {
+    console.error("Erro ao limpar pedidos:", error);
+    mostrarAviso("Erro de conexão ao limpar pedidos.", "erro");
+  } finally {
+    if (botao) {
+      botao.disabled = false;
+      botao.textContent = "🗑 Limpar pedidos concluídos";
+    }
+  }
+}
 
 function agruparItensDetalhePedido(itens) {
   const grupos = new Map();
@@ -5601,6 +5667,31 @@ function atualizarBotaoEntrarHome() {
     linkCadastroHome.classList.remove("oculto");
   }
 }
+
+function iniciarFechamentoMenuOpcoesPedidos() {
+  const menus = document.querySelectorAll(".menu-opcoes-pedidos");
+
+  if (!menus.length) return;
+
+  document.addEventListener("click", (event) => {
+    menus.forEach((menu) => {
+      if (!menu.contains(event.target)) {
+        menu.removeAttribute("open");
+      }
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      menus.forEach((menu) => menu.removeAttribute("open"));
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  iniciarFechamentoMenuOpcoesPedidos();
+});
+
 /* =========================
    INICIALIZAÇÃO
 ========================= */
