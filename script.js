@@ -5601,6 +5601,31 @@ function atualizarBotaoEntrarHome() {
     linkCadastroHome.classList.remove("oculto");
   }
 }
+
+function iniciarFechamentoMenuOpcoesPedidos() {
+  const menus = document.querySelectorAll(".menu-opcoes-pedidos");
+
+  if (!menus.length) return;
+
+  document.addEventListener("click", (event) => {
+    menus.forEach((menu) => {
+      if (!menu.contains(event.target)) {
+        menu.removeAttribute("open");
+      }
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      menus.forEach((menu) => menu.removeAttribute("open"));
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  iniciarFechamentoMenuOpcoesPedidos();
+});
+
 /* =========================
    INICIALIZAÇÃO
 ========================= */
