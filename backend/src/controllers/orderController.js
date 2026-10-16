@@ -1,5 +1,9 @@
 const pool = require("../config/db");
 
+const {
+  obterUsuarioAdminAutenticado,
+} = require("./authController");
+
 async function createOrder(req, res) {
   const client = await pool.connect();
 
