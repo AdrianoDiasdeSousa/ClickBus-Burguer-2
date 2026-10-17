@@ -1479,8 +1479,8 @@ function protegerPaginaCardapio() {
  if (!usuarioEstaLogado()) {
   avisarENavegar("Faça login para acessar o cardápio.", "login.html", "erro");
   return;
+ }
 }
-
 function criarImagemProduto(produto) {
   if (!produto.imagem) {
     return "";
