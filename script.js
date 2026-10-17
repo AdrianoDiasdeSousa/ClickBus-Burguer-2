@@ -1461,7 +1461,10 @@ function usuarioEstaLogado() {
 }
 
 function usuarioEhAdmin() {
-  return localStorage.getItem("tipoUsuario") === "admin";
+  return (
+    usuarioEstaLogado() &&
+    localStorage.getItem("tipoUsuario") === "admin"
+  );
 }
 
 function bloquearPedidoParaAdmin() {
@@ -1473,11 +1476,9 @@ function protegerPaginaCardapio() {
 
   if (!estaNoCardapio) return;
 
-  const usuarioLogado = localStorage.getItem("usuarioLogado");
-
-  if (!usuarioLogado) {
-    avisarENavegar("Faça login para acessar o cardápio.", "login.html", "erro");
-  }
+ if (!usuarioEstaLogado()) {
+  avisarENavegar("Faça login para acessar o cardápio.", "login.html", "erro");
+  return;
 }
 
 function criarImagemProduto(produto) {
@@ -2756,7 +2757,8 @@ async function avancarPedido() {
 
 function sairDoSistema() {
   limparPedidoEmAndamento();
-
+  sessionStorage.removeItem("clickbus_sessao_ativa");
+   
   localStorage.removeItem("clickbus_token");
   localStorage.removeItem("clickbus_usuario");
 
@@ -5655,7 +5657,7 @@ function atualizarBotaoEntrarHome() {
   const tipoUsuario = localStorage.getItem("tipoUsuario") || "";
   const nomeUsuario = localStorage.getItem("nomeUsuario") || "";
 
-  if (emailLogado) {
+ if (usuarioEstaLogado()) {
     if (usuarioLogadoHome) {
       usuarioLogadoHome.textContent =
         tipoUsuario === "admin"
