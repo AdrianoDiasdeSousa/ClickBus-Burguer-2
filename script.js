@@ -329,6 +329,9 @@ async function salvarContaAdministrador(event) {
 
     localStorage.setItem("clickbus_token", resultado.token);
     localStorage.setItem("clickbus_usuario", JSON.stringify(usuario));
+     
+    sessionStorage.setItem("clickbus_sessao_ativa", "true");
+     
     localStorage.setItem("usuarioLogado", usuario.email);
     localStorage.setItem("tipoUsuario", "admin");
     localStorage.setItem("nomeUsuario", "Administrador");
@@ -379,6 +382,7 @@ function limparPedidoEmAndamento() {
   localStorage.removeItem("localizacaoEntrega");
   localStorage.removeItem("tipoEnderecoSelecionado");
 }
+
 async function fazerLogin(event) {
   event.preventDefault();
 
@@ -427,6 +431,7 @@ async function fazerLogin(event) {
 
     localStorage.setItem("clickbus_token", resultado.token);
     localStorage.setItem("clickbus_usuario", JSON.stringify(usuario));
+    sessionStorage.setItem("clickbus_sessao_ativa", "true");
 
     localStorage.setItem("usuarioLogado", usuario.email);
     localStorage.setItem("tipoUsuario", usuario.role || "cliente");
@@ -1446,8 +1451,20 @@ function formatarMoeda(valor) {
   });
 }
 
+// Controle de autenticação da sessão atual
+function usuarioEstaLogado() {
+  return (
+    sessionStorage.getItem("clickbus_sessao_ativa") === "true" &&
+    Boolean(localStorage.getItem("clickbus_token")) &&
+    Boolean(localStorage.getItem("usuarioLogado"))
+  );
+}
+
 function usuarioEhAdmin() {
-  return localStorage.getItem("tipoUsuario") === "admin";
+  return (
+    usuarioEstaLogado() &&
+    localStorage.getItem("tipoUsuario") === "admin"
+  );
 }
 
 function bloquearPedidoParaAdmin() {
@@ -1459,13 +1476,11 @@ function protegerPaginaCardapio() {
 
   if (!estaNoCardapio) return;
 
-  const usuarioLogado = localStorage.getItem("usuarioLogado");
-
-  if (!usuarioLogado) {
-    avisarENavegar("Faça login para acessar o cardápio.", "login.html", "erro");
-  }
+ if (!usuarioEstaLogado()) {
+  avisarENavegar("Faça login para acessar o cardápio.", "login.html", "erro");
+  return;
+ }
 }
-
 function criarImagemProduto(produto) {
   if (!produto.imagem) {
     return "";
@@ -2742,9 +2757,16 @@ async function avancarPedido() {
 
 function sairDoSistema() {
   limparPedidoEmAndamento();
+  sessionStorage.removeItem("clickbus_sessao_ativa");
+   
+  localStorage.removeItem("clickbus_token");
+  localStorage.removeItem("clickbus_usuario");
+
   localStorage.removeItem("usuarioLogado");
   localStorage.removeItem("tipoUsuario");
   localStorage.removeItem("nomeUsuario");
+  localStorage.removeItem("telefoneUsuario");
+  localStorage.removeItem("cpfUsuario");
 
   window.location.href = "login.html";
 }
@@ -5635,7 +5657,7 @@ function atualizarBotaoEntrarHome() {
   const tipoUsuario = localStorage.getItem("tipoUsuario") || "";
   const nomeUsuario = localStorage.getItem("nomeUsuario") || "";
 
-  if (emailLogado) {
+ if (usuarioEstaLogado()) {
     if (usuarioLogadoHome) {
       usuarioLogadoHome.textContent =
         tipoUsuario === "admin"
