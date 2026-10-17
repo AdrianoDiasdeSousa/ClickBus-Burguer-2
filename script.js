@@ -379,6 +379,7 @@ function limparPedidoEmAndamento() {
   localStorage.removeItem("localizacaoEntrega");
   localStorage.removeItem("tipoEnderecoSelecionado");
 }
+
 async function fazerLogin(event) {
   event.preventDefault();
 
@@ -1444,6 +1445,15 @@ function formatarMoeda(valor) {
     style: "currency",
     currency: "BRL",
   });
+}
+
+// Controle de autenticação da sessão atual
+function usuarioEstaLogado() {
+  return (
+    sessionStorage.getItem("clickbus_sessao_ativa") === "true" &&
+    Boolean(localStorage.getItem("clickbus_token")) &&
+    Boolean(localStorage.getItem("usuarioLogado"))
+  );
 }
 
 function usuarioEhAdmin() {
@@ -2742,9 +2752,15 @@ async function avancarPedido() {
 
 function sairDoSistema() {
   limparPedidoEmAndamento();
+
+  localStorage.removeItem("clickbus_token");
+  localStorage.removeItem("clickbus_usuario");
+
   localStorage.removeItem("usuarioLogado");
   localStorage.removeItem("tipoUsuario");
   localStorage.removeItem("nomeUsuario");
+  localStorage.removeItem("telefoneUsuario");
+  localStorage.removeItem("cpfUsuario");
 
   window.location.href = "login.html";
 }
