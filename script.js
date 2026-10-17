@@ -329,6 +329,9 @@ async function salvarContaAdministrador(event) {
 
     localStorage.setItem("clickbus_token", resultado.token);
     localStorage.setItem("clickbus_usuario", JSON.stringify(usuario));
+     
+    sessionStorage.setItem("clickbus_sessao_ativa", "true");
+     
     localStorage.setItem("usuarioLogado", usuario.email);
     localStorage.setItem("tipoUsuario", "admin");
     localStorage.setItem("nomeUsuario", "Administrador");
@@ -428,6 +431,7 @@ async function fazerLogin(event) {
 
     localStorage.setItem("clickbus_token", resultado.token);
     localStorage.setItem("clickbus_usuario", JSON.stringify(usuario));
+    sessionStorage.setItem("clickbus_sessao_ativa", "true");
 
     localStorage.setItem("usuarioLogado", usuario.email);
     localStorage.setItem("tipoUsuario", usuario.role || "cliente");
