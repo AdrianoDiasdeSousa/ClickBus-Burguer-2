@@ -6,11 +6,19 @@ const {
 } = require("./authController");
 
 async function createOrder(req, res) {
-  const client = await pool.connect();
+  let client;
 
   try {
+    const usuario = await obterUsuarioAutenticado(req);
+
+    if (usuario.role === "admin") {
+      return res.status(403).json({
+        erro: "O administrador não pode realizar pedidos.",
+      });
+    }
+
+    client = await pool.connect();
     const {
-      user_id,
       customer_email,
       customer_name,
       customer_phone,
@@ -55,7 +63,7 @@ async function createOrder(req, res) {
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
       RETURNING *`,
       [
-        user_id || null,
+        usuario.id,
         customer_email || null,
         customer_name,
         customer_phone || null,
@@ -101,17 +109,25 @@ async function createOrder(req, res) {
       mensagem: "Pedido criado com sucesso.",
       order,
     });
-  } catch (error) {
+
+    } catch (error) {
+  if (client) {
     await client.query("ROLLBACK");
+  }
 
-    console.error("Erro ao criar pedido:", error);
+  console.error("Erro ao criar pedido:", error);
 
-    return res.status(500).json({
-      erro: "Erro interno ao criar pedido.",
-    });
+  return res.status(error.statusCode || 500).json({
+    erro: error.statusCode
+      ? error.message
+      : "Erro interno ao criar pedido.",
+  });
+}
   } finally {
+  if (client) {
     client.release();
   }
+}
 }
 
 async function listOrders(req, res) {
