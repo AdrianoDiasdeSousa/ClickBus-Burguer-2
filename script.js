@@ -4759,7 +4759,18 @@ function converterPedidoApiParaTela(pedidoApi) {
 
 async function carregarPedidosDaApi() {
   try {
-    const resposta = await fetch(`${API_BASE_URL}/orders`);
+    const token = localStorage.getItem("clickbus_token");
+
+    if (!token || !usuarioEstaLogado()) {
+      return [];
+    }
+
+    const resposta = await fetch(`${API_BASE_URL}/orders`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
 
     if (!resposta.ok) {
       throw new Error("Erro ao buscar pedidos.");
