@@ -158,7 +158,10 @@ ORDER BY o.created_at DESC`,
 }
 
 async function updateOrderStatus(req, res) {
-  try {
+   try {
+    const usuario = await obterUsuarioAutenticado(req);
+    const ehAdmin = usuario.role === "admin";
+
     const { id } = req.params;
     const { status, cancelled_by } = req.body;
 
