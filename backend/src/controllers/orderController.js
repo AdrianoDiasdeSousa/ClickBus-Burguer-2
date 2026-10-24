@@ -1,6 +1,7 @@
 const pool = require("../config/db");
 
 const {
+  obterUsuarioAutenticado,
   obterUsuarioAdminAutenticado,
 } = require("./authController");
 
@@ -115,6 +116,9 @@ async function createOrder(req, res) {
 
 async function listOrders(req, res) {
   try {
+    const usuario = await obterUsuarioAutenticado(req);
+    const ehAdmin = usuario.role === "admin";
+
     const result = await pool.query(
       `SELECT
         o.*,
@@ -133,19 +137,23 @@ async function listOrders(req, res) {
           ) FILTER (WHERE oi.id IS NOT NULL),
           '[]'
         ) AS items
-      FROM orders o
-      LEFT JOIN order_items oi ON oi.order_id = o.id
-      GROUP BY o.id
-      ORDER BY o.created_at DESC`,
+     FROM orders o
+LEFT JOIN order_items oi ON oi.order_id = o.id
+WHERE ($1::boolean = true OR o.user_id = $2)
+GROUP BY o.id
+ORDER BY o.created_at DESC`,
+[ehAdmin, usuario.id],
     );
 
     return res.json(result.rows);
   } catch (error) {
     console.error("Erro ao listar pedidos:", error);
 
-    return res.status(500).json({
-      erro: "Erro interno ao listar pedidos.",
-    });
+    return res.status(error.statusCode || 500).json({
+  erro: error.statusCode
+    ? error.message
+    : "Erro interno ao listar pedidos.",
+});
   }
 }
 
