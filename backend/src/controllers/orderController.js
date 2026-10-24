@@ -122,7 +122,7 @@ async function createOrder(req, res) {
       ? error.message
       : "Erro interno ao criar pedido.",
   });
-}
+    
   } finally {
   if (client) {
     client.release();
