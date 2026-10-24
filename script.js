@@ -5202,11 +5202,19 @@ async function alterarStatusPedido(id, novoStatus) {
   const statusApi = converterStatusTelaParaApi(novoStatus);
 
   try {
-    const resposta = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+   const token = localStorage.getItem("clickbus_token");
+
+if (!token || !usuarioEstaLogado()) {
+mostrarAviso("Faça login novamente como administrador.", "erro");
+  return;
+}
+
+const resposta = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
       body: JSON.stringify({
         status: statusApi,
         cancelled_by: statusApi === "cancelado" ? "admin" : null,
@@ -5552,11 +5560,18 @@ async function cancelarPedidoCliente(id) {
       await renderizarPedidos();
       return;
     }
+     const token = localStorage.getItem("clickbus_token");
+
+if (!token || !usuarioEstaLogado()) {
+  mostrarAviso("Faça login novamente para cancelar o pedido.", "erro");
+  return;
+}
 
     const resposta = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         status: "cancelado",
