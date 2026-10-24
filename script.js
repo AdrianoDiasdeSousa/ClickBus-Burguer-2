@@ -4644,13 +4644,21 @@ items: pedido.flatMap((item) => {
       botaoConfirmar.textContent = "Enviando pedido...";
     }
 
-    const resposta = await fetch(`${API_BASE_URL}/orders`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payloadPedido),
-    });
+  const token = localStorage.getItem("clickbus_token");
+
+if (!token || !usuarioEstaLogado()) {
+  mostrarAviso("Faça login novamente para confirmar o pedido.", "erro");
+  return;
+}
+
+const resposta = await fetch(`${API_BASE_URL}/orders`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify(payloadPedido),
+});
 
     const resultado = await resposta.json();
 
