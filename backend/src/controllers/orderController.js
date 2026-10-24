@@ -179,17 +179,33 @@ async function updateOrderStatus(req, res) {
       });
     }
 
-    const canceladoPorFinal =
-      status === "cancelado" ? cancelled_by || null : null;
+    if (!ehAdmin && status !== "cancelado") {
+  return res.status(403).json({
+    erro: "Cliente só pode cancelar o próprio pedido.",
+  });
+}
 
+const canceladoPorFinal =
+  status === "cancelado"
+    ? (ehAdmin ? "admin" : "cliente")
+    : null;
+     
     const result = await pool.query(
       `UPDATE orders
        SET
         status = $1,
         cancelled_by = $2
-       WHERE id = $3
-       RETURNING *`,
-      [status, canceladoPorFinal, id],
+      WHERE id = $3
+  AND (
+    $4::boolean = true
+    OR (
+      user_id = $5
+      AND status = 'pendente'
+      AND $1 = 'cancelado'
+    )
+  )
+RETURNING *`,
+[status, canceladoPorFinal, id, ehAdmin, usuario.id],
     );
 
     if (result.rows.length === 0) {
@@ -205,10 +221,11 @@ async function updateOrderStatus(req, res) {
   } catch (error) {
     console.error("Erro ao atualizar status do pedido:", error);
 
-    return res.status(500).json({
-      erro: "Erro interno ao atualizar status do pedido.",
-      detalhe: error.message,
-    });
+  return res.status(error.statusCode || 500).json({
+  erro: error.statusCode
+    ? error.message
+    : "Erro interno ao atualizar status do pedido.",
+});
   }
 }
 
