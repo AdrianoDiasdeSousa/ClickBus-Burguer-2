@@ -51,6 +51,41 @@ function obterBearerToken(req) {
   return "";
 }
 
+async function obterUsuarioAutenticado(req) {
+  const token = obterBearerToken(req);
+
+  if (!token) {
+    const erro = new Error("Faça login para continuar.");
+    erro.statusCode = 401;
+    throw erro;
+  }
+
+  let payload;
+
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    const erro = new Error("Sessão inválida ou expirada.");
+    erro.statusCode = 401;
+    throw erro;
+  }
+
+  const resultado = await pool.query(
+    `SELECT id, name, email, role
+     FROM users
+     WHERE id = $1`,
+    [payload.id],
+  );
+
+  if (resultado.rows.length === 0) {
+    const erro = new Error("Usuário não encontrado.");
+    erro.statusCode = 401;
+    throw erro;
+  }
+
+  return resultado.rows[0];
+}
+
 async function obterUsuarioAdminAutenticado(req) {
   const token = obterBearerToken(req);
 
@@ -550,5 +585,6 @@ module.exports = {
   resetPassword,
   getCustomers,
   deleteCustomer,
+  obterUsuarioAutenticado,
   obterUsuarioAdminAutenticado,
 };

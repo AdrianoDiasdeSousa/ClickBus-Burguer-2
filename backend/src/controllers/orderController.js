@@ -1,15 +1,24 @@
 const pool = require("../config/db");
 
 const {
+  obterUsuarioAutenticado,
   obterUsuarioAdminAutenticado,
 } = require("./authController");
 
 async function createOrder(req, res) {
-  const client = await pool.connect();
+  let client;
 
   try {
+    const usuario = await obterUsuarioAutenticado(req);
+
+    if (usuario.role === "admin") {
+      return res.status(403).json({
+        erro: "O administrador não pode realizar pedidos.",
+      });
+    }
+
+    client = await pool.connect();
     const {
-      user_id,
       customer_email,
       customer_name,
       customer_phone,
@@ -54,7 +63,7 @@ async function createOrder(req, res) {
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
       RETURNING *`,
       [
-        user_id || null,
+        usuario.id,
         customer_email || null,
         customer_name,
         customer_phone || null,
@@ -100,21 +109,32 @@ async function createOrder(req, res) {
       mensagem: "Pedido criado com sucesso.",
       order,
     });
-  } catch (error) {
+
+    } catch (error) {
+  if (client) {
     await client.query("ROLLBACK");
+  }
 
-    console.error("Erro ao criar pedido:", error);
+  console.error("Erro ao criar pedido:", error);
 
-    return res.status(500).json({
-      erro: "Erro interno ao criar pedido.",
-    });
+  return res.status(error.statusCode || 500).json({
+    erro: error.statusCode
+      ? error.message
+      : "Erro interno ao criar pedido.",
+  });
+    
   } finally {
+  if (client) {
     client.release();
   }
+}
 }
 
 async function listOrders(req, res) {
   try {
+    const usuario = await obterUsuarioAutenticado(req);
+    const ehAdmin = usuario.role === "admin";
+
     const result = await pool.query(
       `SELECT
         o.*,
@@ -133,24 +153,31 @@ async function listOrders(req, res) {
           ) FILTER (WHERE oi.id IS NOT NULL),
           '[]'
         ) AS items
-      FROM orders o
-      LEFT JOIN order_items oi ON oi.order_id = o.id
-      GROUP BY o.id
-      ORDER BY o.created_at DESC`,
+     FROM orders o
+LEFT JOIN order_items oi ON oi.order_id = o.id
+WHERE ($1::boolean = true OR o.user_id = $2)
+GROUP BY o.id
+ORDER BY o.created_at DESC`,
+[ehAdmin, usuario.id],
     );
 
     return res.json(result.rows);
   } catch (error) {
     console.error("Erro ao listar pedidos:", error);
 
-    return res.status(500).json({
-      erro: "Erro interno ao listar pedidos.",
-    });
+    return res.status(error.statusCode || 500).json({
+  erro: error.statusCode
+    ? error.message
+    : "Erro interno ao listar pedidos.",
+});
   }
 }
 
 async function updateOrderStatus(req, res) {
-  try {
+   try {
+    const usuario = await obterUsuarioAutenticado(req);
+    const ehAdmin = usuario.role === "admin";
+
     const { id } = req.params;
     const { status, cancelled_by } = req.body;
 
@@ -168,17 +195,33 @@ async function updateOrderStatus(req, res) {
       });
     }
 
-    const canceladoPorFinal =
-      status === "cancelado" ? cancelled_by || null : null;
+    if (!ehAdmin && status !== "cancelado") {
+  return res.status(403).json({
+    erro: "Cliente só pode cancelar o próprio pedido.",
+  });
+}
 
+const canceladoPorFinal =
+  status === "cancelado"
+    ? (ehAdmin ? "admin" : "cliente")
+    : null;
+     
     const result = await pool.query(
       `UPDATE orders
        SET
         status = $1,
         cancelled_by = $2
-       WHERE id = $3
-       RETURNING *`,
-      [status, canceladoPorFinal, id],
+      WHERE id = $3
+  AND (
+    $4::boolean = true
+    OR (
+      user_id = $5
+      AND status = 'pendente'
+      AND $1 = 'cancelado'
+    )
+  )
+RETURNING *`,
+[status, canceladoPorFinal, id, ehAdmin, usuario.id],
     );
 
     if (result.rows.length === 0) {
@@ -194,10 +237,11 @@ async function updateOrderStatus(req, res) {
   } catch (error) {
     console.error("Erro ao atualizar status do pedido:", error);
 
-    return res.status(500).json({
-      erro: "Erro interno ao atualizar status do pedido.",
-      detalhe: error.message,
-    });
+  return res.status(error.statusCode || 500).json({
+  erro: error.statusCode
+    ? error.message
+    : "Erro interno ao atualizar status do pedido.",
+});
   }
 }
 

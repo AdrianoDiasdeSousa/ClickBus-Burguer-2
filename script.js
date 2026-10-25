@@ -4644,13 +4644,21 @@ items: pedido.flatMap((item) => {
       botaoConfirmar.textContent = "Enviando pedido...";
     }
 
-    const resposta = await fetch(`${API_BASE_URL}/orders`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payloadPedido),
-    });
+  const token = localStorage.getItem("clickbus_token");
+
+if (!token || !usuarioEstaLogado()) {
+  mostrarAviso("Faça login novamente para confirmar o pedido.", "erro");
+  return;
+}
+
+const resposta = await fetch(`${API_BASE_URL}/orders`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify(payloadPedido),
+});
 
     const resultado = await resposta.json();
 
@@ -4759,7 +4767,18 @@ function converterPedidoApiParaTela(pedidoApi) {
 
 async function carregarPedidosDaApi() {
   try {
-    const resposta = await fetch(`${API_BASE_URL}/orders`);
+    const token = localStorage.getItem("clickbus_token");
+
+    if (!token || !usuarioEstaLogado()) {
+      return [];
+    }
+
+    const resposta = await fetch(`${API_BASE_URL}/orders`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
 
     if (!resposta.ok) {
       throw new Error("Erro ao buscar pedidos.");
@@ -5183,11 +5202,19 @@ async function alterarStatusPedido(id, novoStatus) {
   const statusApi = converterStatusTelaParaApi(novoStatus);
 
   try {
-    const resposta = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+   const token = localStorage.getItem("clickbus_token");
+
+if (!token || !usuarioEstaLogado()) {
+mostrarAviso("Faça login novamente como administrador.", "erro");
+  return;
+}
+
+const resposta = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
       body: JSON.stringify({
         status: statusApi,
         cancelled_by: statusApi === "cancelado" ? "admin" : null,
@@ -5533,11 +5560,18 @@ async function cancelarPedidoCliente(id) {
       await renderizarPedidos();
       return;
     }
+     const token = localStorage.getItem("clickbus_token");
+
+if (!token || !usuarioEstaLogado()) {
+  mostrarAviso("Faça login novamente para cancelar o pedido.", "erro");
+  return;
+}
 
     const resposta = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         status: "cancelado",
