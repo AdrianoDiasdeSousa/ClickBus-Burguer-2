@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { obterUsuarioAdminAutenticado } = require("./authController");
 
 async function listProducts(req, res) {
   try {
@@ -65,6 +66,7 @@ async function getProductById(req, res) {
 
 async function createProduct(req, res) {
   try {
+     await obterUsuarioAdminAutenticado(req);
     const { name, description, price, category, image_url, available } =
       req.body;
 
@@ -110,7 +112,14 @@ async function createProduct(req, res) {
       mensagem: "Produto cadastrado com sucesso.",
       product: result.rows[0],
     });
+ 
   } catch (error) {
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
     console.error("Erro ao criar produto:", error);
 
     return res.status(500).json({
@@ -121,6 +130,7 @@ async function createProduct(req, res) {
 
 async function updateProduct(req, res) {
   try {
+    await obterUsuarioAdminAutenticado(req);
     const { id } = req.params;
 
     const {
@@ -194,17 +204,29 @@ async function updateProduct(req, res) {
       mensagem: "Produto atualizado com sucesso.",
       product: result.rows[0],
     });
+ 
   } catch (error) {
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
     console.error("Erro ao atualizar produto:", error);
 
     return res.status(500).json({
       erro: "Erro interno ao atualizar produto.",
     });
   }
+
 }
+
 
 async function deleteProduct(req, res) {
   try {
+    // Verifica se o usuário é administrador
+    await obterUsuarioAdminAutenticado(req);
+
     const { id } = req.params;
 
     const result = await pool.query(
@@ -223,7 +245,16 @@ async function deleteProduct(req, res) {
     return res.json({
       mensagem: "Produto excluído com sucesso.",
     });
+
   } catch (error) {
+    // Erros de autenticação e permissão
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
+    // Outros erros internos
     console.error("Erro ao excluir produto:", error);
 
     return res.status(500).json({
