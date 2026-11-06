@@ -32,6 +32,7 @@ jobs:
 
       - name: Verificar api.js
         run: node --check api.js
+        # Nova verificacao de sintaxe
 
       - name: Verificar backend
         run: |
