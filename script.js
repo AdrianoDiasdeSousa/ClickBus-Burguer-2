@@ -1514,7 +1514,7 @@ async function renderizarCardapio() {
 
   if (!listaLanches || !listaBebidas) return;
 
-  const produtos = await carregarProdutosDaApi();
+  const produtos = carregarProdutos();
   const admin = usuarioEhAdmin();
    const linkCarrinhoTopo = document.getElementById("linkCarrinhoTopo");
 
@@ -5803,12 +5803,35 @@ function iniciarAtualizacaoAutomaticaPaginas() {
     }, 5000);
   }
 
+ 
   if (estaNaPaginaCardapio) {
-    setInterval(() => {
-      if (typeof renderizarCardapio === "function") {
-        renderizarCardapio();
-      }
+    let atualizandoCardapio = false;
 
+    async function atualizarProdutosCardapio() {
+      if (atualizandoCardapio) return;
+
+      atualizandoCardapio = true;
+
+      try {
+        await carregarProdutosDaApi();
+
+        if (typeof renderizarCardapio === "function") {
+          await renderizarCardapio();
+        }
+      } catch (error) {
+        console.error("Erro ao atualizar cardapio:", error);
+      } finally {
+        atualizandoCardapio = false;
+      }
+    }
+
+    atualizarProdutosCardapio();
+
+    setInterval(() => {
+      atualizarProdutosCardapio();
+    }, 60000);
+
+    setInterval(() => {
       if (typeof atualizarStatusLoja === "function") {
         atualizarStatusLoja();
       }
