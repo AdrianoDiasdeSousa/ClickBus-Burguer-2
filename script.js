@@ -9,6 +9,19 @@ const API_BASE_URL =
     ? API_URL
     : "https://clickbus-burguer-api.onrender.com/api";
 
+function obterHeadersAdmin() {
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    throw new Error("Sessão não encontrada. Faça login novamente.");
+  }
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
 function prepararAvisosTemporarios() {
   if (document.getElementById("estiloAvisosTemporarios")) return;
 
@@ -1895,9 +1908,7 @@ async function reposicionarProdutoArrastado(idArrastado, idAlvo) {
       `${API_BASE_URL}/products/${produtoArrastado.id}`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+       headers: obterHeadersAdmin(),
         body: JSON.stringify(
           converterProdutoTelaParaApi(produtoArrastadoAtualizado),
         ),
@@ -1918,9 +1929,7 @@ async function reposicionarProdutoArrastado(idArrastado, idAlvo) {
       `${API_BASE_URL}/products/${produtoAlvo.id}`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+       headers: obterHeadersAdmin(),
         body: JSON.stringify(
           converterProdutoTelaParaApi(produtoAlvoAtualizado),
         ),
@@ -2008,19 +2017,18 @@ async function moverProduto(id, direcao) {
     ordem: ordemAtual,
   };
 
-  try {
-    const respostaAtual = await fetch(
-      `${API_BASE_URL}/products/${produtoAtual.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          converterProdutoTelaParaApi(produtoAtualAtualizado),
-        ),
-      },
-    );
+ 
+const respostaAtual = await fetch(
+  `${API_BASE_URL}/products/${produtoAtual.id}`,
+  {
+    method: "PUT",
+    headers: obterHeadersAdmin(),
+    body: JSON.stringify(
+      converterProdutoTelaParaApi(produtoAtualAtualizado),
+    ),
+  },
+);
+
 
     const resultadoAtual = await respostaAtual.json();
 
@@ -2036,9 +2044,7 @@ async function moverProduto(id, direcao) {
       `${API_BASE_URL}/products/${produtoAlvo.id}`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: obterHeadersAdmin(),
         body: JSON.stringify(
           converterProdutoTelaParaApi(produtoAlvoAtualizado),
         ),
@@ -2159,9 +2165,7 @@ async function editarAvisoProduto(id) {
   try {
     const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: obterHeadersAdmin(),
       body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
     });
 
@@ -2287,13 +2291,13 @@ async function editarImagemProduto(id) {
         admin_notice: produto.avisoAdmin || produto.admin_notice || "",
       };
 
-      const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dadosAtualizados),
-      });
+      
+const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
+  method: "PUT",
+  headers: obterHeadersAdmin(),
+  body: JSON.stringify(dadosAtualizados),
+});
+
 
       let resultado = null;
 
@@ -2359,12 +2363,10 @@ async function alternarDisponibilidadeProduto(id) {
 
   try {
     const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
-    });
+  method: "PUT",
+  headers: obterHeadersAdmin(),
+  body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
+});
 
     const resultado = await resposta.json();
 
@@ -2411,10 +2413,11 @@ async function excluirProduto(id) {
     return;
   }
 
-  try {
-    const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
-      method: "DELETE",
-    });
+try {
+  const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
+    method: "DELETE",
+    headers: obterHeadersAdmin(),
+  });
 
     const resultado = await resposta.json();
 
@@ -2471,10 +2474,8 @@ async function cadastrarProdutoPorCategoria(categoria) {
 
   try {
     const resposta = await fetch(`${API_BASE_URL}/products`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      method: "POST",    
+      headers: obterHeadersAdmin(),
       body: JSON.stringify({
         name: nome.trim(),
         description: descricao.trim(),
