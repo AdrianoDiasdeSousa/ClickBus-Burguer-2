@@ -9,6 +9,19 @@ const API_BASE_URL =
     ? API_URL
     : "https://clickbus-burguer-api.onrender.com/api";
 
+function obterHeadersAdmin() {
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    throw new Error("Sessão não encontrada. Faça login novamente.");
+  }
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
 function prepararAvisosTemporarios() {
   if (document.getElementById("estiloAvisosTemporarios")) return;
 
@@ -1346,10 +1359,9 @@ function carregarProdutos() {
     try {
       const produtos = normalizarProdutos(JSON.parse(produtosSalvos));
 
-      if (Array.isArray(produtos) && produtos.length > 0) {
-        localStorage.setItem("produtosClickBus", JSON.stringify(produtos));
-        return produtos;
-      }
+     if (Array.isArray(produtos) && produtos.length > 0) {
+  return produtos;
+}
     } catch (error) {
       console.error("Erro ao carregar produtos locais:", error);
     }
@@ -1501,7 +1513,7 @@ async function renderizarCardapio() {
 
   if (!listaLanches || !listaBebidas) return;
 
-  const produtos = await carregarProdutosDaApi();
+  const produtos = carregarProdutos();
   const admin = usuarioEhAdmin();
    const linkCarrinhoTopo = document.getElementById("linkCarrinhoTopo");
 
@@ -1895,9 +1907,7 @@ async function reposicionarProdutoArrastado(idArrastado, idAlvo) {
       `${API_BASE_URL}/products/${produtoArrastado.id}`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+       headers: obterHeadersAdmin(),
         body: JSON.stringify(
           converterProdutoTelaParaApi(produtoArrastadoAtualizado),
         ),
@@ -1918,9 +1928,7 @@ async function reposicionarProdutoArrastado(idArrastado, idAlvo) {
       `${API_BASE_URL}/products/${produtoAlvo.id}`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+       headers: obterHeadersAdmin(),
         body: JSON.stringify(
           converterProdutoTelaParaApi(produtoAlvoAtualizado),
         ),
@@ -2007,20 +2015,19 @@ async function moverProduto(id, direcao) {
     ...produtoAlvo,
     ordem: ordemAtual,
   };
-
-  try {
-    const respostaAtual = await fetch(
-      `${API_BASE_URL}/products/${produtoAtual.id}`,
+   
+   try {
+      const respostaAtual = await fetch(
+     `${API_BASE_URL}/products/${produtoAtual.id}`,
       {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          converterProdutoTelaParaApi(produtoAtualAtualizado),
-        ),
-      },
-    );
+      method: "PUT",
+      headers: obterHeadersAdmin(),
+      body: JSON.stringify(
+      converterProdutoTelaParaApi(produtoAtualAtualizado),
+    ),
+  },
+);
+
 
     const resultadoAtual = await respostaAtual.json();
 
@@ -2036,9 +2043,7 @@ async function moverProduto(id, direcao) {
       `${API_BASE_URL}/products/${produtoAlvo.id}`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: obterHeadersAdmin(),
         body: JSON.stringify(
           converterProdutoTelaParaApi(produtoAlvoAtualizado),
         ),
@@ -2159,9 +2164,7 @@ async function editarAvisoProduto(id) {
   try {
     const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: obterHeadersAdmin(),
       body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
     });
 
@@ -2287,13 +2290,13 @@ async function editarImagemProduto(id) {
         admin_notice: produto.avisoAdmin || produto.admin_notice || "",
       };
 
-      const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dadosAtualizados),
-      });
+      
+const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
+  method: "PUT",
+  headers: obterHeadersAdmin(),
+  body: JSON.stringify(dadosAtualizados),
+});
+
 
       let resultado = null;
 
@@ -2359,12 +2362,10 @@ async function alternarDisponibilidadeProduto(id) {
 
   try {
     const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
-    });
+  method: "PUT",
+  headers: obterHeadersAdmin(),
+  body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
+});
 
     const resultado = await resposta.json();
 
@@ -2411,10 +2412,11 @@ async function excluirProduto(id) {
     return;
   }
 
-  try {
-    const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
-      method: "DELETE",
-    });
+try {
+  const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
+    method: "DELETE",
+    headers: obterHeadersAdmin(),
+  });
 
     const resultado = await resposta.json();
 
@@ -2471,10 +2473,8 @@ async function cadastrarProdutoPorCategoria(categoria) {
 
   try {
     const resposta = await fetch(`${API_BASE_URL}/products`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      method: "POST",    
+      headers: obterHeadersAdmin(),
       body: JSON.stringify({
         name: nome.trim(),
         description: descricao.trim(),
@@ -2810,42 +2810,65 @@ let configuracoesLojaCache = {
   updated_at: null,
 };
 
+
+let requisicaoConfiguracoesLoja = null;
+
 async function carregarConfiguracoesLojaDaApi() {
-  try {
-    const resposta = await fetch(`${API_BASE_URL}/store`);
+  // Reutiliza uma consulta que ja esteja em andamento.
+  if (requisicaoConfiguracoesLoja) {
+    return requisicaoConfiguracoesLoja;
+  }
 
-    if (!resposta.ok) {
-      throw new Error("Erro ao buscar configurações da loja.");
+  requisicaoConfiguracoesLoja = (async () => {
+    const controlador = new AbortController();
+    const timeout = setTimeout(() => controlador.abort(), 10000);
+
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/store`, {
+        signal: controlador.signal,
+      });
+
+      if (!resposta.ok) {
+        throw new Error("Erro ao buscar configuracoes da loja.");
+      }
+
+      const configuracoes = await resposta.json();
+
+      configuracoesLojaCache = {
+        store_name: configuracoes.store_name || perfilLojaPadrao.nome,
+        category: configuracoes.category || perfilLojaPadrao.categoria,
+        address: configuracoes.address || perfilLojaPadrao.endereco,
+        location: configuracoes.location || perfilLojaPadrao.localizacaoLoja,
+        phone: configuracoes.phone || perfilLojaPadrao.telefone,
+        opening_hours: configuracoes.opening_hours || perfilLojaPadrao.horario,
+        business_days: configuracoes.business_days || perfilLojaPadrao.dias,
+        manual_status: configuracoes.manual_status || "auto",
+        sharing_title:
+          configuracoes.sharing_title || perfilLojaPadrao.tituloCompartilhamento,
+        delivery_area:
+          configuracoes.delivery_area || perfilLojaPadrao.cidadeEntrega,
+        published_link:
+          configuracoes.published_link || perfilLojaPadrao.linkPublicado,
+        share_message_client:
+          configuracoes.share_message_client || perfilLojaPadrao.mensagemCliente,
+        share_message_admin:
+          configuracoes.share_message_admin || perfilLojaPadrao.mensagemAdmin,
+        updated_at: configuracoes.updated_at || null,
+      };
+
+      return configuracoesLojaCache;
+    } catch (error) {
+      console.error("Erro ao carregar configuracoes da loja:", error);
+      return configuracoesLojaCache;
+    } finally {
+      clearTimeout(timeout);
     }
+  })();
 
-    const configuracoes = await resposta.json();
-
-    configuracoesLojaCache = {
-      store_name: configuracoes.store_name || perfilLojaPadrao.nome,
-      category: configuracoes.category || perfilLojaPadrao.categoria,
-      address: configuracoes.address || perfilLojaPadrao.endereco,
-      location: configuracoes.location || perfilLojaPadrao.localizacaoLoja,
-      phone: configuracoes.phone || perfilLojaPadrao.telefone,
-      opening_hours: configuracoes.opening_hours || perfilLojaPadrao.horario,
-      business_days: configuracoes.business_days || perfilLojaPadrao.dias,
-      manual_status: configuracoes.manual_status || "auto",
-      sharing_title:
-        configuracoes.sharing_title || perfilLojaPadrao.tituloCompartilhamento,
-      delivery_area:
-        configuracoes.delivery_area || perfilLojaPadrao.cidadeEntrega,
-      published_link:
-        configuracoes.published_link || perfilLojaPadrao.linkPublicado,
-      share_message_client:
-        configuracoes.share_message_client || perfilLojaPadrao.mensagemCliente,
-      share_message_admin:
-        configuracoes.share_message_admin || perfilLojaPadrao.mensagemAdmin,
-      updated_at: configuracoes.updated_at || null,
-    };
-
-    return configuracoesLojaCache;
-  } catch (error) {
-    console.error("Erro ao carregar configurações da loja:", error);
-    return configuracoesLojaCache;
+  try {
+    return await requisicaoConfiguracoesLoja;
+  } finally {
+    requisicaoConfiguracoesLoja = null;
   }
 }
 
@@ -3083,10 +3106,26 @@ async function verificarStatusLoja() {
 }
 
 function iniciarAtualizacaoStatusLoja() {
-  verificarStatusLoja();
+  let iniciada = false;
+
+  async function atualizar() {
+    if (iniciada) return;
+
+    iniciada = true;
+
+    try {
+      await verificarStatusLoja();
+    } catch (erro) {
+      console.error("Erro ao verificar status da loja:", erro);
+    } finally {
+      iniciada = false;
+    }
+  }
+
+  atualizar();
 
   setInterval(() => {
-    verificarStatusLoja();
+    atualizar();
   }, 15000);
 }
 
@@ -5154,33 +5193,6 @@ async function renderizarPedidos() {
   });
 }
 
-function iniciarAtualizacaoAutomatica() {
-  const pagina = window.location.pathname;
-
-  const estaNaPaginaPedidos = pagina.includes("pedidos.html");
-  const estaNaPaginaDetalhe = pagina.includes("detalhe-pedido.html");
-  const estaNaPaginaCardapio = pagina.includes("cardapio.html");
-
-  if (estaNaPaginaPedidos) {
-    setInterval(() => {
-      renderizarPedidos();
-    }, 5000);
-  }
-
-  if (estaNaPaginaDetalhe) {
-    setInterval(() => {
-      carregarDetalhePedidoPagina();
-    }, 5000);
-  }
-
-  if (estaNaPaginaCardapio) {
-    setInterval(() => {
-      atualizarStatusLoja?.();
-      carregarProdutosCardapio?.();
-    }, 5000);
-  }
-}
-
 function converterStatusTelaParaApi(statusTela) {
   const mapa = {
     "Pedido recebido": "pendente",
@@ -5802,20 +5814,39 @@ function iniciarAtualizacaoAutomaticaPaginas() {
     }, 5000);
   }
 
+ 
   if (estaNaPaginaCardapio) {
+    let atualizandoCardapio = false;
+
+    async function atualizarProdutosCardapio() {
+      if (atualizandoCardapio) return;
+
+      atualizandoCardapio = true;
+
+      try {
+        await carregarProdutosDaApi();
+
+        if (typeof renderizarCardapio === "function") {
+          await renderizarCardapio();
+        }
+      } catch (error) {
+        console.error("Erro ao atualizar cardapio:", error);
+      } finally {
+        atualizandoCardapio = false;
+      }
+    }
+
+    atualizarProdutosCardapio();
+
     setInterval(() => {
-      if (typeof renderizarCardapio === "function") {
-        renderizarCardapio();
-      }
+      atualizarProdutosCardapio();
+    }, 60000);
 
-      if (typeof atualizarStatusLoja === "function") {
-        atualizarStatusLoja();
-      }
-
-      if (typeof atualizarHorarioFuncionamento === "function") {
-        atualizarHorarioFuncionamento();
-      }
-    }, 5000);
+   setInterval(() => {
+  if (typeof atualizarHorarioFuncionamento === "function") {
+    atualizarHorarioFuncionamento();
+  }
+}, 5000);
   }
 }
 
@@ -6006,10 +6037,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   executarComSeguranca("iniciarAtualizacaoStatusLoja", () => {
-    if (typeof iniciarAtualizacaoAutomatica === "function") {
-      iniciarAtualizacaoAutomatica();
-    }
-
     if (typeof iniciarAtualizacaoStatusLoja === "function") {
       iniciarAtualizacaoStatusLoja();
     }

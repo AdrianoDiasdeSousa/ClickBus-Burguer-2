@@ -1,0 +1,48 @@
+
+name: Verificar JavaScript
+
+on:
+  push:
+    branches:
+      - seguranca-rotas-admin
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verificar-sintaxe:
+    name: Verificar sintaxe JavaScript
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verificar script.js
+        run: node --check script.js
+
+      - name: Verificar api.js
+        run: node --check api.js
+        # Nova verificacao de sintaxe
+
+      - name: Verificar backend
+        run: |
+          find backend/src -type f -name '*.js' -print0 |
+            xargs -0 -r -n 1 node --check
+
+      - name: Instalar dependencias do backend
+        working-directory: backend
+        run: npm ci
+
+      - name: Testar autorizacao de produtos
+        working-directory: backend
+        run: node --test tests/productAuthorization.test.js
