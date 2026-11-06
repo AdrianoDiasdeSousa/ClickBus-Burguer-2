@@ -2210,28 +2210,36 @@ function redimensionarImagemBase64(
         canvas.height = altura;
 
         const contexto = canvas.getContext("2d");
+
+        if (!contexto) {
+          reject(new Error("Não foi possível processar a imagem."));
+          return;
+        }
+
         contexto.clearRect(0, 0, largura, altura);
         contexto.drawImage(imagem, 0, 0, largura, altura);
 
-        const manterTransparencia =
-          arquivo.type === "image/png" || arquivo.type === "image/webp";
-
-        const imagemBase64 = manterTransparencia
-          ? canvas.toDataURL("image/png")
-          : canvas.toDataURL("image/jpeg", qualidade);
+        const imagemBase64 = canvas.toDataURL(
+          "image/webp",
+          qualidade
+        );
 
         resolve(imagemBase64);
       };
 
       imagem.onerror = () => {
-        reject(new Error("Não foi possível carregar a imagem selecionada."));
+        reject(
+          new Error("Não foi possível carregar a imagem selecionada.")
+        );
       };
 
       imagem.src = leitor.result;
     };
 
     leitor.onerror = () => {
-      reject(new Error("Não foi possível ler o arquivo selecionado."));
+      reject(
+        new Error("Não foi possível ler o arquivo selecionado.")
+      );
     };
 
     leitor.readAsDataURL(arquivo);
