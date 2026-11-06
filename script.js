@@ -6383,6 +6383,9 @@ function obterMaiorIdPedido(pedidos) {
 }
 
 function tocarAlertaNovoPedido() {
+  // Recupera as configuracoes de som salvas.
+  const configuracao = obterConfiguracaoSomPedido();
+
   if (!somPedidoAtivado) {
     return;
   }
@@ -6392,48 +6395,60 @@ function tocarAlertaNovoPedido() {
     audioPedido.currentTime = 0;
   }
 
-  audioPedido = criarAudioPedido();
+  audioPedido = new Audio(
+    new URL(configuracao.toque, window.location.origin + "/").href
+  );
+
+  audioPedido.volume = Math.min(
+    1,
+    Math.max(0, configuracao.volume / 100)
+  );
 
   audioPedido.play().catch((erro) => {
     console.error(
-      "O navegador bloqueou o alerta sonoro:",
-      erro,
+      "O navegador bloqueou o som do novo pedido:",
+      erro
     );
   });
 }
 
 async function verificarNovoPedido() {
-  if (!usuarioEhAdmin()) {
-    return;
-  }
+  if (!usuarioEhAdmin()) return;
 
   const pedidos = await buscarPedidosParaAlerta();
 
-  if (!pedidos.length) {
-    return;
-  }
+  if (!pedidos.length) return;
 
   const maiorIdAtual = obterMaiorIdPedido(pedidos);
 
-  if (maiorIdAtual === null) {
-    return;
-  }
+  if (maiorIdAtual === null) return;
 
-  // Primeira consulta:
-  // apenas registra o pedido mais recente.
-  // Não toca para pedidos antigos.
+  const chave = "clickbus_ultimo_pedido_monitorado";
+
   if (ultimoPedidoConhecidoId === null) {
-    ultimoPedidoConhecidoId = maiorIdAtual;
-    return;
+    const idSalvo = Number(sessionStorage.getItem(chave));
+
+    if (Number.isFinite(idSalvo) && idSalvo > 0) {
+      ultimoPedidoConhecidoId = idSalvo;
+    } else {
+      ultimoPedidoConhecidoId = maiorIdAtual;
+      sessionStorage.setItem(chave, String(maiorIdAtual));
+      return;
+    }
   }
 
   if (maiorIdAtual > ultimoPedidoConhecidoId) {
     const quantidadeNovos = pedidos.filter(
       (pedido) =>
-        Number(pedido.id) > ultimoPedidoConhecidoId,
+        Number(pedido.id) > ultimoPedidoConhecidoId
     ).length;
 
     ultimoPedidoConhecidoId = maiorIdAtual;
+
+    sessionStorage.setItem(
+      chave,
+      String(maiorIdAtual)
+    );
 
     tocarAlertaNovoPedido();
 
@@ -6442,43 +6457,46 @@ async function verificarNovoPedido() {
         ? `🔔 ${quantidadeNovos} novos pedidos recebidos!`
         : "🔔 Novo pedido recebido!",
       "sucesso",
-      6000,
+      6000
     );
 
-    // Atualiza automaticamente a lista da página de pedidos.
-    if (typeof renderizarPedidos === "function") {
+    if (
+      window.location.pathname.includes("pedidos.html") &&
+      typeof renderizarPedidos === "function"
+    ) {
       await renderizarPedidos();
     }
   }
 }
 
 async function iniciarMonitorNovosPedidos() {
-  if (monitorPedidosIniciado) {
-    return;
-  }
+  if (monitorPedidosIniciado) return;
 
-  if (!usuarioEhAdmin()) {
-    return;
-  }
-
-  const estaNaPaginaPedidos =
-    window.location.pathname.includes("pedidos.html");
-
-  if (!estaNaPaginaPedidos) {
-    return;
-  }
-
+  if (!usuarioEhAdmin()) return;
   monitorPedidosIniciado = true;
 
-  // Registra o último pedido existente sem tocar.
-  await verificarNovoPedido();
+  let consultaEmAndamento = false;
 
-  // Verifica novos pedidos a cada 5 segundos.
+  async function consultarNovosPedidos() {
+    if (consultaEmAndamento) return;
+
+    consultaEmAndamento = true;
+
+    try {
+      await verificarNovoPedido();
+    } catch (erro) {
+      console.error("Erro no monitor de pedidos:", erro);
+    } finally {
+      consultaEmAndamento = false;
+    }
+  }
+
+  await consultarNovosPedidos();
+
   setInterval(() => {
-    verificarNovoPedido();
+    consultarNovosPedidos();
   }, 5000);
 }
-
 document.addEventListener("DOMContentLoaded", () => {
   iniciarMonitorNovosPedidos();
 });
