@@ -2810,42 +2810,65 @@ let configuracoesLojaCache = {
   updated_at: null,
 };
 
+
+let requisicaoConfiguracoesLoja = null;
+
 async function carregarConfiguracoesLojaDaApi() {
-  try {
-    const resposta = await fetch(`${API_BASE_URL}/store`);
+  // Reutiliza uma consulta que ja esteja em andamento.
+  if (requisicaoConfiguracoesLoja) {
+    return requisicaoConfiguracoesLoja;
+  }
 
-    if (!resposta.ok) {
-      throw new Error("Erro ao buscar configurações da loja.");
+  requisicaoConfiguracoesLoja = (async () => {
+    const controlador = new AbortController();
+    const timeout = setTimeout(() => controlador.abort(), 10000);
+
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/store`, {
+        signal: controlador.signal,
+      });
+
+      if (!resposta.ok) {
+        throw new Error("Erro ao buscar configuracoes da loja.");
+      }
+
+      const configuracoes = await resposta.json();
+
+      configuracoesLojaCache = {
+        store_name: configuracoes.store_name || perfilLojaPadrao.nome,
+        category: configuracoes.category || perfilLojaPadrao.categoria,
+        address: configuracoes.address || perfilLojaPadrao.endereco,
+        location: configuracoes.location || perfilLojaPadrao.localizacaoLoja,
+        phone: configuracoes.phone || perfilLojaPadrao.telefone,
+        opening_hours: configuracoes.opening_hours || perfilLojaPadrao.horario,
+        business_days: configuracoes.business_days || perfilLojaPadrao.dias,
+        manual_status: configuracoes.manual_status || "auto",
+        sharing_title:
+          configuracoes.sharing_title || perfilLojaPadrao.tituloCompartilhamento,
+        delivery_area:
+          configuracoes.delivery_area || perfilLojaPadrao.cidadeEntrega,
+        published_link:
+          configuracoes.published_link || perfilLojaPadrao.linkPublicado,
+        share_message_client:
+          configuracoes.share_message_client || perfilLojaPadrao.mensagemCliente,
+        share_message_admin:
+          configuracoes.share_message_admin || perfilLojaPadrao.mensagemAdmin,
+        updated_at: configuracoes.updated_at || null,
+      };
+
+      return configuracoesLojaCache;
+    } catch (error) {
+      console.error("Erro ao carregar configuracoes da loja:", error);
+      return configuracoesLojaCache;
+    } finally {
+      clearTimeout(timeout);
     }
+  })();
 
-    const configuracoes = await resposta.json();
-
-    configuracoesLojaCache = {
-      store_name: configuracoes.store_name || perfilLojaPadrao.nome,
-      category: configuracoes.category || perfilLojaPadrao.categoria,
-      address: configuracoes.address || perfilLojaPadrao.endereco,
-      location: configuracoes.location || perfilLojaPadrao.localizacaoLoja,
-      phone: configuracoes.phone || perfilLojaPadrao.telefone,
-      opening_hours: configuracoes.opening_hours || perfilLojaPadrao.horario,
-      business_days: configuracoes.business_days || perfilLojaPadrao.dias,
-      manual_status: configuracoes.manual_status || "auto",
-      sharing_title:
-        configuracoes.sharing_title || perfilLojaPadrao.tituloCompartilhamento,
-      delivery_area:
-        configuracoes.delivery_area || perfilLojaPadrao.cidadeEntrega,
-      published_link:
-        configuracoes.published_link || perfilLojaPadrao.linkPublicado,
-      share_message_client:
-        configuracoes.share_message_client || perfilLojaPadrao.mensagemCliente,
-      share_message_admin:
-        configuracoes.share_message_admin || perfilLojaPadrao.mensagemAdmin,
-      updated_at: configuracoes.updated_at || null,
-    };
-
-    return configuracoesLojaCache;
-  } catch (error) {
-    console.error("Erro ao carregar configurações da loja:", error);
-    return configuracoesLojaCache;
+  try {
+    return await requisicaoConfiguracoesLoja;
+  } finally {
+    requisicaoConfiguracoesLoja = null;
   }
 }
 
@@ -3083,10 +3106,26 @@ async function verificarStatusLoja() {
 }
 
 function iniciarAtualizacaoStatusLoja() {
-  verificarStatusLoja();
+  let iniciada = false;
+
+  async function atualizar() {
+    if (iniciada) return;
+
+    iniciada = true;
+
+    try {
+      await verificarStatusLoja();
+    } catch (erro) {
+      console.error("Erro ao verificar status da loja:", erro);
+    } finally {
+      iniciada = false;
+    }
+  }
+
+  atualizar();
 
   setInterval(() => {
-    verificarStatusLoja();
+    atualizar();
   }, 15000);
 }
 
@@ -5803,15 +5842,11 @@ function iniciarAtualizacaoAutomaticaPaginas() {
       atualizarProdutosCardapio();
     }, 60000);
 
-    setInterval(() => {
-      if (typeof atualizarStatusLoja === "function") {
-        atualizarStatusLoja();
-      }
-
-      if (typeof atualizarHorarioFuncionamento === "function") {
-        atualizarHorarioFuncionamento();
-      }
-    }, 5000);
+   setInterval(() => {
+  if (typeof atualizarHorarioFuncionamento === "function") {
+    atualizarHorarioFuncionamento();
+  }
+}, 5000);
   }
 }
 
