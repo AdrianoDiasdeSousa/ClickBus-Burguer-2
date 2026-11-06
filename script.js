@@ -5154,33 +5154,6 @@ async function renderizarPedidos() {
   });
 }
 
-function iniciarAtualizacaoAutomatica() {
-  const pagina = window.location.pathname;
-
-  const estaNaPaginaPedidos = pagina.includes("pedidos.html");
-  const estaNaPaginaDetalhe = pagina.includes("detalhe-pedido.html");
-  const estaNaPaginaCardapio = pagina.includes("cardapio.html");
-
-  if (estaNaPaginaPedidos) {
-    setInterval(() => {
-      renderizarPedidos();
-    }, 5000);
-  }
-
-  if (estaNaPaginaDetalhe) {
-    setInterval(() => {
-      carregarDetalhePedidoPagina();
-    }, 5000);
-  }
-
-  if (estaNaPaginaCardapio) {
-    setInterval(() => {
-      atualizarStatusLoja?.();
-      carregarProdutosCardapio?.();
-    }, 5000);
-  }
-}
-
 function converterStatusTelaParaApi(statusTela) {
   const mapa = {
     "Pedido recebido": "pendente",
@@ -6029,10 +6002,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   executarComSeguranca("iniciarAtualizacaoStatusLoja", () => {
-    if (typeof iniciarAtualizacaoAutomatica === "function") {
-      iniciarAtualizacaoAutomatica();
-    }
-
     if (typeof iniciarAtualizacaoStatusLoja === "function") {
       iniciarAtualizacaoStatusLoja();
     }
