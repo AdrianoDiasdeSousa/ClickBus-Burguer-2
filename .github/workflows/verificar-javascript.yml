@@ -38,3 +38,11 @@ jobs:
         run: |
           find backend/src -type f -name '*.js' -print0 |
             xargs -0 -r -n 1 node --check
+
+      - name: Instalar dependencias do backend
+        working-directory: backend
+        run: npm ci
+
+      - name: Testar autorizacao de produtos
+        working-directory: backend
+        run: node --test tests/productAuthorization.test.js
