@@ -2016,14 +2016,14 @@ async function moverProduto(id, direcao) {
     ...produtoAlvo,
     ordem: ordemAtual,
   };
-
- 
-const respostaAtual = await fetch(
-  `${API_BASE_URL}/products/${produtoAtual.id}`,
-  {
-    method: "PUT",
-    headers: obterHeadersAdmin(),
-    body: JSON.stringify(
+   
+   try {
+      const respostaAtual = await fetch(
+     `${API_BASE_URL}/products/${produtoAtual.id}`,
+      {
+      method: "PUT",
+      headers: obterHeadersAdmin(),
+      body: JSON.stringify(
       converterProdutoTelaParaApi(produtoAtualAtualizado),
     ),
   },
