@@ -1359,10 +1359,9 @@ function carregarProdutos() {
     try {
       const produtos = normalizarProdutos(JSON.parse(produtosSalvos));
 
-      if (Array.isArray(produtos) && produtos.length > 0) {
-        localStorage.setItem("produtosClickBus", JSON.stringify(produtos));
-        return produtos;
-      }
+     if (Array.isArray(produtos) && produtos.length > 0) {
+  return produtos;
+}
     } catch (error) {
       console.error("Erro ao carregar produtos locais:", error);
     }
