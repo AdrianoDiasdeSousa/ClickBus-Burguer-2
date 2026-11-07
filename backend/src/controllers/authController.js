@@ -146,8 +146,7 @@ const cpfLimpo = typeof cpf === "string"
 
 function cpfValido(numero) {
   if (!/^\d{11}$/.test(numero)) return false;
-  if (/^(\d)\1{10}$/.test(numero)) return false;
-
+  if (new Set(numero).size === 1) return false;
   for (let tamanho = 9; tamanho <= 10; tamanho++) {
     const soma = numero
       .slice(0, tamanho)
