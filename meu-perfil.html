@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0" />
+
   <title>Meu Perfil - ClickBus Burguer</title>
 
   <link rel="stylesheet" href="css/global.css" />
@@ -14,8 +15,10 @@
 <body>
   <header class="topo">
     <a href="index.html" class="area-logo">
-      <img src="img/logo-topo.png"
-           alt="ClickBus Burguer" />
+      <img
+        src="img/logo-topo.png"
+        alt="ClickBus Burguer"
+      />
     </a>
 
     <a href="cardapio.html" class="botao-voltar">
@@ -23,40 +26,72 @@
     </a>
   </header>
 
-  <main class="pagina-meu-perfil" id="conteudoPerfil" hidden>
+  <main
+    class="pagina-meu-perfil"
+    id="conteudoPerfil"
+    hidden
+  >
     <h1>Meu Perfil</h1>
     <p>Gerencie seus dados e endereços de entrega.</p>
 
-    <p id="mensagemPerfil" role="status"
-       aria-live="polite"></p>
+    <p
+      id="mensagemPerfil"
+      role="status"
+      aria-live="polite"
+    ></p>
 
+    <!-- DADOS PESSOAIS -->
     <section class="perfil-container">
       <h2>Meus Dados</h2>
 
       <form id="formMeusDados">
-        <label for="perfilNome">Nome completo</label>
-        <input type="text" id="perfilNome"
-               autocomplete="name" required />
+        <label for="perfilNome">
+          Nome completo
+        </label>
+        <input
+          type="text"
+          id="perfilNome"
+          autocomplete="name"
+          required
+        />
 
         <label for="perfilCpf">CPF</label>
-        <input type="text" id="perfilCpf"
-               inputmode="numeric" maxlength="14"
-               autocomplete="off" />
+        <input
+          type="text"
+          id="perfilCpf"
+          inputmode="numeric"
+          maxlength="14"
+          autocomplete="off"
+          readonly
+        />
 
         <label for="perfilEmail">Email</label>
-        <input type="email" id="perfilEmail"
-               autocomplete="email" required />
+        <input
+          type="email"
+          id="perfilEmail"
+          autocomplete="email"
+          required
+        />
 
         <label for="perfilTelefone">Telefone</label>
-        <input type="tel" id="perfilTelefone"
-               autocomplete="tel" required />
+        <input
+          type="tel"
+          id="perfilTelefone"
+          autocomplete="tel"
+          required
+        />
 
-        <button type="submit" id="btnSalvarDados">
+        <button
+          type="submit"
+          id="btnSalvarDados"
+          disabled
+        >
           Salvar alterações
         </button>
       </form>
     </section>
 
+    <!-- ENDEREÇOS -->
     <section class="perfil-container">
       <h2>Meus Endereços</h2>
 
@@ -65,7 +100,10 @@
         endereço cadastrado.
       </p>
 
-      <div id="listaEnderecos" aria-live="polite">
+      <div
+        id="listaEnderecos"
+        aria-live="polite"
+      >
         Carregando endereços...
       </div>
 
@@ -74,8 +112,12 @@
       </h3>
 
       <form id="formEndereco">
-        <input type="hidden" id="enderecoId" />
+        <input
+          type="hidden"
+          id="enderecoId"
+        />
 
+        <!-- CAMPO ORIGINAL PRESERVADO -->
         <label for="enderecoCompleto">
           Endereço completo
         </label>
@@ -89,21 +131,185 @@
           required
         ></textarea>
 
+        <!-- NOVOS CAMPOS DETALHADOS -->
+        <div id="camposEnderecoDetalhado" hidden>
+          <label for="perfilCep">CEP</label>
+          <input
+            id="perfilCep"
+            type="text"
+            inputmode="numeric"
+            maxlength="9"
+            autocomplete="postal-code"
+          />
+
+          <label for="perfilRua">Rua / Avenida</label>
+          <input
+            id="perfilRua"
+            type="text"
+            autocomplete="address-line1"
+          />
+
+          <label for="perfilNumero">Número</label>
+          <input
+            id="perfilNumero"
+            type="text"
+          />
+
+          <label for="perfilBairro">Bairro</label>
+          <input
+            id="perfilBairro"
+            type="text"
+          />
+
+          <label for="perfilCidade">Cidade</label>
+          <input
+            id="perfilCidade"
+            type="text"
+            autocomplete="address-level2"
+          />
+
+          <label for="perfilEstado">Estado</label>
+          <input
+            id="perfilEstado"
+            type="text"
+            maxlength="2"
+            autocomplete="address-level1"
+          />
+
+          <label for="perfilComplemento">Complemento</label>
+          <input
+            id="perfilComplemento"
+            type="text"
+          />
+
+          <label for="perfilReferencia">
+            Ponto de referência
+          </label>
+          <input
+            id="perfilReferencia"
+            type="text"
+          />
+
+          <label for="perfilLocalizacao">
+            Localização da entrega
+          </label>
+          <input
+            id="perfilLocalizacao"
+            type="text"
+            placeholder="Coordenadas ou link do Google Maps"
+          />
+
+          <div class="acoes-localizacao-perfil">
+            <button
+              type="button"
+              id="btnBuscarMapaPerfil"
+            >
+              Buscar no mapa
+            </button>
+
+            <button
+              type="button"
+              id="btnLocalizacaoAtualPerfil"
+            >
+              Usar localização atual
+            </button>
+          </div>
+
+          <div
+            id="mapaPerfilEndereco"
+            hidden
+          ></div>
+
+          <button
+            type="button"
+            id="btnConfirmarMapaPerfil"
+            hidden
+          >
+            Confirmar localização no mapa
+          </button>
+        </div>
+
         <label>
-          <input type="checkbox" id="enderecoPrincipal" />
+          <input
+            type="checkbox"
+            id="enderecoPrincipal"
+          />
           Definir como endereço principal
         </label>
 
-        <button type="submit" id="btnSalvarEndereco">
+        <button
+          type="submit"
+          id="btnSalvarEndereco"
+        >
           Salvar endereço
         </button>
 
-        <button type="button"
-                id="btnCancelarEdicaoEndereco"
-                hidden>
+        <button
+          type="button"
+          id="btnCancelarEdicaoEndereco"
+          hidden
+        >
           Cancelar edição
         </button>
       </form>
+    </section>
+
+    <!-- SEGURANÇA DA CONTA -->
+    <section class="perfil-container">
+      <h2>Segurança da Conta</h2>
+
+      <p>
+        Para alterar sua senha, informe primeiro
+        a senha atual.
+      </p>
+
+      <form id="formAlterarSenha">
+        <label for="senhaAtualPerfil">
+          Senha atual
+        </label>
+        <input
+          type="password"
+          id="senhaAtualPerfil"
+          autocomplete="current-password"
+          required
+          disabled
+        />
+
+        <label for="novaSenhaPerfil">
+          Nova senha
+        </label>
+        <input
+          type="password"
+          id="novaSenhaPerfil"
+          autocomplete="new-password"
+          minlength="8"
+          required
+          disabled
+        />
+
+        <label for="confirmarNovaSenhaPerfil">
+          Confirmar nova senha
+        </label>
+        <input
+          type="password"
+          id="confirmarNovaSenhaPerfil"
+          autocomplete="new-password"
+          minlength="8"
+          required
+          disabled
+        />
+
+        <button
+          type="submit"
+          id="btnAlterarSenha"
+          disabled
+        >
+          Alterar senha
+        </button>
+      </form>
+
+      <p id="mensagemAlterarSenha" role="status"
+         aria-live="polite"></p>
     </section>
   </main>
 
