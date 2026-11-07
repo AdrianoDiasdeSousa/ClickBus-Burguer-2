@@ -728,9 +728,52 @@ async function deleteCustomer(req, res) {
   }
 }
 
+
+async function getMyProfile(req, res) {
+  try {
+    const usuario = await obterUsuarioAutenticado(req);
+
+    if (usuario.role !== "cliente") {
+      return res.status(403).json({
+        erro: "Apenas clientes podem acessar este perfil.",
+      });
+    }
+
+    const resultado = await pool.query(
+      `SELECT id, name, cpf, email, phone
+       FROM users
+       WHERE id = $1
+         AND role = 'cliente'
+         AND is_active = TRUE`,
+      [usuario.id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(401).json({
+        erro: "Conta de cliente não encontrada ou inativa.",
+      });
+    }
+
+    return res.json(resultado.rows[0]);
+  } catch (error) {
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
+    console.error("Erro ao consultar Meu Perfil:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível carregar seus dados pessoais.",
+    });
+  }
+}
+
 module.exports = {
   register,
   login,
+  getMyProfile,
   getAdminProfile,
   updateAdminProfile,
   forgotPassword,
