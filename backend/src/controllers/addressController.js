@@ -39,6 +39,49 @@ function validarEndereco(value) {
   return address;
 }
 
+function validarCamposEndereco(body) {
+  const campos = {
+    cep: 9,
+    street: 150,
+    number: 30,
+    neighborhood: 100,
+    city: 100,
+    state: 2,
+    complement: 150,
+    reference: 200,
+    location: 500,
+  };
+
+  const resultado = {};
+
+  for (const [campo, limite] of Object.entries(campos)) {
+    const valor = body?.[campo];
+
+    if (valor !== undefined && valor !== null &&
+        typeof valor !== "string") {
+      throw erroHttp(400, `Campo ${campo} inválido.`);
+    }
+
+    const texto = typeof valor === "string" ? valor.trim() : null;
+
+    if (texto !== null && texto.length > limite) {
+      throw erroHttp(400, `Campo ${campo} excede o limite permitido.`);
+    }
+
+    resultado[campo] = texto;
+  }
+
+  if (resultado.cep && !/^\d{5}-?\d{3}$/.test(resultado.cep)) {
+    throw erroHttp(400, "Informe um CEP válido.");
+  }
+
+  if (resultado.state && !/^[A-Za-z]{2}$/.test(resultado.state)) {
+    throw erroHttp(400, "Informe a sigla do estado com duas letras.");
+  }
+
+  return resultado;
+}
+
 function tratarErro(res, error, contexto) {
   if (!error.statusCode) console.error(contexto, error);
   return res.status(error.statusCode || 500).json({
@@ -108,59 +151,164 @@ async function listAddresses(req, res) {
   }
 }
 
+
 async function createAddress(req, res) {
   try {
     const user = await clienteAutenticado(req);
     const address = validarEndereco(req.body?.address);
+    const campos = validarCamposEndereco(req.body);
+
     const criado = await comTransacao(async (client) => {
       await bloquearCliente(client, user.id);
+
       const count = await client.query(
         "SELECT COUNT(*)::int AS total FROM user_addresses WHERE user_id = $1",
         [user.id],
       );
+
       const primeiro = count.rows[0].total === 0;
-      const tornarPrincipal = primeiro || req.body?.is_primary === true;
+      const tornarPrincipal =
+        primeiro || req.body?.is_primary === true;
+
       if (tornarPrincipal && !primeiro) {
         await client.query(
-          "UPDATE user_addresses SET is_primary = FALSE, updated_at = NOW() WHERE user_id = $1 AND is_primary = TRUE",
+          `UPDATE user_addresses
+           SET is_primary = FALSE, updated_at = NOW()
+           WHERE user_id = $1 AND is_primary = TRUE`,
           [user.id],
         );
       }
+
       const result = await client.query(
-        `INSERT INTO user_addresses (user_id, address, is_primary)
-         VALUES ($1, $2, $3)
-         RETURNING id, address, is_primary, created_at, updated_at`,
-        [user.id, address, tornarPrincipal],
+        `INSERT INTO user_addresses (
+           user_id,
+           address,
+           is_primary,
+           cep,
+           street,
+           number,
+           neighborhood,
+           city,
+           state,
+           complement,
+           reference,
+           location
+         )
+         VALUES (
+           $1, $2, $3, $4, $5, $6,
+           $7, $8, $9, $10, $11, $12
+         )
+         RETURNING
+           id,
+           address,
+           cep,
+           street,
+           number,
+           neighborhood,
+           city,
+           state,
+           complement,
+           reference,
+           location,
+           is_primary,
+           created_at,
+           updated_at`,
+        [
+          user.id,
+          address,
+          tornarPrincipal,
+          campos.cep,
+          campos.street,
+          campos.number,
+          campos.neighborhood,
+          campos.city,
+          campos.state,
+          campos.complement,
+          campos.reference,
+          campos.location,
+        ],
       );
+
       return result.rows[0];
     });
+
     return res.status(201).json(criado);
   } catch (error) {
     return tratarErro(res, error, "Erro ao cadastrar endereço:");
   }
 }
 
+
 async function updateAddress(req, res) {
   try {
     const user = await clienteAutenticado(req);
     const id = validarId(req.params.id);
     const address = validarEndereco(req.body?.address);
+    const campos = validarCamposEndereco(req.body);
+
     const atualizado = await comTransacao(async (client) => {
       await bloquearCliente(client, user.id);
+
       const result = await client.query(
-        `UPDATE user_addresses SET address = $1, updated_at = NOW()
-         WHERE id = $2 AND user_id = $3
-         RETURNING id, address, is_primary, created_at, updated_at`,
-        [address, id, user.id],
+        `UPDATE user_addresses
+         SET
+           address = $1,
+           cep = COALESCE($2, cep),
+           street = COALESCE($3, street),
+           number = COALESCE($4, number),
+           neighborhood = COALESCE($5, neighborhood),
+           city = COALESCE($6, city),
+           state = COALESCE($7, state),
+           complement = COALESCE($8, complement),
+           reference = COALESCE($9, reference),
+           location = COALESCE($10, location),
+           updated_at = NOW()
+         WHERE id = $11
+           AND user_id = $12
+         RETURNING
+           id,
+           address,
+           cep,
+           street,
+           number,
+           neighborhood,
+           city,
+           state,
+           complement,
+           reference,
+           location,
+           is_primary,
+           created_at,
+           updated_at`,
+        [
+          address,
+          campos.cep,
+          campos.street,
+          campos.number,
+          campos.neighborhood,
+          campos.city,
+          campos.state,
+          campos.complement,
+          campos.reference,
+          campos.location,
+          id,
+          user.id,
+        ],
       );
-      if (result.rowCount === 0) throw erroHttp(404, "Endereço não encontrado.");
+
+      if (result.rowCount === 0) {
+        throw erroHttp(404, "Endereço não encontrado.");
+      }
+
       return result.rows[0];
     });
+
     return res.json(atualizado);
   } catch (error) {
     return tratarErro(res, error, "Erro ao atualizar endereço:");
   }
 }
+
 
 async function setPrimaryAddress(req, res) {
   try {
@@ -183,9 +331,25 @@ async function setPrimaryAddress(req, res) {
           [id, user.id],
         );
       }
-      const result = await client.query(
-        `SELECT id, address, is_primary, created_at, updated_at
-         FROM user_addresses WHERE id = $1 AND user_id = $2`,
+      const result = await client.query(        
+`SELECT
+   id,
+   address,
+   cep,
+   street,
+   number,
+   neighborhood,
+   city,
+   state,
+   complement,
+   reference,
+   location,
+   is_primary,
+   created_at,
+   updated_at
+ FROM user_addresses
+ WHERE id = $1 AND user_id = $2`,
+
         [id, user.id],
       );
       return result.rows[0];
