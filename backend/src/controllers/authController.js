@@ -113,8 +113,11 @@ async function obterUsuarioAdminAutenticado(req) {
 
   const result = await pool.query(
     `SELECT id, name, email, phone, password_hash, role, address, recovery_question
-     FROM users
-     WHERE id = $1 AND role = 'admin'`,
+     FROM users     
+WHERE id = $1
+  AND role = 'admin'
+  AND is_active = TRUE
+
     [payload.id],
   );
 
