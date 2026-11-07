@@ -129,34 +129,145 @@ function renderizarEnderecos() {
   }
 }
 
+
 function limparFormularioEndereco() {
   elemento("formEndereco").reset();
   elemento("enderecoId").value = "";
+  
+  elemento("camposEnderecoDetalhado").hidden = false;
+  elemento("mapaPerfilEndereco").hidden = true;
+  elemento("btnConfirmarMapaPerfil").hidden = true;
+
   elemento("tituloFormularioEndereco").textContent =
     "Cadastrar novo endereço";
+
   elemento("btnCancelarEdicaoEndereco").hidden = true;
   elemento("btnSalvarEndereco").textContent = "Salvar endereço";
 }
 
+
 function editarEndereco(endereco) {
   elemento("enderecoId").value = endereco.id;
-  elemento("enderecoCompleto").value = endereco.address;
+  elemento("enderecoCompleto").value = endereco.address || "";
   elemento("enderecoPrincipal").checked = endereco.is_primary;
+
+  elemento("perfilCep").value = endereco.cep || "";
+  elemento("perfilRua").value = endereco.street || "";
+  elemento("perfilNumero").value = endereco.number || "";
+  elemento("perfilBairro").value = endereco.neighborhood || "";
+  elemento("perfilCidade").value = endereco.city || "";
+  elemento("perfilEstado").value = endereco.state || "";
+  elemento("perfilComplemento").value = endereco.complement || "";
+  elemento("perfilReferencia").value = endereco.reference || "";
+  elemento("perfilLocalizacao").value = endereco.location || "";
+
+  elemento("camposEnderecoDetalhado").hidden = false;
+  elemento("mapaPerfilEndereco").hidden = true;
+  elemento("btnConfirmarMapaPerfil").hidden = true;
 
   elemento("tituloFormularioEndereco").textContent = "Editar endereço";
   elemento("btnCancelarEdicaoEndereco").hidden = false;
   elemento("btnSalvarEndereco").textContent = "Salvar alterações";
 
-  elemento("enderecoCompleto").focus();
+  elemento("perfilCep").focus();
 }
+
+function montarEnderecoCompleto() {
+  const rua = elemento("perfilRua").value.trim();
+  const numero = elemento("perfilNumero").value.trim();
+  const bairro = elemento("perfilBairro").value.trim();
+  const cidade = elemento("perfilCidade").value.trim();
+  const estado = elemento("perfilEstado").value.trim().toUpperCase();
+  const cep = elemento("perfilCep").value.trim();
+  const complemento = elemento("perfilComplemento").value.trim();
+  const referencia = elemento("perfilReferencia").value.trim();
+
+  const partes = [
+    [rua, numero].filter(Boolean).join(", "),
+    bairro,
+    [cidade, estado].filter(Boolean).join(" - "),
+    cep ? `CEP: ${cep}` : "",
+    complemento ? `Complemento: ${complemento}` : "",
+    referencia ? `Referência: ${referencia}` : "",
+  ].filter(Boolean);
+
+  return partes.join(", ");
+}
+
 
 async function salvarEndereco(evento) {
   evento.preventDefault();
 
   const id = elemento("enderecoId").value;
-  const address = elemento("enderecoCompleto").value.trim();
+
+  const enderecoDigitado = elemento("enderecoCompleto").value.trim();
+
+  const enderecoAnterior = enderecosDoCliente.find(
+    (item) => String(item.id) === id
+  );
+
+  const camposDetalhadosAlterados = [
+    ["perfilCep", "cep"],
+    ["perfilRua", "street"],
+    ["perfilNumero", "number"],
+    ["perfilBairro", "neighborhood"],
+    ["perfilCidade", "city"],
+    ["perfilEstado", "state"],
+    ["perfilComplemento", "complement"],
+    ["perfilReferencia", "reference"],
+  ].some(([campo, propriedade]) => {
+    const atual = elemento(campo).value.trim();
+    const anterior = enderecoAnterior?.[propriedade] || "";
+    return atual.toUpperCase() !== anterior.toUpperCase();
+  });
+
+  const enderecoMontado = montarEnderecoCompleto();
+
+ 
+  const camposEssenciaisPreenchidos =
+    elemento("perfilRua").value.trim() !== "" &&
+    elemento("perfilNumero").value.trim() !== "" &&
+    elemento("perfilBairro").value.trim() !== "" &&
+    elemento("perfilCidade").value.trim() !== "" &&
+    elemento("perfilEstado").value.trim() !== "";
+
+  const address =
+    camposDetalhadosAlterados && camposEssenciaisPreenchidos
+      ? enderecoMontado
+      : enderecoDigitado;
+
+
   const isPrimary = elemento("enderecoPrincipal").checked;
   const botao = elemento("btnSalvarEndereco");
+  const camposDetalhados = {
+    cep: elemento("perfilCep").value.trim(),
+    street: elemento("perfilRua").value.trim(),
+    number: elemento("perfilNumero").value.trim(),
+    neighborhood: elemento("perfilBairro").value.trim(),
+    city: elemento("perfilCidade").value.trim(),
+    state: elemento("perfilEstado").value.trim().toUpperCase(),
+    complement: elemento("perfilComplemento").value.trim(),
+    reference: elemento("perfilReferencia").value.trim(),
+    location: elemento("perfilLocalizacao").value.trim(),
+  };
+
+  const preencheuEnderecoDetalhado = [
+    camposDetalhados.cep,
+    camposDetalhados.street,
+    camposDetalhados.number,
+    camposDetalhados.neighborhood,
+    camposDetalhados.city,
+    camposDetalhados.state,
+  ].some(Boolean);
+
+  if (preencheuEnderecoDetalhado && !camposEssenciaisPreenchidos) {
+    mostrarMensagem(
+      "Preencha rua, número, bairro, cidade e estado para salvar o endereço detalhado.",
+      true
+    );
+    return;
+  }
+
 
   if (address.length < 5 || address.length > 500) {
     mostrarMensagem(
@@ -170,30 +281,37 @@ async function salvarEndereco(evento) {
 
   try {
     if (id) {
-      await requisicaoPerfil(`/addresses/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ address }),
-      });
+  
+await requisicaoPerfil(`/addresses/${id}`, {
+  method: "PUT",
+  
+body: JSON.stringify({
+  address,
+  ...(!elemento("camposEnderecoDetalhado").hidden
+    ? camposDetalhados
+    : {}),
+}),
 
-      const enderecoAnterior = enderecosDoCliente.find(
-        (item) => String(item.id) === id
-      );
+});
 
       if (isPrimary && !enderecoAnterior?.is_primary) {
         await requisicaoPerfil(`/addresses/${id}/primary`, {
           method: "PATCH",
         });
       }
+      
     } else {
-      await requisicaoPerfil("/addresses", {
-        method: "POST",
-        body: JSON.stringify({
-          address,
-          is_primary: isPrimary,
-        }),
-      });
-    }
-
+     await requisicaoPerfil("/addresses", {
+  method: "POST",
+  body: JSON.stringify({
+    address,
+    is_primary: isPrimary,
+...(!elemento("camposEnderecoDetalhado").hidden
+  ? camposDetalhados
+  : {}),
+  }),
+ });
+}
     limparFormularioEndereco();
     await carregarEnderecos();
 
@@ -300,6 +418,7 @@ async function iniciarMeuPerfil() {
     // O backend valida o token e exige a função de cliente.
     await configurarDadosPessoais();
     await carregarEnderecos();
+    elemento("camposEnderecoDetalhado").hidden = false;
 
     conteudo.hidden = false;
     mostrarMensagem("");
