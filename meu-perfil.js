@@ -29,10 +29,14 @@ async function requisicaoPerfil(caminho, opcoes = {}) {
 
   return fazerRequisicaoApi(caminho, {
     ...opcoes,
-    headers: {
-      ...(opcoes.headers || {}),
-      Authorization: `Bearer ${token}`,
-    },
+    
+headers: {
+  ...(opcoes.headers || {}),
+  ...(opcoes.body != null
+    ? { "Content-Type": "application/json" }
+    : {}),
+  Authorization: `Bearer ${token}`,
+},
   });
 }
 
@@ -236,7 +240,14 @@ function editarEndereco(endereco) {
   elemento("btnCancelarEdicaoEndereco").hidden = false;
   elemento("btnSalvarEndereco").textContent = "Salvar alterações";
 
-  elemento("perfilCep").focus();
+ elemento("tituloFormularioEndereco").scrollIntoView({
+  behavior: "smooth",
+  block: "start",
+});
+
+elemento("perfilCep").focus({
+  preventScroll: true,
+});
 }
 
 function montarEnderecoCompleto() {
