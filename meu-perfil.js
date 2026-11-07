@@ -194,6 +194,26 @@ function montarEnderecoCompleto() {
   return partes.join(", ");
 }
 
+function atualizarEnderecoCompleto() {
+  const camposEssenciais = [
+    "perfilRua",
+    "perfilNumero",
+    "perfilBairro",
+    "perfilCidade",
+    "perfilEstado",
+  ];
+
+  const completo = camposEssenciais.every(
+    (id) => elemento(id).value.trim() !== ""
+  );
+
+  if (!completo) return;
+  const enderecoMontado = montarEnderecoCompleto();
+
+  if (enderecoMontado.length <= 500) {
+    elemento("enderecoCompleto").value = enderecoMontado;
+  }
+}
 
 async function salvarEndereco(evento) {
   evento.preventDefault();
@@ -408,6 +428,25 @@ async function iniciarMeuPerfil() {
     "click",
     limparFormularioEndereco
   );
+  
+  const camposQueFormamEndereco = [
+    "perfilCep",
+    "perfilRua",
+    "perfilNumero",
+    "perfilBairro",
+    "perfilCidade",
+    "perfilEstado",
+    "perfilComplemento",
+    "perfilReferencia",
+  ];
+
+  for (const id of camposQueFormamEndereco) {
+    elemento(id).addEventListener(
+      "input",
+      atualizarEnderecoCompleto
+    );
+  }
+
 
   elemento("formMeusDados").addEventListener(
     "submit",
