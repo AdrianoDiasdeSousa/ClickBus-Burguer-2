@@ -1501,6 +1501,18 @@ if (linkClientesAdmin) {
   }
 }
 
+const linkMeuPerfilCardapio =
+  document.getElementById("linkMeuPerfilCardapio");
+
+if (linkMeuPerfilCardapio) {
+  const token = localStorage.getItem("clickbus_token");
+
+  linkMeuPerfilCardapio.classList.toggle(
+    "oculto",
+    admin || !token
+  );
+}
+
   listaLanches.innerHTML = "";
   listaBebidas.innerHTML = "";
 
