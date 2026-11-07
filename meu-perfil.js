@@ -36,23 +36,24 @@ async function requisicaoPerfil(caminho, opcoes = {}) {
 }
 
 
+
 async function configurarDadosPessoais() {
-  const formulario = elemento("formMeusDados");
-
-  // Os campos continuam bloqueados até
-  // implementarmos a atualização dos dados.
-  for (const campo of formulario.querySelectorAll("input")) {
-    campo.disabled = true;
-  }
-
-  elemento("btnSalvarDados").disabled = true;
-
   const usuario = await requisicaoPerfil("/auth/me");
 
   elemento("perfilNome").value = usuario.name || "";
   elemento("perfilCpf").value = usuario.cpf || "";
   elemento("perfilEmail").value = usuario.email || "";
   elemento("perfilTelefone").value = usuario.phone || "";
+
+  // Os campos ficam disponíveis para edição.
+  elemento("perfilNome").disabled = false;
+  elemento("perfilCpf").disabled = false;
+  elemento("perfilCpf").readOnly = false;
+  elemento("perfilEmail").disabled = false;
+  elemento("perfilTelefone").disabled = false;
+
+  // O salvamento será conectado na próxima etapa.
+  elemento("btnSalvarDados").disabled = true;
 }
 
 async function carregarEnderecos() {
