@@ -128,14 +128,49 @@ async function obterUsuarioAdminAutenticado(req) {
 }
 
 async function register(req, res) {
-  try {
-    const { name, email, phone, password, address } = req.body;
-
+  try {  
+const { name, email, phone, password, address, cpf } = req.body;
+    
     if (!name || !email || !password) {
       return res.status(400).json({
         erro: "Nome, email e senha são obrigatórios.",
       });
     }
+
+const cpfLimpo = typeof cpf === "string"
+  ? cpf.replace(/\D/g, "")
+  : "";
+
+function cpfValido(numero) {
+  if (!/^\d{11}$/.test(numero)) return false;
+  if (/^(\d)\1{10}$/.test(numero)) return false;
+
+  for (let tamanho = 9; tamanho <= 10; tamanho++) {
+    const soma = numero
+      .slice(0, tamanho)
+      .split("")
+      .reduce(
+        (total, digito, indice) =>
+          total + Number(digito) * (tamanho + 1 - indice),
+        0
+      );
+
+    const resto = (soma * 10) % 11;
+    const verificador = resto === 10 ? 0 : resto;
+
+    if (verificador !== Number(numero[tamanho])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+if (!cpfValido(cpfLimpo)) {
+  return res.status(400).json({
+    erro: "Informe um CPF válido.",
+  });
+}
 
     const userExists = await pool.query(
       "SELECT id FROM users WHERE email = $1",
@@ -148,16 +183,42 @@ async function register(req, res) {
       });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
 
-    const result = await pool.query(
-      `INSERT INTO users 
-        (name, email, phone, password_hash, role, address)
-       VALUES 
-        ($1, $2, $3, $4, $5, $6)
-       RETURNING id, name, email, phone, role, address, created_at`,
-      [name, email, phone || null, passwordHash, "cliente", address || null],
-    );
+const cpfExists = await pool.query(
+  `SELECT id
+   FROM users
+   WHERE regexp_replace(
+     COALESCE(cpf, ''), '[^0-9]', '', 'g'
+   ) = $1
+   LIMIT 1`,
+  [cpfLimpo]
+);
+
+if (cpfExists.rows.length > 0) {
+  return res.status(409).json({
+    erro: "Já existe uma conta cadastrada com este CPF.",
+  });
+}
+
+    
+    const passwordHash = await bcrypt.hash(password, 10);
+ 
+const result = await pool.query(
+  `INSERT INTO users
+    (name, email, phone, password_hash, role, address, cpf)
+   VALUES
+    ($1, $2, $3, $4, $5, $6, $7)
+   RETURNING id, name, email, phone, role, address, cpf, created_at`,
+  [
+    name,
+    email,
+    phone || null,
+    passwordHash,
+    "cliente",
+    address || null,
+    cpfLimpo,
+  ],
+);
 
     const user = result.rows[0];
     const token = criarTokenUsuario(user);
@@ -167,13 +228,21 @@ async function register(req, res) {
       token,
       user,
     });
-  } catch (error) {
-    console.error("Erro no cadastro:", error);
-
-    return res.status(500).json({
-      erro: "Erro interno ao cadastrar usuário.",
+    
+} catch (error) {
+  if (error.code === "23505") {
+    return res.status(409).json({
+      erro: "Já existe uma conta com este CPF ou email.",
     });
   }
+
+  console.error("Erro no cadastro:", error);
+
+  return res.status(500).json({
+    erro: "Erro interno ao cadastrar usuário.",
+  });
+}
+
 }
 
 async function login(req, res) {
