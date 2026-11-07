@@ -379,12 +379,8 @@ elemento("perfilCep").value = camposDetalhados.cep;
   const address = enderecoValidado;
   
   botao.disabled = true;
-
   try {
     if (id) {
-  
-await requisicaoPerfil(`/addresses/${id}`, {
-  method: "PUT",
       await requisicaoPerfil(`/addresses/${id}`, {
         method: "PUT",
         body: JSON.stringify({
