@@ -1858,122 +1858,20 @@ function finalizarArrasteProduto() {
     });
 }
 
+
 async function reposicionarProdutoArrastado(idArrastado, idAlvo) {
-  if (!usuarioEhAdmin()) {
-    mostrarAviso(
-      "Apenas o administrador pode mudar a ordem dos produtos.",
-      "erro"
-    );
-    return;
-  }
-
-  if (Number(idArrastado) === Number(idAlvo)) return;
-
-  try {
-    const produtos = await carregarProdutosDaApi();
-
-    const produtoArrastado = produtos.find(
-      (produto) => Number(produto.id) === Number(idArrastado)
-    );
-
-    const produtoAlvo = produtos.find(
-      (produto) => Number(produto.id) === Number(idAlvo)
-    );
-
-    if (!produtoArrastado || !produtoAlvo) {
-      mostrarAviso("Produto não encontrado.", "erro");
-      return;
-    }
-
-    if (produtoArrastado.categoria !== produtoAlvo.categoria) {
-      mostrarAviso(
-        "Organize o produto dentro da própria categoria.",
-        "erro"
-      );
-      return;
-    }
-
-    const produtosCategoria = produtos
-      .filter(
-        (produto) =>
-          produto.categoria === produtoArrastado.categoria
-      )
-      .sort((a, b) => {
-        const ordemA = Number(a.ordem) || Number(a.id);
-        const ordemB = Number(b.ordem) || Number(b.id);
-
-        return ordemA - ordemB || Number(a.id) - Number(b.id);
-      });
-
-    const indiceArrastado = produtosCategoria.findIndex(
-      (produto) => Number(produto.id) === Number(idArrastado)
-    );
-
-    const indiceAlvo = produtosCategoria.findIndex(
-      (produto) => Number(produto.id) === Number(idAlvo)
-    );
-
-    if (indiceArrastado < 0 || indiceAlvo < 0) return;
-
-    // Remove o produto da posicao original.
-    const [produtoMovido] = produtosCategoria.splice(
-      indiceArrastado,
-      1
-    );
-
-    // Insere o produto na posicao do produto alvo.
-    produtosCategoria.splice(
-      indiceAlvo,
-      0,
-      produtoMovido
-    );
-
-    // Reorganiza os numeros de ordem da categoria.
-    for (let i = 0; i < produtosCategoria.length; i++) {
-      const produto = produtosCategoria[i];
-      const novaOrdem = i + 1;
-
-      if (Number(produto.ordem) === novaOrdem) continue;
-
-      const resposta = await fetch(
-        `${API_BASE_URL}/products/${produto.id}`,
-        {
-          method: "PUT",
-          headers: obterHeadersAdmin(),
-          body: JSON.stringify(
-            converterProdutoTelaParaApi({
-              ...produto,
-              ordem: novaOrdem
-            })
-          )
-        }
-      );
-
-      if (!resposta.ok) {
-        throw new Error(
-          `Não foi possível atualizar a ordem do produto ${produto.id}.`
-        );
-      }
-    }
-
-    await carregarProdutosDaApi();
-    await renderizarCardapio();
-
-    mostrarAviso(
-      "Produto reposicionado com sucesso!",
-      "sucesso"
-    );
-  } catch (erro) {
-    console.error("Erro ao arrastar produto:", erro);
-
-    mostrarAviso(
-      "Erro ao reposicionar produto. Verifique a ordem antes de tentar novamente.",
-      "erro"
-    );
-  }
+  return reordenarProdutosAdmin(
+    "arrastar",
+    idArrastado,
+    idAlvo
+  );
 }
 
-async function moverProduto(id, direcao) {
+
+let ordenacaoProdutosEmAndamento = false;
+
+// Salva a ordem dos lanches ou bebidas em uma unica requisicao.
+async function reordenarProdutosAdmin(tipo, id, referencia) {
   if (!usuarioEhAdmin()) {
     mostrarAviso(
       "Apenas o administrador pode mudar a ordem dos produtos.",
@@ -1982,18 +1880,40 @@ async function moverProduto(id, direcao) {
     return;
   }
 
-  if (direcao !== -1 && direcao !== 1) return;
+  if (ordenacaoProdutosEmAndamento) {
+    mostrarAviso(
+      "Aguarde a ordenacao anterior terminar.",
+      "erro"
+    );
+    return;
+  }
+
+  ordenacaoProdutosEmAndamento = true;
 
   try {
-    const produtos = await carregarProdutosDaApi();
+    const respostaProdutos = await fetch(
+      `${API_BASE_URL}/products`,
+      { cache: "no-store" }
+    );
+
+    if (!respostaProdutos.ok) {
+      throw new Error("Nao foi possivel consultar os produtos.");
+    }
+
+    const dadosProdutos = await respostaProdutos.json();
+
+    if (!Array.isArray(dadosProdutos)) {
+      throw new Error("Lista de produtos invalida.");
+    }
+
+    const produtos = dadosProdutos.map(converterProdutoApiParaTela);
 
     const produtoAtual = produtos.find(
       (produto) => Number(produto.id) === Number(id)
     );
 
     if (!produtoAtual) {
-      mostrarAviso("Produto não encontrado.", "erro");
-      return;
+      throw new Error("Produto nao encontrado.");
     }
 
     const produtosDaCategoria = produtos
@@ -2012,57 +1932,84 @@ async function moverProduto(id, direcao) {
       (produto) => Number(produto.id) === Number(id)
     );
 
-    const novoIndice = indiceAtual + direcao;
+    let indiceDestino;
 
-    if (
-      indiceAtual < 0 ||
-      novoIndice < 0 ||
-      novoIndice >= produtosDaCategoria.length
-    ) {
-      mostrarAviso(
-        "O produto já está no limite da categoria.",
-        "info"
+    if (tipo === "botao") {
+      if (referencia !== -1 && referencia !== 1) {
+        throw new Error("Direcao invalida.");
+      }
+
+      indiceDestino = indiceAtual + referencia;
+
+      if (
+        indiceDestino < 0 ||
+        indiceDestino >= produtosDaCategoria.length
+      ) {
+        mostrarAviso(
+          "O produto ja esta no limite da categoria.",
+          "erro"
+        );
+        return;
+      }
+    } else if (tipo === "arrastar") {
+      const produtoAlvo = produtos.find(
+        (produto) => Number(produto.id) === Number(referencia)
       );
-      return;
+
+      if (!produtoAlvo) {
+        throw new Error("Produto de destino nao encontrado.");
+      }
+
+      if (produtoAlvo.categoria !== produtoAtual.categoria) {
+        mostrarAviso(
+          "Organize o produto dentro da propria categoria.",
+          "erro"
+        );
+        return;
+      }
+
+      indiceDestino = produtosDaCategoria.findIndex(
+        (produto) => Number(produto.id) === Number(referencia)
+      );
+
+      if (indiceAtual === indiceDestino) return;
+    } else {
+      throw new Error("Tipo de ordenacao invalido.");
     }
 
+    // Move o produto dentro da categoria.
     const [produtoMovido] = produtosDaCategoria.splice(
       indiceAtual,
       1
     );
 
     produtosDaCategoria.splice(
-      novoIndice,
+      indiceDestino,
       0,
       produtoMovido
     );
 
-    // Garante uma posicao unica para cada produto da categoria.
-    for (let i = 0; i < produtosDaCategoria.length; i++) {
-      const produto = produtosDaCategoria[i];
-      const novaOrdem = i + 1;
-
-      if (Number(produto.ordem) === novaOrdem) continue;
-
-      const resposta = await fetch(
-        `${API_BASE_URL}/products/${produto.id}`,
-        {
-          method: "PUT",
-          headers: obterHeadersAdmin(),
-          body: JSON.stringify(
-            converterProdutoTelaParaApi({
-              ...produto,
-              ordem: novaOrdem
-            })
+    // Salva toda a sequencia de uma vez.
+    const resposta = await fetch(
+      `${API_BASE_URL}/products/reorder`,
+      {
+        method: "PUT",
+        headers: obterHeadersAdmin(),
+        body: JSON.stringify({
+          category: produtoAtual.categoria,
+          productIds: produtosDaCategoria.map(
+            (produto) => Number(produto.id)
           )
-        }
-      );
-
-      if (!resposta.ok) {
-        throw new Error(
-          `Não foi possível atualizar o produto ${produto.id}.`
-        );
+        })
       }
+    );
+
+    const resultado = await resposta.json().catch(() => ({}));
+
+    if (!resposta.ok) {
+      throw new Error(
+        resultado.erro || "Nao foi possivel salvar a ordem."
+      );
     }
 
     await carregarProdutosDaApi();
@@ -2072,15 +2019,24 @@ async function moverProduto(id, direcao) {
       "Ordem dos produtos atualizada com sucesso!",
       "sucesso"
     );
+
   } catch (erro) {
-    console.error("Erro ao mover produto:", erro);
+    console.error("Erro ao reordenar produtos:", erro);
 
     mostrarAviso(
-      "Não foi possível concluir a ordenação. Verifique a ordem antes de tentar novamente.",
+      erro.message || "Erro ao salvar a ordem dos produtos.",
       "erro"
     );
+  } finally {
+    ordenacaoProdutosEmAndamento = false;
   }
 }
+
+// Botoes Subir e Descer.
+async function moverProduto(id, direcao) {
+  return reordenarProdutosAdmin("botao", id, direcao);
+}
+
 
 async function editarProduto(id) {
   if (!usuarioEhAdmin()) {
@@ -2125,9 +2081,7 @@ async function editarProduto(id) {
   try {
     const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: obterHeadersAdmin(),
       body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
     });
 
