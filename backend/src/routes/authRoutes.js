@@ -7,6 +7,7 @@ const {
   register,
   login,
   getMyProfile,
+  updateMyProfile,
   getAdminProfile,
   updateAdminProfile,
   forgotPassword,
@@ -23,6 +24,7 @@ router.post("/login", login);
 
 // Meu Perfil: dados do cliente autenticado
 router.get("/me", getMyProfile);
+router.put("/me", updateMyProfile);
 
 // Recuperação de senha
 router.post("/forgot-password", forgotPassword);
