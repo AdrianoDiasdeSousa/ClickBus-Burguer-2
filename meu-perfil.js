@@ -4,6 +4,7 @@
 document.addEventListener("DOMContentLoaded", iniciarMeuPerfil);
 
 let enderecosDoCliente = [];
+let cpfOriginalPerfil = "";
 
 function elemento(id) {
   return document.getElementById(id);
@@ -42,6 +43,7 @@ async function configurarDadosPessoais() {
 
   elemento("perfilNome").value = usuario.name || "";
   elemento("perfilCpf").value = usuario.cpf || "";
+  cpfOriginalPerfil = String(usuario.cpf || "").replace(/\D/g, "");
   elemento("perfilEmail").value = usuario.email || "";
   elemento("perfilTelefone").value = usuario.phone || "";
 
@@ -51,9 +53,73 @@ async function configurarDadosPessoais() {
   elemento("perfilCpf").readOnly = false;
   elemento("perfilEmail").disabled = false;
   elemento("perfilTelefone").disabled = false;
+  elemento("btnSalvarDados").disabled = false;
+}
 
-  // O salvamento será conectado na próxima etapa.
-  elemento("btnSalvarDados").disabled = true;
+async function salvarDadosPessoais(evento) {
+  evento.preventDefault();
+
+  const name = elemento("perfilNome").value.trim();
+  const email = elemento("perfilEmail").value.trim();
+  const phone = elemento("perfilTelefone").value.trim();
+  const cpf = elemento("perfilCpf").value.replace(/\D/g, "");
+
+  if (name.length < 3 || !email || !phone) {
+    mostrarMensagem(
+      "Preencha corretamente nome, email e telefone.",
+      true
+    );
+    return;
+  }
+
+  if (cpf && cpf.length !== 11) {
+    mostrarMensagem("O CPF deve conter 11 números.", true);
+    return;
+  }
+
+  if (cpf !== cpfOriginalPerfil) {
+    const confirmado = window.confirm(
+      "Atenção! Você está alterando seu CPF. " +
+      "Tem certeza de que deseja continuar?"
+    );
+
+    if (!confirmado) return;
+  }
+
+  const botao = elemento("btnSalvarDados");
+  botao.disabled = true;
+
+  try {
+    const resposta = await requisicaoPerfil("/auth/me", {
+      method: "PUT",
+      body: JSON.stringify({
+        name,
+        email,
+        phone,
+        cpf,
+      }),
+    });
+
+    const usuario = resposta.usuario;
+
+    if (!usuario) {
+      throw new Error("Resposta inválida ao salvar seus dados.");
+    }
+
+    elemento("perfilNome").value = usuario.name || "";
+    elemento("perfilEmail").value = usuario.email || "";
+    elemento("perfilTelefone").value = usuario.phone || "";
+    elemento("perfilCpf").value = usuario.cpf || "";
+
+    cpfOriginalPerfil = String(usuario.cpf || "")
+      .replace(/\D/g, "");
+
+    mostrarMensagem("Dados pessoais atualizados com sucesso.");
+  } catch (erro) {
+    mostrarMensagem(erro.message, true);
+  } finally {
+    botao.disabled = false;
+  }
 }
 
 async function carregarEnderecos() {
@@ -447,12 +513,11 @@ async function iniciarMeuPerfil() {
       atualizarEnderecoCompleto
     );
   }
-
-
-  elemento("formMeusDados").addEventListener(
-    "submit",
-    (evento) => evento.preventDefault()
-  );
+ 
+elemento("formMeusDados").addEventListener(
+  "submit",
+  salvarDadosPessoais
+);
 
   try {
     // O backend valida o token e exige a função de cliente.
