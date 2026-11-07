@@ -887,13 +887,6 @@ async function updateMyProfile(req, res) {
       });
     }
 
-    
-    const alterouCpf = cpfFinal !== cpfAnterior;
-
-    // A confirmação da alteração de CPF será feita
-    // por um aviso na página Meu Perfil.
-    // Não é necessário informar a senha atual.
-
     const emailExistente = await client.query(
       `SELECT id FROM users
        WHERE LOWER(email) = $1
