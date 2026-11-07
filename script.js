@@ -1862,95 +1862,114 @@ async function reposicionarProdutoArrastado(idArrastado, idAlvo) {
   if (!usuarioEhAdmin()) {
     mostrarAviso(
       "Apenas o administrador pode mudar a ordem dos produtos.",
-      "erro",
+      "erro"
     );
     return;
   }
 
-  const produtos = carregarProdutos();
-
-  const produtoArrastado = produtos.find(
-    (produto) => Number(produto.id) === Number(idArrastado),
-  );
-
-  const produtoAlvo = produtos.find(
-    (produto) => Number(produto.id) === Number(idAlvo),
-  );
-
-  if (!produtoArrastado || !produtoAlvo) {
-    mostrarAviso("Produto não encontrado.", "erro");
-    return;
-  }
-
-  if (produtoArrastado.categoria !== produtoAlvo.categoria) {
-    mostrarAviso("Organize o produto dentro da própria categoria.", "erro");
-    return;
-  }
-
-  const ordemArrastado =
-    Number(produtoArrastado.ordem) || Number(produtoArrastado.id);
-
-  const ordemAlvo = Number(produtoAlvo.ordem) || Number(produtoAlvo.id);
-
-  const produtoArrastadoAtualizado = {
-    ...produtoArrastado,
-    ordem: ordemAlvo,
-  };
-
-  const produtoAlvoAtualizado = {
-    ...produtoAlvo,
-    ordem: ordemArrastado,
-  };
+  if (Number(idArrastado) === Number(idAlvo)) return;
 
   try {
-    const respostaArrastado = await fetch(
-      `${API_BASE_URL}/products/${produtoArrastado.id}`,
-      {
-        method: "PUT",
-       headers: obterHeadersAdmin(),
-        body: JSON.stringify(
-          converterProdutoTelaParaApi(produtoArrastadoAtualizado),
-        ),
-      },
+    const produtos = await carregarProdutosDaApi();
+
+    const produtoArrastado = produtos.find(
+      (produto) => Number(produto.id) === Number(idArrastado)
     );
 
-    const resultadoArrastado = await respostaArrastado.json();
+    const produtoAlvo = produtos.find(
+      (produto) => Number(produto.id) === Number(idAlvo)
+    );
 
-    if (!respostaArrastado.ok) {
+    if (!produtoArrastado || !produtoAlvo) {
+      mostrarAviso("Produto não encontrado.", "erro");
+      return;
+    }
+
+    if (produtoArrastado.categoria !== produtoAlvo.categoria) {
       mostrarAviso(
-        resultadoArrastado.erro || "Erro ao atualizar ordem do produto.",
-        "erro",
+        "Organize o produto dentro da própria categoria.",
+        "erro"
       );
       return;
     }
 
-    const respostaAlvo = await fetch(
-      `${API_BASE_URL}/products/${produtoAlvo.id}`,
-      {
-        method: "PUT",
-       headers: obterHeadersAdmin(),
-        body: JSON.stringify(
-          converterProdutoTelaParaApi(produtoAlvoAtualizado),
-        ),
-      },
+    const produtosCategoria = produtos
+      .filter(
+        (produto) =>
+          produto.categoria === produtoArrastado.categoria
+      )
+      .sort((a, b) => {
+        const ordemA = Number(a.ordem) || Number(a.id);
+        const ordemB = Number(b.ordem) || Number(b.id);
+
+        return ordemA - ordemB || Number(a.id) - Number(b.id);
+      });
+
+    const indiceArrastado = produtosCategoria.findIndex(
+      (produto) => Number(produto.id) === Number(idArrastado)
     );
 
-    const resultadoAlvo = await respostaAlvo.json();
+    const indiceAlvo = produtosCategoria.findIndex(
+      (produto) => Number(produto.id) === Number(idAlvo)
+    );
 
-    if (!respostaAlvo.ok) {
-      mostrarAviso(
-        resultadoAlvo.erro || "Erro ao atualizar ordem do produto.",
-        "erro",
+    if (indiceArrastado < 0 || indiceAlvo < 0) return;
+
+    // Remove o produto da posicao original.
+    const [produtoMovido] = produtosCategoria.splice(
+      indiceArrastado,
+      1
+    );
+
+    // Insere o produto na posicao do produto alvo.
+    produtosCategoria.splice(
+      indiceAlvo,
+      0,
+      produtoMovido
+    );
+
+    // Reorganiza os numeros de ordem da categoria.
+    for (let i = 0; i < produtosCategoria.length; i++) {
+      const produto = produtosCategoria[i];
+      const novaOrdem = i + 1;
+
+      if (Number(produto.ordem) === novaOrdem) continue;
+
+      const resposta = await fetch(
+        `${API_BASE_URL}/products/${produto.id}`,
+        {
+          method: "PUT",
+          headers: obterHeadersAdmin(),
+          body: JSON.stringify(
+            converterProdutoTelaParaApi({
+              ...produto,
+              ordem: novaOrdem
+            })
+          )
+        }
       );
-      return;
+
+      if (!resposta.ok) {
+        throw new Error(
+          `Não foi possível atualizar a ordem do produto ${produto.id}.`
+        );
+      }
     }
 
-    mostrarAviso("Produto reposicionado com sucesso.", "sucesso");
-
+    await carregarProdutosDaApi();
     await renderizarCardapio();
-  } catch (error) {
-    console.error("Erro ao arrastar produto:", error);
-    mostrarAviso("Erro de conexão ao reposicionar produto.", "erro");
+
+    mostrarAviso(
+      "Produto reposicionado com sucesso!",
+      "sucesso"
+    );
+  } catch (erro) {
+    console.error("Erro ao arrastar produto:", erro);
+
+    mostrarAviso(
+      "Erro ao reposicionar produto. Verifique a ordem antes de tentar novamente.",
+      "erro"
+    );
   }
 }
 
@@ -1958,116 +1977,111 @@ async function moverProduto(id, direcao) {
   if (!usuarioEhAdmin()) {
     mostrarAviso(
       "Apenas o administrador pode mudar a ordem dos produtos.",
-      "erro",
+      "erro"
     );
     return;
   }
 
-  const produtos = carregarProdutos();
+  if (direcao !== -1 && direcao !== 1) return;
 
-  const produtoAtual = produtos.find(
-    (produto) => Number(produto.id) === Number(id),
-  );
+  try {
+    const produtos = await carregarProdutosDaApi();
 
-  if (!produtoAtual) {
-    mostrarAviso("Produto não encontrado.", "erro");
-    return;
-  }
-
-  const produtosDaCategoria = produtos
-    .filter((produto) => produto.categoria === produtoAtual.categoria)
-    .sort((a, b) => {
-      const ordemA = Number(a.ordem) || Number(a.id);
-      const ordemB = Number(b.ordem) || Number(b.id);
-      return ordemA - ordemB;
-    });
-
-  const indiceCategoria = produtosDaCategoria.findIndex(
-    (produto) => Number(produto.id) === Number(id),
-  );
-
-  const novoIndiceCategoria = indiceCategoria + direcao;
-
-  if (
-    novoIndiceCategoria < 0 ||
-    novoIndiceCategoria >= produtosDaCategoria.length
-  ) {
-    mostrarAviso(
-      direcao < 0
-        ? "Esse produto já está no topo da categoria."
-        : "Esse produto já está no fim da categoria.",
-      "erro",
+    const produtoAtual = produtos.find(
+      (produto) => Number(produto.id) === Number(id)
     );
-    return;
-  }
 
-  const produtoAlvo = produtosDaCategoria[novoIndiceCategoria];
+    if (!produtoAtual) {
+      mostrarAviso("Produto não encontrado.", "erro");
+      return;
+    }
 
-  const ordemAtual = Number(produtoAtual.ordem) || Number(produtoAtual.id);
-  const ordemAlvo = Number(produtoAlvo.ordem) || Number(produtoAlvo.id);
+    const produtosDaCategoria = produtos
+      .filter(
+        (produto) =>
+          produto.categoria === produtoAtual.categoria
+      )
+      .sort((a, b) => {
+        const ordemA = Number(a.ordem) || Number(a.id);
+        const ordemB = Number(b.ordem) || Number(b.id);
 
-  const produtoAtualAtualizado = {
-    ...produtoAtual,
-    ordem: ordemAlvo,
-  };
+        return ordemA - ordemB || Number(a.id) - Number(b.id);
+      });
 
-  const produtoAlvoAtualizado = {
-    ...produtoAlvo,
-    ordem: ordemAtual,
-  };
-   
-   try {
-      const respostaAtual = await fetch(
-     `${API_BASE_URL}/products/${produtoAtual.id}`,
-      {
-      method: "PUT",
-      headers: obterHeadersAdmin(),
-      body: JSON.stringify(
-      converterProdutoTelaParaApi(produtoAtualAtualizado),
-    ),
-  },
-);
+    const indiceAtual = produtosDaCategoria.findIndex(
+      (produto) => Number(produto.id) === Number(id)
+    );
 
+    const novoIndice = indiceAtual + direcao;
 
-    const resultadoAtual = await respostaAtual.json();
-
-    if (!respostaAtual.ok) {
+    if (
+      indiceAtual < 0 ||
+      novoIndice < 0 ||
+      novoIndice >= produtosDaCategoria.length
+    ) {
       mostrarAviso(
-        resultadoAtual.erro || "Erro ao atualizar ordem do produto.",
-        "erro",
+        "O produto já está no limite da categoria.",
+        "info"
       );
       return;
     }
 
-    const respostaAlvo = await fetch(
-      `${API_BASE_URL}/products/${produtoAlvo.id}`,
-      {
-        method: "PUT",
-        headers: obterHeadersAdmin(),
-        body: JSON.stringify(
-          converterProdutoTelaParaApi(produtoAlvoAtualizado),
-        ),
-      },
+    const [produtoMovido] = produtosDaCategoria.splice(
+      indiceAtual,
+      1
     );
 
-    const resultadoAlvo = await respostaAlvo.json();
+    produtosDaCategoria.splice(
+      novoIndice,
+      0,
+      produtoMovido
+    );
 
-    if (!respostaAlvo.ok) {
-      mostrarAviso(
-        resultadoAlvo.erro || "Erro ao atualizar ordem do produto.",
-        "erro",
+    // Garante uma posicao unica para cada produto da categoria.
+    for (let i = 0; i < produtosDaCategoria.length; i++) {
+      const produto = produtosDaCategoria[i];
+      const novaOrdem = i + 1;
+
+      if (Number(produto.ordem) === novaOrdem) continue;
+
+      const resposta = await fetch(
+        `${API_BASE_URL}/products/${produto.id}`,
+        {
+          method: "PUT",
+          headers: obterHeadersAdmin(),
+          body: JSON.stringify(
+            converterProdutoTelaParaApi({
+              ...produto,
+              ordem: novaOrdem
+            })
+          )
+        }
       );
-      return;
+
+      if (!resposta.ok) {
+        throw new Error(
+          `Não foi possível atualizar o produto ${produto.id}.`
+        );
+      }
     }
 
-    mostrarAviso("Ordem do produto atualizada.", "sucesso");
-
+    await carregarProdutosDaApi();
     await renderizarCardapio();
-  } catch (error) {
-    console.error("Erro ao mover produto:", error);
-    mostrarAviso("Erro de conexão ao mudar a ordem do produto.", "erro");
+
+    mostrarAviso(
+      "Ordem dos produtos atualizada com sucesso!",
+      "sucesso"
+    );
+  } catch (erro) {
+    console.error("Erro ao mover produto:", erro);
+
+    mostrarAviso(
+      "Não foi possível concluir a ordenação. Verifique a ordem antes de tentar novamente.",
+      "erro"
+    );
   }
 }
+
 async function editarProduto(id) {
   if (!usuarioEhAdmin()) {
     mostrarAviso("Apenas o administrador pode editar produtos.", "erro");
