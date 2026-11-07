@@ -318,12 +318,6 @@ async function salvarEndereco(evento) {
     elemento("perfilCidade").value.trim() !== "" &&
     elemento("perfilEstado").value.trim() !== "";
 
-  const address =
-    camposDetalhadosAlterados && camposEssenciaisPreenchidos
-      ? enderecoMontado
-      : enderecoDigitado;
-
-
   const isPrimary = elemento("enderecoPrincipal").checked;
   const botao = elemento("btnSalvarEndereco");
   const camposDetalhados = {
@@ -338,32 +332,52 @@ async function salvarEndereco(evento) {
     location: elemento("perfilLocalizacao").value.trim(),
   };
 
-  const preencheuEnderecoDetalhado = [
-    camposDetalhados.cep,
-    camposDetalhados.street,
-    camposDetalhados.number,
-    camposDetalhados.neighborhood,
-    camposDetalhados.city,
-    camposDetalhados.state,
-  ].some(Boolean);
+  const camposObrigatorios = {
+    "CEP": camposDetalhados.cep,
+    "Rua / Avenida": camposDetalhados.street,
+    "Número": camposDetalhados.number,
+    "Bairro": camposDetalhados.neighborhood,
+    "Cidade": camposDetalhados.city,
+    "Estado": camposDetalhados.state,
+  };
 
-  if (preencheuEnderecoDetalhado && !camposEssenciaisPreenchidos) {
-    mostrarMensagem(
-      "Preencha rua, número, bairro, cidade e estado para salvar o endereço detalhado.",
-      true
-    );
+  for (const [nome, valor] of Object.entries(camposObrigatorios)) {
+    if (!valor) {
+      mostrarMensagem(`Preencha o campo ${nome}.`, true);
+      return;
+    }
+  }
+
+  const cepNumeros = camposDetalhados.cep.replace(/\D/g, "");
+
+  if (cepNumeros.length !== 8) {
+    mostrarMensagem("Informe um CEP com 8 números.", true);
     return;
   }
 
 
-  if (address.length < 5 || address.length > 500) {
+camposDetalhados.cep =
+  `${cepNumeros.slice(0, 5)}-${cepNumeros.slice(5)}`;
+
+elemento("perfilCep").value = camposDetalhados.cep;
+
+
+  if (!/^[A-Z]{2}$/.test(camposDetalhados.state)) {
+    mostrarMensagem("Informe a sigla do estado com 2 letras.", true);
+    return;
+  }
+
+  const enderecoValidado = montarEnderecoCompleto();
+
+  if (enderecoValidado.length < 5 || enderecoValidado.length > 500) {
     mostrarMensagem(
-      "Informe um endereço entre 5 e 500 caracteres.",
+      "O endereço completo deve ter entre 5 e 500 caracteres.",
       true
     );
     return;
   }
-
+  const address = enderecoValidado;
+  
   botao.disabled = true;
 
   try {
@@ -371,15 +385,13 @@ async function salvarEndereco(evento) {
   
 await requisicaoPerfil(`/addresses/${id}`, {
   method: "PUT",
-  
-body: JSON.stringify({
-  address,
-  ...(!elemento("camposEnderecoDetalhado").hidden
-    ? camposDetalhados
-    : {}),
-}),
-
-});
+      await requisicaoPerfil(`/addresses/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          address,
+          ...camposDetalhados,
+        }),
+      });
 
       if (isPrimary && !enderecoAnterior?.is_primary) {
         await requisicaoPerfil(`/addresses/${id}/primary`, {
@@ -388,17 +400,16 @@ body: JSON.stringify({
       }
       
     } else {
-     await requisicaoPerfil("/addresses", {
-  method: "POST",
-  body: JSON.stringify({
-    address,
-    is_primary: isPrimary,
-...(!elemento("camposEnderecoDetalhado").hidden
-  ? camposDetalhados
-  : {}),
-  }),
- });
-}
+      await requisicaoPerfil("/addresses", {
+        method: "POST",
+        body: JSON.stringify({
+          address,
+          is_primary: isPrimary,
+          ...camposDetalhados,
+        }),
+      });
+    }
+     
     limparFormularioEndereco();
     await carregarEnderecos();
 
