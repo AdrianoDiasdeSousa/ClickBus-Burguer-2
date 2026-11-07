@@ -80,10 +80,26 @@ async function listAddresses(req, res) {
   try {
     const user = await clienteAutenticado(req);
     const result = await pool.query(
-      `SELECT id, address, is_primary, created_at, updated_at
-       FROM user_addresses
-       WHERE user_id = $1
-       ORDER BY is_primary DESC, created_at ASC, id ASC`,
+      
+`SELECT
+   id,
+   address,
+   cep,
+   street,
+   number,
+   neighborhood,
+   city,
+   state,
+   complement,
+   reference,
+   location,
+   is_primary,
+   created_at,
+   updated_at
+ FROM user_addresses
+ WHERE user_id = $1
+ ORDER BY is_primary DESC, created_at ASC, id ASC`,
+
       [user.id],
     );
     return res.json(result.rows);
