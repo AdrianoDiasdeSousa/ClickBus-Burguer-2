@@ -34,8 +34,19 @@ async function carregarConfiguracoesLojaApi() {
 }
 
 async function salvarConfiguracoesLojaApi(dadosLoja) {
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    throw new Error(
+      "Você precisa estar autenticado como administrador."
+    );
+  }
+
   return fazerRequisicaoApi("/store", {
     method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(dadosLoja),
   });
 }
