@@ -887,29 +887,12 @@ async function updateMyProfile(req, res) {
       });
     }
 
+    
     const alterouCpf = cpfFinal !== cpfAnterior;
 
-    if (alterouCpf && cpfAnterior) {
-      if (
-        typeof current_password !== "string" ||
-        !current_password
-      ) {
-        return res.status(400).json({
-          erro: "Informe sua senha atual para alterar o CPF.",
-        });
-      }
-
-      const senhaValida = await bcrypt.compare(
-        current_password,
-        usuarioAtual.password_hash
-      );
-
-      if (!senhaValida) {
-        return res.status(401).json({
-          erro: "Senha atual incorreta.",
-        });
-      }
-    }
+    // A confirmação da alteração de CPF será feita
+    // por um aviso na página Meu Perfil.
+    // Não é necessário informar a senha atual.
 
     const emailExistente = await client.query(
       `SELECT id FROM users
