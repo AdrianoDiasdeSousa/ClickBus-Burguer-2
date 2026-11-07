@@ -141,47 +141,6 @@ function alternarVisibilidadeSenha(inputId, botao) {
   }
 }
 
-function obterCredenciaisAdmin() {
-  let credenciaisSalvas = null;
-
-  try {
-    credenciaisSalvas = JSON.parse(
-      localStorage.getItem("adminClickBusCredenciais") || "null",
-    );
-  } catch (erro) {
-    credenciaisSalvas = null;
-  }
-
-  return {
-    email: credenciaisSalvas?.email || "admin@clickbus.com",
-    senha: credenciaisSalvas?.senha || "admin123",
-    perguntaRecuperacao: credenciaisSalvas?.perguntaRecuperacao || "",
-    respostaRecuperacao: credenciaisSalvas?.respostaRecuperacao || "",
-  };
-}
-
-function salvarCredenciaisAdmin(credenciais) {
-  const credenciaisAtuais = obterCredenciaisAdmin();
-
-  const credenciaisSeguras = {
-    email: credenciais.email || credenciaisAtuais.email || "admin@clickbus.com",
-    senha: credenciais.senha || credenciaisAtuais.senha || "admin123",
-    perguntaRecuperacao:
-      credenciais.perguntaRecuperacao ||
-      credenciaisAtuais.perguntaRecuperacao ||
-      "",
-    respostaRecuperacao:
-      credenciais.respostaRecuperacao ||
-      credenciaisAtuais.respostaRecuperacao ||
-      "",
-  };
-
-  localStorage.setItem(
-    "adminClickBusCredenciais",
-    JSON.stringify(credenciaisSeguras),
-  );
-}
-
 async function preencherContaAdministrador() {
   const areaContaAdmin = document.getElementById("areaContaAdmin");
   const emailAdminAtual = document.getElementById("emailAdminAtual");
@@ -189,11 +148,13 @@ async function preencherContaAdministrador() {
   const senhaAtualAdmin = document.getElementById("senhaAtualAdmin");
   const novaSenhaAdmin = document.getElementById("novaSenhaAdmin");
   const confirmarSenhaAdmin = document.getElementById("confirmarSenhaAdmin");
+
   const perguntaRecuperacaoAdmin = document.getElementById(
-    "perguntaRecuperacaoAdmin",
+    "perguntaRecuperacaoAdmin"
   );
+
   const respostaRecuperacaoAdmin = document.getElementById(
-    "respostaRecuperacaoAdmin",
+    "respostaRecuperacaoAdmin"
   );
 
   if (!areaContaAdmin || !emailAdminAtual) return;
@@ -205,19 +166,23 @@ async function preencherContaAdministrador() {
 
   areaContaAdmin.classList.remove("oculto");
 
-  const credenciaisLocais = obterCredenciaisAdmin();
+  // Remove credenciais antigas armazenadas neste navegador.
+  localStorage.removeItem("adminClickBusCredenciais");
 
-  emailAdminAtual.value = credenciaisLocais.email;
-  novoEmailAdmin.value = "";
+  // Limpa os campos antes de consultar o servidor.
+  emailAdminAtual.value = "";
+  if (novoEmailAdmin) novoEmailAdmin.value = "";
 
   if (senhaAtualAdmin) senhaAtualAdmin.value = "";
   if (novaSenhaAdmin) novaSenhaAdmin.value = "";
   if (confirmarSenhaAdmin) confirmarSenhaAdmin.value = "";
-  if (respostaRecuperacaoAdmin) respostaRecuperacaoAdmin.value = "";
 
   if (perguntaRecuperacaoAdmin) {
-    perguntaRecuperacaoAdmin.value =
-      credenciaisLocais.perguntaRecuperacao || "";
+    perguntaRecuperacaoAdmin.value = "";
+  }
+
+  if (respostaRecuperacaoAdmin) {
+    respostaRecuperacaoAdmin.value = "";
   }
 
   const token = localStorage.getItem("clickbus_token");
@@ -225,34 +190,46 @@ async function preencherContaAdministrador() {
   if (!token) {
     mostrarAviso(
       "Faça login novamente como administrador para editar a conta.",
-      "erro",
+      "erro"
     );
     return;
   }
 
   try {
-    const resposta = await fetch(`${API_BASE_URL}/auth/admin-profile`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const resposta = await fetch(
+      `${API_BASE_URL}/auth/admin-profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        cache: "no-store"
+      }
+    );
 
     const resultado = await resposta.json();
 
     if (!resposta.ok) {
-      throw new Error(resultado?.erro || "Não foi possível carregar o admin.");
+      throw new Error(
+        resultado?.erro ||
+        "Não foi possível carregar a conta administrativa."
+      );
     }
 
-    emailAdminAtual.value = resultado.email || credenciaisLocais.email;
+    // Os dados da conta vêm somente do backend.
+    emailAdminAtual.value = resultado.email || "";
 
     if (perguntaRecuperacaoAdmin) {
-      perguntaRecuperacaoAdmin.value = resultado.recovery_question || "";
+      perguntaRecuperacaoAdmin.value =
+        resultado.recovery_question || "";
     }
+
   } catch (error) {
     console.error("Erro ao carregar conta do admin:", error);
+
     mostrarAviso(
-      error.message || "Não foi possível carregar os dados do administrador.",
-      "erro",
+      error.message ||
+      "Não foi possível carregar os dados do administrador.",
+      "erro"
     );
   }
 }
@@ -299,8 +276,8 @@ async function salvarContaAdministrador(event) {
     return;
   }
 
-  if (novaSenha && novaSenha.length < 4) {
-    mostrarAviso("A nova senha precisa ter pelo menos 4 caracteres.", "erro");
+  if (novaSenha && novaSenha.length < 10) {
+    mostrarAviso("A nova senha precisa ter pelo menos 10 caracteres.", "erro");
     return;
   }
 
@@ -348,12 +325,6 @@ async function salvarContaAdministrador(event) {
     localStorage.setItem("usuarioLogado", usuario.email);
     localStorage.setItem("tipoUsuario", "admin");
     localStorage.setItem("nomeUsuario", "Administrador");
-
-    salvarCredenciaisAdmin({
-      email: usuario.email,
-      perguntaRecuperacao,
-      respostaRecuperacao: "",
-    });
 
     document.getElementById("emailAdminAtual").value = usuario.email;
     document.getElementById("novoEmailAdmin").value = "";
