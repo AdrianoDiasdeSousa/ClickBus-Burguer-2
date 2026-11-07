@@ -977,11 +977,130 @@ async function updateMyProfile(req, res) {
   }
 }
 
+async function changeMyPassword(req, res) {
+  try {
+    const usuario = await obterUsuarioAutenticado(req);
+
+    if (usuario.role !== "cliente") {
+      return res.status(403).json({
+        erro: "Apenas clientes podem alterar esta senha.",
+      });
+    }
+
+    const {
+      current_password,
+      new_password,
+      confirm_password,
+    } = req.body || {};
+
+    if (
+      typeof current_password !== "string" ||
+      !current_password ||
+      typeof new_password !== "string" ||
+      typeof confirm_password !== "string"
+    ) {
+      return res.status(400).json({
+        erro: "Preencha os três campos de senha.",
+      });
+    }
+
+    if (
+      new_password.length < 6 ||
+      new_password.length > 72
+    ) {
+      return res.status(400).json({
+        erro: "A nova senha deve ter entre 6 e 72 caracteres.",
+      });
+    }
+
+    if (new_password !== confirm_password) {
+      return res.status(400).json({
+        erro: "A confirmação da nova senha não confere.",
+      });
+    }
+
+    const resultado = await pool.query(
+      `SELECT id, password_hash
+       FROM users
+       WHERE id = $1
+         AND role = 'cliente'
+         AND is_active = TRUE`,
+      [usuario.id]
+    );
+
+    if (resultado.rowCount !== 1) {
+      return res.status(401).json({
+        erro: "Conta de cliente não encontrada ou inativa.",
+      });
+    }
+
+    const hashAtual = resultado.rows[0].password_hash;
+
+    const senhaCorreta = await bcrypt.compare(
+      current_password,
+      hashAtual
+    );
+
+    if (!senhaCorreta) {
+      return res.status(401).json({
+        erro: "Senha atual incorreta.",
+      });
+    }
+
+    const mesmaSenha = await bcrypt.compare(
+      new_password,
+      hashAtual
+    );
+
+    if (mesmaSenha) {
+      return res.status(400).json({
+        erro: "A nova senha deve ser diferente da senha atual.",
+      });
+    }
+
+    const novoHash = await bcrypt.hash(new_password, 10);
+
+    const atualizado = await pool.query(
+      `UPDATE users
+       SET password_hash = $1
+       WHERE id = $2
+         AND role = 'cliente'
+         AND is_active = TRUE
+         AND password_hash = $3
+       RETURNING id`,
+      [novoHash, usuario.id, hashAtual]
+    );
+
+    if (atualizado.rowCount !== 1) {
+      return res.status(409).json({
+        erro: "A senha foi alterada em outra operação. Tente novamente.",
+      });
+    }
+
+    return res.json({
+      mensagem: "Senha alterada com sucesso.",
+    });
+  } catch (error) {
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
+    console.error("Erro ao alterar senha do cliente:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível alterar sua senha agora.",
+    });
+  }
+}
+
 module.exports = {
   register,
   login,
   getMyProfile,
   updateMyProfile,
+  changeMyPassword,
   getAdminProfile,
   updateAdminProfile,
   forgotPassword,
