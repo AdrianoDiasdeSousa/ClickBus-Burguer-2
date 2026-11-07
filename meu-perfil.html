@@ -118,18 +118,12 @@
         />
 
         <!-- CAMPO ORIGINAL PRESERVADO -->
-        <label for="enderecoCompleto">
-          Endereço completo
-        </label>
-
-        <textarea
-          id="enderecoCompleto"
-          rows="4"
-          maxlength="500"
-          minlength="5"
-          placeholder="Rua, número, bairro, cidade, estado, CEP e complemento"
-          required
-        ></textarea>
+        
+       <!-- Endereço completo gerado automaticamente pelo JavaScript -->
+       <input
+       type="hidden"
+       id="enderecoCompleto"
+       />
 
         <!-- NOVOS CAMPOS DETALHADOS -->
         <div id="camposEnderecoDetalhado" hidden>
