@@ -371,7 +371,7 @@ async function fazerLogin(event) {
   event.preventDefault();
 
   const email = document.getElementById("email")?.value.trim();
-  const senha = document.getElementById("senha")?.value.trim();
+  const senha = document.getElementById("senha")?.value || "";
 
   if (!email || !senha) {
     mostrarAviso("Preencha todos os campos.", "erro");
@@ -880,11 +880,10 @@ async function fazerCadastro(event) {
 
   const nome = document.getElementById("nome")?.value.trim();
   const email = document.getElementById("email")?.value.trim();
-  const senha = document.getElementById("senha")?.value.trim();
+  const senha = document.getElementById("senha")?.value || "";
   const cpf = document.getElementById("cpf")?.value.trim() || "";
-  const confirmarSenha = document
-    .getElementById("confirmarSenha")
-    ?.value.trim();
+  const confirmarSenha =
+  document.getElementById("confirmarSenha")?.value || "";
 
   const telefone = formatarTelefoneBR(
     document.getElementById("telefone")?.value.trim() || "",
