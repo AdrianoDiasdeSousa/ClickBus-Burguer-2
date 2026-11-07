@@ -770,10 +770,242 @@ async function getMyProfile(req, res) {
   }
 }
 
+function validarCpfPerfil(cpf) {
+  if (!/^\d{11}$/.test(cpf)) return false;
+  if (new Set(cpf).size === 1) return false;
+
+  for (let tamanho = 9; tamanho <= 10; tamanho++) {
+    const soma = cpf
+      .slice(0, tamanho)
+      .split("")
+      .reduce(
+        (total, digito, indice) =>
+          total + Number(digito) * (tamanho + 1 - indice),
+        0
+      );
+
+    const resto = (soma * 10) % 11;
+    const verificador = resto === 10 ? 0 : resto;
+
+    if (verificador !== Number(cpf[tamanho])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function updateMyProfile(req, res) {
+  let client;
+  let transacaoIniciada = false;
+
+  try {
+    const autenticado = await obterUsuarioAutenticado(req);
+
+    if (autenticado.role !== "cliente") {
+      return res.status(403).json({
+        erro: "Apenas clientes podem editar este perfil.",
+      });
+    }
+
+    const { name, email, phone, cpf, current_password } =
+      req.body || {};
+
+    if (
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof phone !== "string" ||
+      typeof cpf !== "string"
+    ) {
+      return res.status(400).json({
+        erro: "Informe nome, email, telefone e CPF válidos.",
+      });
+    }
+
+    const nomeFinal = name.trim();
+    const emailFinal = email.trim().toLowerCase();
+    const telefoneFinal = phone.trim();
+    const cpfFinal = cpf.replace(/\D/g, "");
+
+    if (nomeFinal.length < 3 || nomeFinal.length > 150) {
+      return res.status(400).json({
+        erro: "Informe um nome entre 3 e 150 caracteres.",
+      });
+    }
+
+    if (
+      emailFinal.length > 254 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailFinal)
+    ) {
+      return res.status(400).json({
+        erro: "Informe um email válido.",
+      });
+    }
+
+    if (
+      telefoneFinal.length < 8 ||
+      telefoneFinal.length > 30
+    ) {
+      return res.status(400).json({
+        erro: "Informe um telefone válido.",
+      });
+    }
+
+    if (cpfFinal && !validarCpfPerfil(cpfFinal)) {
+      return res.status(400).json({
+        erro: "Informe um CPF válido.",
+      });
+    }
+
+    client = await pool.connect();
+    await client.query("BEGIN");
+    transacaoIniciada = true;
+
+    const resultadoAtual = await client.query(
+      `SELECT id, cpf, password_hash
+       FROM users
+       WHERE id = $1
+         AND role = 'cliente'
+         AND is_active = TRUE
+       FOR UPDATE`,
+      [autenticado.id]
+    );
+
+    if (resultadoAtual.rowCount !== 1) {
+      return res.status(401).json({
+        erro: "Conta de cliente não encontrada ou inativa.",
+      });
+    }
+
+    const usuarioAtual = resultadoAtual.rows[0];
+    const cpfAnterior = String(usuarioAtual.cpf || "")
+      .replace(/\D/g, "");
+
+    if (cpfAnterior && !cpfFinal) {
+      return res.status(400).json({
+        erro: "O CPF cadastrado não pode ser apagado.",
+      });
+    }
+
+    const alterouCpf = cpfFinal !== cpfAnterior;
+
+    if (alterouCpf && cpfAnterior) {
+      if (
+        typeof current_password !== "string" ||
+        !current_password
+      ) {
+        return res.status(400).json({
+          erro: "Informe sua senha atual para alterar o CPF.",
+        });
+      }
+
+      const senhaValida = await bcrypt.compare(
+        current_password,
+        usuarioAtual.password_hash
+      );
+
+      if (!senhaValida) {
+        return res.status(401).json({
+          erro: "Senha atual incorreta.",
+        });
+      }
+    }
+
+    const emailExistente = await client.query(
+      `SELECT id FROM users
+       WHERE LOWER(email) = $1
+         AND id <> $2
+       LIMIT 1`,
+      [emailFinal, autenticado.id]
+    );
+
+    if (emailExistente.rowCount > 0) {
+      return res.status(409).json({
+        erro: "Este email já está cadastrado em outra conta.",
+      });
+    }
+
+    if (cpfFinal) {
+      const cpfExistente = await client.query(
+        `SELECT id FROM users
+         WHERE regexp_replace(
+           COALESCE(cpf, ''), '[^0-9]', '', 'g'
+         ) = $1
+           AND id <> $2
+         LIMIT 1`,
+        [cpfFinal, autenticado.id]
+      );
+
+      if (cpfExistente.rowCount > 0) {
+        return res.status(409).json({
+          erro: "Este CPF já está cadastrado em outra conta.",
+        });
+      }
+    }
+
+    const atualizado = await client.query(
+      `UPDATE users
+       SET name = $1,
+           email = $2,
+           phone = $3,
+           cpf = $4
+       WHERE id = $5
+         AND role = 'cliente'
+         AND is_active = TRUE
+       RETURNING id, name, cpf, email, phone`,
+      [
+        nomeFinal,
+        emailFinal,
+        telefoneFinal,
+        cpfFinal || null,
+        autenticado.id,
+      ]
+    );
+
+    await client.query("COMMIT");
+    transacaoIniciada = false;
+
+    return res.json({
+      mensagem: "Dados pessoais atualizados com sucesso.",
+      usuario: atualizado.rows[0],
+    });
+  } catch (error) {
+    if (error.code === "23505") {
+      return res.status(409).json({
+        erro: "CPF ou email já cadastrado em outra conta.",
+      });
+    }
+
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
+    console.error("Erro ao atualizar Meu Perfil:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível atualizar seus dados pessoais.",
+    });
+  } finally {
+    if (client) {
+      if (transacaoIniciada) {
+        try {
+          await client.query("ROLLBACK");
+        } catch (erroRollback) {
+          console.error("Erro ao desfazer atualização:", erroRollback);
+        }
+      }
+      client.release();
+    }
+  }
+}
+
 module.exports = {
   register,
   login,
   getMyProfile,
+  updateMyProfile,
   getAdminProfile,
   updateAdminProfile,
   forgotPassword,
