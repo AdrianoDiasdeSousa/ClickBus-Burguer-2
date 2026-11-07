@@ -4695,7 +4695,7 @@ const resposta = await fetch(`${API_BASE_URL}/orders`, {
       trocoPara,
       status: "Pedido recebido",
       totalProdutos,
-      totalValor,
+      totalValor: Number(resultado.order.total_amount),
       itens: pedido,
       pedidoBancoId: resultado.order.id,
     };
