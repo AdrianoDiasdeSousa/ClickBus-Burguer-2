@@ -248,3 +248,169 @@
     flex: 1 1 130px;
   }
 }
+
+/* CAMPOS DETALHADOS DO ENDEREÇO */
+
+#camposEnderecoDetalhado {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+#camposEnderecoDetalhado[hidden] {
+  display: none;
+}
+
+#camposEnderecoDetalhado label,
+#formAlterarSenha label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 19px;
+  font-weight: bold;
+}
+
+#camposEnderecoDetalhado input,
+#formAlterarSenha input {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  margin: 0 0 16px;
+  border: none;
+  border-radius: 4px;
+  background: #ddd;
+  color: #111;
+  box-sizing: border-box;
+  font: 18px Georgia, "Times New Roman", serif;
+}
+
+#camposEnderecoDetalhado input:focus-visible,
+#formAlterarSenha input:focus-visible {
+  outline: 3px solid #f4c430;
+  outline-offset: 2px;
+}
+
+#camposEnderecoDetalhado input:disabled,
+#formAlterarSenha input:disabled {
+  opacity: 0.7;
+}
+
+/* BOTÕES DE LOCALIZAÇÃO */
+
+.acoes-localizacao-perfil {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0 18px;
+}
+
+.acoes-localizacao-perfil button,
+#btnConfirmarMapaPerfil {
+  padding: 11px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #4657ff;
+  color: #fff;
+  font: 16px Georgia, "Times New Roman", serif;
+  cursor: pointer;
+}
+
+.acoes-localizacao-perfil button:hover,
+#btnConfirmarMapaPerfil:hover {
+  background: #2637d9;
+}
+
+#mapaPerfilEndereco {
+  width: 100%;
+  height: 320px;
+  margin: 15px 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#mapaPerfilEndereco[hidden],
+#btnConfirmarMapaPerfil[hidden] {
+  display: none;
+}
+
+/* SEGURANÇA DA CONTA */
+
+#formAlterarSenha {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+#btnAlterarSenha {
+  align-self: center;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 16px;
+  background: #4657ff;
+  color: white;
+  font: 21px Georgia, "Times New Roman", serif;
+  cursor: pointer;
+}
+
+#btnAlterarSenha:hover:not(:disabled) {
+  background: #2637d9;
+}
+
+#btnAlterarSenha:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#mensagemAlterarSenha {
+  text-align: center;
+  margin-top: 14px;
+}
+
+/* LISTA DOS ENDEREÇOS */
+
+#listaEnderecos .item-endereco {
+  padding: 18px;
+  border: 1px solid #777;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow-wrap: anywhere;
+}
+
+#listaEnderecos .item-endereco strong {
+  display: block;
+  margin: 8px 0;
+  color: #f4c430;
+}
+
+#listaEnderecos .acoes-endereco {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* CELULARES */
+
+@media (max-width: 768px) {
+  #camposEnderecoDetalhado label,
+  #formAlterarSenha label {
+    font-size: 17px;
+  }
+
+  #camposEnderecoDetalhado input,
+  #formAlterarSenha input {
+    font-size: 16px;
+  }
+
+  .acoes-localizacao-perfil button {
+    flex: 1 1 180px;
+  }
+
+  #btnAlterarSenha {
+    width: 100%;
+    font-size: 19px;
+  }
+
+  #listaEnderecos .acoes-endereco button {
+    flex: 1 1 130px;
+  }
+}
