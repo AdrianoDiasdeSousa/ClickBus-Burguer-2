@@ -111,15 +111,14 @@ async function obterUsuarioAdminAutenticado(req) {
     throw erro;
   }
 
-  const result = await pool.query(
-    `SELECT id, name, email, phone, password_hash, role, address, recovery_question
-     FROM users     
-WHERE id = $1
-  AND role = 'admin'
-  AND is_active = TRUE
-
-    [payload.id],
-  );
+const result = await pool.query(
+  `SELECT id, name, email, phone, password_hash, role, address, recovery_question
+   FROM users
+   WHERE id = $1
+     AND role = 'admin'
+     AND is_active = TRUE`,
+  [payload.id]
+);
 
   if (result.rows.length === 0) {
     const erro = new Error("Administrador não encontrado.");
