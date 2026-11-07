@@ -141,47 +141,6 @@ function alternarVisibilidadeSenha(inputId, botao) {
   }
 }
 
-function obterCredenciaisAdmin() {
-  let credenciaisSalvas = null;
-
-  try {
-    credenciaisSalvas = JSON.parse(
-      localStorage.getItem("adminClickBusCredenciais") || "null",
-    );
-  } catch (erro) {
-    credenciaisSalvas = null;
-  }
-
-  return {
-    email: credenciaisSalvas?.email || "admin@clickbus.com",
-    senha: credenciaisSalvas?.senha || "admin123",
-    perguntaRecuperacao: credenciaisSalvas?.perguntaRecuperacao || "",
-    respostaRecuperacao: credenciaisSalvas?.respostaRecuperacao || "",
-  };
-}
-
-function salvarCredenciaisAdmin(credenciais) {
-  const credenciaisAtuais = obterCredenciaisAdmin();
-
-  const credenciaisSeguras = {
-    email: credenciais.email || credenciaisAtuais.email || "admin@clickbus.com",
-    senha: credenciais.senha || credenciaisAtuais.senha || "admin123",
-    perguntaRecuperacao:
-      credenciais.perguntaRecuperacao ||
-      credenciaisAtuais.perguntaRecuperacao ||
-      "",
-    respostaRecuperacao:
-      credenciais.respostaRecuperacao ||
-      credenciaisAtuais.respostaRecuperacao ||
-      "",
-  };
-
-  localStorage.setItem(
-    "adminClickBusCredenciais",
-    JSON.stringify(credenciaisSeguras),
-  );
-}
-
 async function preencherContaAdministrador() {
   const areaContaAdmin = document.getElementById("areaContaAdmin");
   const emailAdminAtual = document.getElementById("emailAdminAtual");
@@ -189,11 +148,13 @@ async function preencherContaAdministrador() {
   const senhaAtualAdmin = document.getElementById("senhaAtualAdmin");
   const novaSenhaAdmin = document.getElementById("novaSenhaAdmin");
   const confirmarSenhaAdmin = document.getElementById("confirmarSenhaAdmin");
+
   const perguntaRecuperacaoAdmin = document.getElementById(
-    "perguntaRecuperacaoAdmin",
+    "perguntaRecuperacaoAdmin"
   );
+
   const respostaRecuperacaoAdmin = document.getElementById(
-    "respostaRecuperacaoAdmin",
+    "respostaRecuperacaoAdmin"
   );
 
   if (!areaContaAdmin || !emailAdminAtual) return;
@@ -205,19 +166,23 @@ async function preencherContaAdministrador() {
 
   areaContaAdmin.classList.remove("oculto");
 
-  const credenciaisLocais = obterCredenciaisAdmin();
+  // Remove credenciais antigas armazenadas neste navegador.
+  localStorage.removeItem("adminClickBusCredenciais");
 
-  emailAdminAtual.value = credenciaisLocais.email;
-  novoEmailAdmin.value = "";
+  // Limpa os campos antes de consultar o servidor.
+  emailAdminAtual.value = "";
+  if (novoEmailAdmin) novoEmailAdmin.value = "";
 
   if (senhaAtualAdmin) senhaAtualAdmin.value = "";
   if (novaSenhaAdmin) novaSenhaAdmin.value = "";
   if (confirmarSenhaAdmin) confirmarSenhaAdmin.value = "";
-  if (respostaRecuperacaoAdmin) respostaRecuperacaoAdmin.value = "";
 
   if (perguntaRecuperacaoAdmin) {
-    perguntaRecuperacaoAdmin.value =
-      credenciaisLocais.perguntaRecuperacao || "";
+    perguntaRecuperacaoAdmin.value = "";
+  }
+
+  if (respostaRecuperacaoAdmin) {
+    respostaRecuperacaoAdmin.value = "";
   }
 
   const token = localStorage.getItem("clickbus_token");
@@ -225,34 +190,46 @@ async function preencherContaAdministrador() {
   if (!token) {
     mostrarAviso(
       "Faça login novamente como administrador para editar a conta.",
-      "erro",
+      "erro"
     );
     return;
   }
 
   try {
-    const resposta = await fetch(`${API_BASE_URL}/auth/admin-profile`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const resposta = await fetch(
+      `${API_BASE_URL}/auth/admin-profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        cache: "no-store"
+      }
+    );
 
     const resultado = await resposta.json();
 
     if (!resposta.ok) {
-      throw new Error(resultado?.erro || "Não foi possível carregar o admin.");
+      throw new Error(
+        resultado?.erro ||
+        "Não foi possível carregar a conta administrativa."
+      );
     }
 
-    emailAdminAtual.value = resultado.email || credenciaisLocais.email;
+    // Os dados da conta vêm somente do backend.
+    emailAdminAtual.value = resultado.email || "";
 
     if (perguntaRecuperacaoAdmin) {
-      perguntaRecuperacaoAdmin.value = resultado.recovery_question || "";
+      perguntaRecuperacaoAdmin.value =
+        resultado.recovery_question || "";
     }
+
   } catch (error) {
     console.error("Erro ao carregar conta do admin:", error);
+
     mostrarAviso(
-      error.message || "Não foi possível carregar os dados do administrador.",
-      "erro",
+      error.message ||
+      "Não foi possível carregar os dados do administrador.",
+      "erro"
     );
   }
 }
@@ -299,8 +276,8 @@ async function salvarContaAdministrador(event) {
     return;
   }
 
-  if (novaSenha && novaSenha.length < 4) {
-    mostrarAviso("A nova senha precisa ter pelo menos 4 caracteres.", "erro");
+  if (novaSenha && novaSenha.length < 10) {
+    mostrarAviso("A nova senha precisa ter pelo menos 10 caracteres.", "erro");
     return;
   }
 
@@ -348,12 +325,6 @@ async function salvarContaAdministrador(event) {
     localStorage.setItem("usuarioLogado", usuario.email);
     localStorage.setItem("tipoUsuario", "admin");
     localStorage.setItem("nomeUsuario", "Administrador");
-
-    salvarCredenciaisAdmin({
-      email: usuario.email,
-      perguntaRecuperacao,
-      respostaRecuperacao: "",
-    });
 
     document.getElementById("emailAdminAtual").value = usuario.email;
     document.getElementById("novoEmailAdmin").value = "";
@@ -1858,216 +1829,186 @@ function finalizarArrasteProduto() {
     });
 }
 
+
 async function reposicionarProdutoArrastado(idArrastado, idAlvo) {
-  if (!usuarioEhAdmin()) {
-    mostrarAviso(
-      "Apenas o administrador pode mudar a ordem dos produtos.",
-      "erro",
-    );
-    return;
-  }
-
-  const produtos = carregarProdutos();
-
-  const produtoArrastado = produtos.find(
-    (produto) => Number(produto.id) === Number(idArrastado),
+  return reordenarProdutosAdmin(
+    "arrastar",
+    idArrastado,
+    idAlvo
   );
-
-  const produtoAlvo = produtos.find(
-    (produto) => Number(produto.id) === Number(idAlvo),
-  );
-
-  if (!produtoArrastado || !produtoAlvo) {
-    mostrarAviso("Produto não encontrado.", "erro");
-    return;
-  }
-
-  if (produtoArrastado.categoria !== produtoAlvo.categoria) {
-    mostrarAviso("Organize o produto dentro da própria categoria.", "erro");
-    return;
-  }
-
-  const ordemArrastado =
-    Number(produtoArrastado.ordem) || Number(produtoArrastado.id);
-
-  const ordemAlvo = Number(produtoAlvo.ordem) || Number(produtoAlvo.id);
-
-  const produtoArrastadoAtualizado = {
-    ...produtoArrastado,
-    ordem: ordemAlvo,
-  };
-
-  const produtoAlvoAtualizado = {
-    ...produtoAlvo,
-    ordem: ordemArrastado,
-  };
-
-  try {
-    const respostaArrastado = await fetch(
-      `${API_BASE_URL}/products/${produtoArrastado.id}`,
-      {
-        method: "PUT",
-       headers: obterHeadersAdmin(),
-        body: JSON.stringify(
-          converterProdutoTelaParaApi(produtoArrastadoAtualizado),
-        ),
-      },
-    );
-
-    const resultadoArrastado = await respostaArrastado.json();
-
-    if (!respostaArrastado.ok) {
-      mostrarAviso(
-        resultadoArrastado.erro || "Erro ao atualizar ordem do produto.",
-        "erro",
-      );
-      return;
-    }
-
-    const respostaAlvo = await fetch(
-      `${API_BASE_URL}/products/${produtoAlvo.id}`,
-      {
-        method: "PUT",
-       headers: obterHeadersAdmin(),
-        body: JSON.stringify(
-          converterProdutoTelaParaApi(produtoAlvoAtualizado),
-        ),
-      },
-    );
-
-    const resultadoAlvo = await respostaAlvo.json();
-
-    if (!respostaAlvo.ok) {
-      mostrarAviso(
-        resultadoAlvo.erro || "Erro ao atualizar ordem do produto.",
-        "erro",
-      );
-      return;
-    }
-
-    mostrarAviso("Produto reposicionado com sucesso.", "sucesso");
-
-    await renderizarCardapio();
-  } catch (error) {
-    console.error("Erro ao arrastar produto:", error);
-    mostrarAviso("Erro de conexão ao reposicionar produto.", "erro");
-  }
 }
 
-async function moverProduto(id, direcao) {
+
+let ordenacaoProdutosEmAndamento = false;
+
+// Salva a ordem dos lanches ou bebidas em uma unica requisicao.
+async function reordenarProdutosAdmin(tipo, id, referencia) {
   if (!usuarioEhAdmin()) {
     mostrarAviso(
       "Apenas o administrador pode mudar a ordem dos produtos.",
-      "erro",
+      "erro"
     );
     return;
   }
 
-  const produtos = carregarProdutos();
-
-  const produtoAtual = produtos.find(
-    (produto) => Number(produto.id) === Number(id),
-  );
-
-  if (!produtoAtual) {
-    mostrarAviso("Produto não encontrado.", "erro");
-    return;
-  }
-
-  const produtosDaCategoria = produtos
-    .filter((produto) => produto.categoria === produtoAtual.categoria)
-    .sort((a, b) => {
-      const ordemA = Number(a.ordem) || Number(a.id);
-      const ordemB = Number(b.ordem) || Number(b.id);
-      return ordemA - ordemB;
-    });
-
-  const indiceCategoria = produtosDaCategoria.findIndex(
-    (produto) => Number(produto.id) === Number(id),
-  );
-
-  const novoIndiceCategoria = indiceCategoria + direcao;
-
-  if (
-    novoIndiceCategoria < 0 ||
-    novoIndiceCategoria >= produtosDaCategoria.length
-  ) {
+  if (ordenacaoProdutosEmAndamento) {
     mostrarAviso(
-      direcao < 0
-        ? "Esse produto já está no topo da categoria."
-        : "Esse produto já está no fim da categoria.",
-      "erro",
+      "Aguarde a ordenacao anterior terminar.",
+      "erro"
     );
     return;
   }
 
-  const produtoAlvo = produtosDaCategoria[novoIndiceCategoria];
+  ordenacaoProdutosEmAndamento = true;
 
-  const ordemAtual = Number(produtoAtual.ordem) || Number(produtoAtual.id);
-  const ordemAlvo = Number(produtoAlvo.ordem) || Number(produtoAlvo.id);
+  try {
+    const respostaProdutos = await fetch(
+      `${API_BASE_URL}/products`,
+      { cache: "no-store" }
+    );
 
-  const produtoAtualAtualizado = {
-    ...produtoAtual,
-    ordem: ordemAlvo,
-  };
-
-  const produtoAlvoAtualizado = {
-    ...produtoAlvo,
-    ordem: ordemAtual,
-  };
-   
-   try {
-      const respostaAtual = await fetch(
-     `${API_BASE_URL}/products/${produtoAtual.id}`,
-      {
-      method: "PUT",
-      headers: obterHeadersAdmin(),
-      body: JSON.stringify(
-      converterProdutoTelaParaApi(produtoAtualAtualizado),
-    ),
-  },
-);
-
-
-    const resultadoAtual = await respostaAtual.json();
-
-    if (!respostaAtual.ok) {
-      mostrarAviso(
-        resultadoAtual.erro || "Erro ao atualizar ordem do produto.",
-        "erro",
-      );
-      return;
+    if (!respostaProdutos.ok) {
+      throw new Error("Nao foi possivel consultar os produtos.");
     }
 
-    const respostaAlvo = await fetch(
-      `${API_BASE_URL}/products/${produtoAlvo.id}`,
+    const dadosProdutos = await respostaProdutos.json();
+
+    if (!Array.isArray(dadosProdutos)) {
+      throw new Error("Lista de produtos invalida.");
+    }
+
+    const produtos = dadosProdutos.map(converterProdutoApiParaTela);
+
+    const produtoAtual = produtos.find(
+      (produto) => Number(produto.id) === Number(id)
+    );
+
+    if (!produtoAtual) {
+      throw new Error("Produto nao encontrado.");
+    }
+
+    const produtosDaCategoria = produtos
+      .filter(
+        (produto) =>
+          produto.categoria === produtoAtual.categoria
+      )
+      .sort((a, b) => {
+        const ordemA = Number(a.ordem) || Number(a.id);
+        const ordemB = Number(b.ordem) || Number(b.id);
+
+        return ordemA - ordemB || Number(a.id) - Number(b.id);
+      });
+
+    const indiceAtual = produtosDaCategoria.findIndex(
+      (produto) => Number(produto.id) === Number(id)
+    );
+
+    let indiceDestino;
+
+    if (tipo === "botao") {
+      if (referencia !== -1 && referencia !== 1) {
+        throw new Error("Direcao invalida.");
+      }
+
+      indiceDestino = indiceAtual + referencia;
+
+      if (
+        indiceDestino < 0 ||
+        indiceDestino >= produtosDaCategoria.length
+      ) {
+        mostrarAviso(
+          "O produto ja esta no limite da categoria.",
+          "erro"
+        );
+        return;
+      }
+    } else if (tipo === "arrastar") {
+      const produtoAlvo = produtos.find(
+        (produto) => Number(produto.id) === Number(referencia)
+      );
+
+      if (!produtoAlvo) {
+        throw new Error("Produto de destino nao encontrado.");
+      }
+
+      if (produtoAlvo.categoria !== produtoAtual.categoria) {
+        mostrarAviso(
+          "Organize o produto dentro da propria categoria.",
+          "erro"
+        );
+        return;
+      }
+
+      indiceDestino = produtosDaCategoria.findIndex(
+        (produto) => Number(produto.id) === Number(referencia)
+      );
+
+      if (indiceAtual === indiceDestino) return;
+    } else {
+      throw new Error("Tipo de ordenacao invalido.");
+    }
+
+    // Move o produto dentro da categoria.
+    const [produtoMovido] = produtosDaCategoria.splice(
+      indiceAtual,
+      1
+    );
+
+    produtosDaCategoria.splice(
+      indiceDestino,
+      0,
+      produtoMovido
+    );
+
+    // Salva toda a sequencia de uma vez.
+    const resposta = await fetch(
+      `${API_BASE_URL}/products/reorder`,
       {
         method: "PUT",
         headers: obterHeadersAdmin(),
-        body: JSON.stringify(
-          converterProdutoTelaParaApi(produtoAlvoAtualizado),
-        ),
-      },
+        body: JSON.stringify({
+          category: produtoAtual.categoria,
+          productIds: produtosDaCategoria.map(
+            (produto) => Number(produto.id)
+          )
+        })
+      }
     );
 
-    const resultadoAlvo = await respostaAlvo.json();
+    const resultado = await resposta.json().catch(() => ({}));
 
-    if (!respostaAlvo.ok) {
-      mostrarAviso(
-        resultadoAlvo.erro || "Erro ao atualizar ordem do produto.",
-        "erro",
+    if (!resposta.ok) {
+      throw new Error(
+        resultado.erro || "Nao foi possivel salvar a ordem."
       );
-      return;
     }
 
-    mostrarAviso("Ordem do produto atualizada.", "sucesso");
-
+    await carregarProdutosDaApi();
     await renderizarCardapio();
-  } catch (error) {
-    console.error("Erro ao mover produto:", error);
-    mostrarAviso("Erro de conexão ao mudar a ordem do produto.", "erro");
+
+    mostrarAviso(
+      "Ordem dos produtos atualizada com sucesso!",
+      "sucesso"
+    );
+
+  } catch (erro) {
+    console.error("Erro ao reordenar produtos:", erro);
+
+    mostrarAviso(
+      erro.message || "Erro ao salvar a ordem dos produtos.",
+      "erro"
+    );
+  } finally {
+    ordenacaoProdutosEmAndamento = false;
   }
 }
+
+// Botoes Subir e Descer.
+async function moverProduto(id, direcao) {
+  return reordenarProdutosAdmin("botao", id, direcao);
+}
+
+
 async function editarProduto(id) {
   if (!usuarioEhAdmin()) {
     mostrarAviso("Apenas o administrador pode editar produtos.", "erro");
@@ -2111,9 +2052,7 @@ async function editarProduto(id) {
   try {
     const resposta = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: obterHeadersAdmin(),
       body: JSON.stringify(converterProdutoTelaParaApi(produtoAtualizado)),
     });
 
@@ -4727,7 +4666,7 @@ const resposta = await fetch(`${API_BASE_URL}/orders`, {
       trocoPara,
       status: "Pedido recebido",
       totalProdutos,
-      totalValor,
+      totalValor: Number(resultado.order.total_amount),
       itens: pedido,
       pedidoBancoId: resultado.order.id,
     };

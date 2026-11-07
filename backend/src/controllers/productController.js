@@ -263,10 +263,120 @@ async function deleteProduct(req, res) {
   }
 }
 
+async function reorderProducts(req, res) {
+  let client;
+
+  try {
+    await obterUsuarioAdminAutenticado(req);
+
+    const { category, productIds } = req.body || {};
+
+    if (
+      !["lanche", "bebida"].includes(category) ||
+      !Array.isArray(productIds) ||
+      productIds.length === 0 ||
+      !productIds.every(
+        (id) => Number.isSafeInteger(id) && id > 0
+      ) ||
+      new Set(productIds).size !== productIds.length
+    ) {
+      return res.status(400).json({
+        erro: "Categoria ou lista de produtos inválida.",
+      });
+    }
+
+    client = await pool.connect();
+
+    await client.query("BEGIN");
+
+    // Impede que duas reorganizações sejam
+    // executadas simultaneamente por esta rota.
+    await client.query(
+      "SELECT pg_advisory_xact_lock(725311)"
+    );
+
+    // Bloqueia os produtos da categoria durante
+    // a atualização da sequência.
+    const resultado = await client.query(
+      `SELECT id
+       FROM products
+       WHERE category = $1
+       ORDER BY id
+       FOR UPDATE`,
+      [category]
+    );
+
+    const idsBanco = resultado.rows.map(
+      (produto) => Number(produto.id)
+    );
+
+    const idsRecebidos = new Set(productIds);
+
+    // Exige todos os produtos da categoria,
+    // sem IDs extras e sem produtos faltando.
+    const listaValida =
+      idsBanco.length === productIds.length &&
+      idsBanco.every((id) => idsRecebidos.has(id));
+
+    if (!listaValida) {
+      await client.query("ROLLBACK");
+
+      return res.status(409).json({
+        erro:
+          "A lista de produtos mudou. Atualize o cardápio e tente novamente.",
+      });
+    }
+
+    for (let i = 0; i < productIds.length; i++) {
+      await client.query(
+        `UPDATE products
+         SET display_order = $1
+         WHERE id = $2 AND category = $3`,
+        [i + 1, productIds[i], category]
+      );
+    }
+
+    await client.query("COMMIT");
+
+    return res.json({
+      mensagem: "Ordem dos produtos atualizada com sucesso.",
+      category,
+      productIds,
+    });
+
+  } catch (error) {
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error("Erro ao desfazer transação:", rollbackError);
+      }
+    }
+
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
+    console.error("Erro ao reordenar produtos:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível atualizar a ordem dos produtos.",
+    });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+}
+
 module.exports = {
   listProducts,
   getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
+  reorderProducts,
 };
+

@@ -7,6 +7,7 @@ const {
 
 async function createOrder(req, res) {
   let client;
+  let transacaoIniciada = false;
 
   try {
     const usuario = await obterUsuarioAutenticado(req);
@@ -17,7 +18,6 @@ async function createOrder(req, res) {
       });
     }
 
-    client = await pool.connect();
     const {
       customer_email,
       customer_name,
@@ -27,24 +27,119 @@ async function createOrder(req, res) {
       delivery_location,
       payment_method,
       change_for,
-      total_amount,
       notes,
       items,
-    } = req.body;
+    } = req.body || {};
 
-    if (!customer_name || !payment_method || !total_amount) {
+    if (
+      typeof customer_name !== "string" ||
+      !customer_name.trim() ||
+      typeof payment_method !== "string" ||
+      !payment_method.trim()
+    ) {
       return res.status(400).json({
-        erro: "Nome do cliente, forma de pagamento e total são obrigatórios.",
+        erro: "Nome do cliente e forma de pagamento são obrigatórios.",
       });
     }
 
-    if (!Array.isArray(items) || items.length === 0) {
+    if (
+      !Array.isArray(items) ||
+      items.length === 0 ||
+      items.length > 100
+    ) {
       return res.status(400).json({
-        erro: "O pedido precisa ter pelo menos um item.",
+        erro: "O pedido deve conter entre 1 e 100 itens.",
       });
     }
 
+    for (const item of items) {
+      if (
+        !item ||
+        !Number.isSafeInteger(Number(item.product_id)) ||
+        Number(item.product_id) <= 0 ||
+        !Number.isSafeInteger(Number(item.quantity)) ||
+        Number(item.quantity) < 1 ||
+        Number(item.quantity) > 100
+      ) {
+        return res.status(400).json({
+          erro: "Produto ou quantidade inválida.",
+        });
+      }
+    }
+
+    client = await pool.connect();
     await client.query("BEGIN");
+    transacaoIniciada = true;
+
+    const itensValidados = [];
+    let totalCentavos = 0;
+
+    for (const item of items) {
+      const resultadoProduto = await client.query(
+        `SELECT id, name, price, available
+         FROM products
+         WHERE id = $1
+         FOR SHARE`,
+        [Number(item.product_id)]
+      );
+
+      if (resultadoProduto.rows.length === 0) {
+        const erro = new Error(
+          `Produto ${item.product_id} não encontrado.`
+        );
+        erro.statusCode = 400;
+        throw erro;
+      }
+
+      const produto = resultadoProduto.rows[0];
+
+      if (produto.available !== true) {
+        const erro = new Error(
+          `O produto ${produto.name} está indisponível.`
+        );
+        erro.statusCode = 400;
+        throw erro;
+      }
+
+      // O preço vem exclusivamente do PostgreSQL.
+      const precoCentavos = Math.round(
+        Number(produto.price) * 100
+      );
+
+      if (
+        !Number.isSafeInteger(precoCentavos) ||
+        precoCentavos < 0
+      ) {
+        throw new Error(
+          "Preço inválido cadastrado no banco de dados."
+        );
+      }
+
+      const quantidade = Number(item.quantity);
+      const subtotalCentavos = precoCentavos * quantidade;
+
+      if (!Number.isSafeInteger(subtotalCentavos)) {
+        throw new Error("Valor do pedido excede o limite permitido.");
+      }
+
+      totalCentavos += subtotalCentavos;
+
+      if (!Number.isSafeInteger(totalCentavos)) {
+        throw new Error("Valor total excede o limite permitido.");
+      }
+
+      itensValidados.push({
+        product_id: produto.id,
+        product_name: produto.name,
+        quantity: quantidade,
+        unit_price: precoCentavos / 100,
+        subtotal: subtotalCentavos / 100,
+        observation: item.observation || null,
+      });
+    }
+
+    // O total também é calculado pelo servidor.
+    const totalCalculado = totalCentavos / 100;
 
     const orderResult = await client.query(
       `INSERT INTO orders (
@@ -60,27 +155,30 @@ async function createOrder(req, res) {
         total_amount,
         status,
         notes
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6,
+        $7, $8, $9, $10, $11, $12
+      )
       RETURNING *`,
       [
         usuario.id,
         customer_email || null,
-        customer_name,
+        customer_name.trim(),
         customer_phone || null,
         delivery_type || "delivery",
         delivery_address || null,
         delivery_location || null,
         payment_method,
         change_for || null,
-        Number(total_amount),
+        totalCalculado,
         "pendente",
         notes || null,
-      ],
+      ]
     );
 
     const order = orderResult.rows[0];
 
-    for (const item of items) {
+    for (const item of itensValidados) {
       await client.query(
         `INSERT INTO order_items (
           order_id,
@@ -90,44 +188,52 @@ async function createOrder(req, res) {
           unit_price,
           subtotal,
           observation
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           order.id,
-          item.product_id || null,
+          item.product_id,
           item.product_name,
-          Number(item.quantity),
-          Number(item.unit_price),
-          Number(item.subtotal),
-          item.observation || null,
-        ],
+          item.quantity,
+          item.unit_price,
+          item.subtotal,
+          item.observation,
+        ]
       );
     }
 
     await client.query("COMMIT");
+    transacaoIniciada = false;
 
     return res.status(201).json({
       mensagem: "Pedido criado com sucesso.",
       order,
     });
 
-    } catch (error) {
-  if (client) {
-    await client.query("ROLLBACK");
-  }
+  } catch (error) {
+    if (client && transacaoIniciada) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error(
+          "Erro ao desfazer pedido:",
+          rollbackError
+        );
+      }
+    }
 
-  console.error("Erro ao criar pedido:", error);
+    console.error("Erro ao criar pedido:", error);
 
-  return res.status(error.statusCode || 500).json({
-    erro: error.statusCode
-      ? error.message
-      : "Erro interno ao criar pedido.",
-  });
-    
+    return res.status(error.statusCode || 500).json({
+      erro: error.statusCode
+        ? error.message
+        : "Erro interno ao criar pedido.",
+    });
+
   } finally {
-  if (client) {
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
-}
 }
 
 async function listOrders(req, res) {

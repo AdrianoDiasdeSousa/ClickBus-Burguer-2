@@ -303,11 +303,20 @@ async function updateAdminProfile(req, res) {
       }
     }
 
-    if (new_password && String(new_password).length < 4) {
-      return res.status(400).json({
-        erro: "A nova senha precisa ter pelo menos 4 caracteres.",
-      });
-    }
+
+if (
+  new_password !== undefined &&
+  new_password !== null &&
+  new_password !== "" &&
+  (
+    typeof new_password !== "string" ||
+    new_password.length < 10
+  )
+) {
+  return res.status(400).json({
+    erro: "A nova senha precisa ter pelo menos 10 caracteres.",
+  });
+}
 
     if (!recovery_question || !recovery_answer) {
       return res.status(400).json({
@@ -431,13 +440,21 @@ async function forgotPassword(req, res) {
 }
 
 async function resetPassword(req, res) {
+  let client;
+  let transacaoIniciada = false;
+
   try {
     await ensureAdminProfileSchema();
 
-    const token = String(req.body.token || "").trim();
-    const newPassword = String(req.body.new_password || "");
+    const token = req.body?.token;
+    const newPassword = req.body?.new_password;
 
-    if (!token || !newPassword) {
+    if (
+      typeof token !== "string" ||
+      !token.trim() ||
+      typeof newPassword !== "string" ||
+      !newPassword
+    ) {
       return res.status(400).json({
         erro: "Token e nova senha são obrigatórios.",
       });
@@ -449,57 +466,122 @@ async function resetPassword(req, res) {
       });
     }
 
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(token.trim())
+      .digest("hex");
 
-    const tokenResult = await pool.query(
-      `SELECT prt.id, prt.user_id
+    client = await pool.connect();
+
+    await client.query("BEGIN");
+    transacaoIniciada = true;
+
+    // Bloqueia o token e o usuario durante a redefinicao.
+    const tokenResult = await client.query(
+      `SELECT
+         prt.id,
+         prt.user_id,
+         u.role
        FROM password_reset_tokens prt
+       JOIN users u ON u.id = prt.user_id
        WHERE prt.token_hash = $1
          AND prt.used_at IS NULL
          AND prt.expires_at > NOW()
        ORDER BY prt.created_at DESC
-       LIMIT 1`,
-      [tokenHash],
+       LIMIT 1
+       FOR UPDATE OF prt, u`,
+      [tokenHash]
     );
 
     if (tokenResult.rows.length === 0) {
-      return res.status(400).json({
-        erro: "Link inválido ou expirado. Solicite uma nova recuperação.",
-      });
+      const erro = new Error(
+        "Link inválido ou expirado. Solicite uma nova recuperação."
+      );
+      erro.statusCode = 400;
+      throw erro;
     }
 
     const resetToken = tokenResult.rows[0];
-    const passwordHash = await bcrypt.hash(newPassword, 10);
 
-    await pool.query("BEGIN");
+    // Administradores precisam de senha mais longa.
+    const tamanhoMinimo =
+      resetToken.role === "admin" ? 10 : 6;
 
-    await pool.query(
+    if (newPassword.length < tamanhoMinimo) {
+      const erro = new Error(
+        `A nova senha precisa ter pelo menos ${tamanhoMinimo} caracteres.`
+      );
+      erro.statusCode = 400;
+      throw erro;
+    }
+
+    const passwordHash = await bcrypt.hash(
+      newPassword,
+      10
+    );
+
+    await client.query(
       `UPDATE users
        SET password_hash = $1
        WHERE id = $2`,
-      [passwordHash, resetToken.user_id],
+      [passwordHash, resetToken.user_id]
     );
 
-    await pool.query(
+    const tokenAtualizado = await client.query(
       `UPDATE password_reset_tokens
        SET used_at = NOW()
-       WHERE id = $1`,
-      [resetToken.id],
+       WHERE id = $1
+         AND used_at IS NULL
+       RETURNING id`,
+      [resetToken.id]
     );
 
-    await pool.query("COMMIT");
+    if (tokenAtualizado.rowCount !== 1) {
+      throw new Error(
+        "Nao foi possivel finalizar a recuperacao."
+      );
+    }
+
+    await client.query("COMMIT");
+    transacaoIniciada = false;
 
     return res.json({
-      mensagem: "Senha redefinida com sucesso. Já pode fazer login.",
+      mensagem:
+        "Senha redefinida com sucesso. Já pode fazer login.",
     });
-  } catch (error) {
-    await pool.query("ROLLBACK").catch(() => {});
 
-    console.error("Erro ao redefinir senha:", error);
+  } catch (error) {
+    if (client && transacaoIniciada) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error(
+          "Erro ao desfazer recuperacao de senha:",
+          rollbackError
+        );
+      }
+    }
+
+    if (error.statusCode === 400) {
+      return res.status(400).json({
+        erro: error.message,
+      });
+    }
+
+    console.error(
+      "Erro ao redefinir senha:",
+      error
+    );
 
     return res.status(500).json({
-      erro: "Não foi possível redefinir a senha agora.",
+      erro:
+        "Não foi possível redefinir a senha agora.",
     });
+
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 }
 
