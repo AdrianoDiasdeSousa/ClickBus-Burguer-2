@@ -35,23 +35,24 @@ async function requisicaoPerfil(caminho, opcoes = {}) {
   });
 }
 
-function configurarDadosPessoais() {
+
+async function configurarDadosPessoais() {
   const formulario = elemento("formMeusDados");
 
-  // A API de dados pessoais ainda será implementada.
-  // Não permitir salvamento sem backend.
+  // Os campos continuam bloqueados até
+  // implementarmos a atualização dos dados.
   for (const campo of formulario.querySelectorAll("input")) {
     campo.disabled = true;
   }
 
   elemento("btnSalvarDados").disabled = true;
 
-  const aviso = document.createElement("p");
-  aviso.textContent =
-    "A consulta e a edição dos dados pessoais serão liberadas " +
-    "quando concluirmos a integração segura com o backend.";
+  const usuario = await requisicaoPerfil("/auth/me");
 
-  formulario.before(aviso);
+  elemento("perfilNome").value = usuario.name || "";
+  elemento("perfilCpf").value = usuario.cpf || "";
+  elemento("perfilEmail").value = usuario.email || "";
+  elemento("perfilTelefone").value = usuario.phone || "";
 }
 
 async function carregarEnderecos() {
@@ -295,10 +296,9 @@ async function iniciarMeuPerfil() {
     (evento) => evento.preventDefault()
   );
 
-  configurarDadosPessoais();
-
   try {
     // O backend valida o token e exige a função de cliente.
+    await configurarDadosPessoais();
     await carregarEnderecos();
 
     conteudo.hidden = false;
