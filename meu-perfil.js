@@ -126,6 +126,74 @@ async function salvarDadosPessoais(evento) {
   }
 }
 
+async function alterarSenhaPerfil(evento) {
+  evento.preventDefault();
+
+  const senhaAtual = elemento("senhaAtualPerfil").value;
+  const novaSenha = elemento("novaSenhaPerfil").value;
+  const confirmarSenha = elemento("confirmarNovaSenhaPerfil").value;
+
+  const botao = elemento("btnAlterarSenha");
+  const mensagem = elemento("mensagemAlterarSenha");
+
+  mensagem.textContent = "";
+  mensagem.style.color = "";
+
+  if (!senhaAtual || !novaSenha || !confirmarSenha) {
+    mensagem.textContent = "Preencha os três campos de senha.";
+    mensagem.style.color = "#f87171";
+    return;
+  }
+
+  if (novaSenha.length < 6) {
+    mensagem.textContent =
+      "A nova senha deve ter pelo menos 6 caracteres.";
+    mensagem.style.color = "#f87171";
+    return;
+  }
+
+  if (novaSenha !== confirmarSenha) {
+    mensagem.textContent = "As novas senhas não coincidem.";
+    mensagem.style.color = "#f87171";
+    return;
+  }
+
+  if (novaSenha === senhaAtual) {
+    mensagem.textContent =
+      "A nova senha deve ser diferente da senha atual.";
+    mensagem.style.color = "#f87171";
+    return;
+  }
+
+  botao.disabled = true;
+
+  try {
+    const resposta = await requisicaoPerfil(
+      "/auth/change-password",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          current_password: senhaAtual,
+          new_password: novaSenha,
+          confirm_password: confirmarSenha,
+        }),
+      }
+    );
+
+    elemento("formAlterarSenha").reset();
+
+    mensagem.textContent =
+      resposta.mensagem || "Senha alterada com sucesso.";
+    mensagem.style.color = "#4ade80";
+  } catch (erro) {
+    mensagem.textContent =
+      erro.message || "Não foi possível alterar sua senha.";
+    mensagem.style.color = "#f87171";
+  } finally {
+    botao.disabled = false;
+  }
+}
+
 async function carregarEnderecos() {
   const enderecos = await requisicaoPerfil("/addresses");
 
@@ -537,10 +605,20 @@ elemento("formMeusDados").addEventListener(
   salvarDadosPessoais
 );
 
+  elemento("formAlterarSenha").addEventListener(
+    "submit",
+    alterarSenhaPerfil
+  );
+
   try {
     // O backend valida o token e exige a função de cliente.
     await configurarDadosPessoais();
     await carregarEnderecos();
+    
+    elemento("senhaAtualPerfil").disabled = false;
+    elemento("novaSenhaPerfil").disabled = false;
+    elemento("confirmarNovaSenhaPerfil").disabled = false;
+    elemento("btnAlterarSenha").disabled = false;
     elemento("camposEnderecoDetalhado").hidden = false;
 
     conteudo.hidden = false;
