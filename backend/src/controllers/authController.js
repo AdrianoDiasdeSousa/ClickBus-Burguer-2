@@ -657,13 +657,14 @@ async function resetPassword(req, res) {
 
 async function getCustomers(req, res) {
   try {
-    // Garante que somente o administrador tenha acesso.
+    // Permite acesso somente ao administrador.
     await obterUsuarioAdminAutenticado(req);
 
     const result = await pool.query(`
       SELECT
         id,
         name,
+        cpf,
         email,
         phone,
         address,
@@ -682,6 +683,7 @@ async function getCustomers(req, res) {
     });
   }
 }
+
 
 async function deleteCustomer(req, res) {
   try {
