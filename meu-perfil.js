@@ -268,6 +268,19 @@ function renderizarEnderecos() {
   }
 }
 
+function fecharMapaPerfil() {
+  if (typeof mapasEndereco !== "undefined") {
+    const dadosMapa = mapasEndereco.perfil;
+
+    if (dadosMapa?.mapa) {
+      dadosMapa.mapa.remove();
+      delete mapasEndereco.perfil;
+    }
+  }
+
+  elemento("mapaPerfilEndereco").hidden = true;
+  elemento("btnConfirmarMapaPerfil").hidden = true;
+}
 
 function limparFormularioEndereco() {
   elemento("formEndereco").reset();
