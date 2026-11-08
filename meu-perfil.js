@@ -232,6 +232,25 @@ function renderizarEnderecos() {
     const descricao = document.createElement("p");
     descricao.textContent = endereco.address;
     item.appendChild(descricao);
+    
+    if (endereco.location) {
+      const localizacao = document.createElement("p");
+
+      localizacao.textContent =
+        `Localização da entrega: ${endereco.location}`;
+
+      item.appendChild(localizacao);
+
+      const linkMapa = document.createElement("a");
+
+      linkMapa.href = obterLinkLocalizacao(endereco.location);
+      linkMapa.textContent = "Ver localização no Google Maps";
+      linkMapa.target = "_blank";
+      linkMapa.rel = "noopener noreferrer";
+
+      item.appendChild(linkMapa);
+    }
+
 
     if (endereco.is_primary) {
       const principal = document.createElement("strong");
