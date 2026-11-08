@@ -1507,13 +1507,14 @@ function criarImagemProduto(produto) {
   }
 
   return `
-    <img
-      src="${produto.imagem}"
-      alt="${produto.nome}"
-      onerror="this.style.display='none'"
-    />
-  `;
-}
+  <img
+    src="${produto.imagem}"
+    alt="${produto.nome}"
+    loading="lazy"
+    decoding="async"
+    onerror="this.style.display='none'"
+  />
+`;
 
 async function renderizarCardapio() {
   const listaLanches = document.getElementById("listaLanches");
