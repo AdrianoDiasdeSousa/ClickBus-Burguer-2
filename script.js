@@ -4507,6 +4507,11 @@ if (titulo) {
   localStorage.setItem("modoFormularioEndereco", modo);
 
   formulario.classList.remove("oculto");
+   const botaoNovoEndereco = document.querySelector(".btn-novo-endereco");
+
+if (botaoNovoEndereco) {
+  botaoNovoEndereco.hidden = true;
+}
 
   if (modo === "editarUsuario") {
     const endereco = enderecoPrincipalFinalizacao;
@@ -4553,6 +4558,11 @@ function fecharFormularioEndereco() {
 
   formulario.classList.add("oculto");
   formulario.reset();
+  const botaoNovoEndereco = document.querySelector(".btn-novo-endereco");
+
+if (botaoNovoEndereco) {
+  botaoNovoEndereco.hidden = false;
+}
   localStorage.removeItem("modoFormularioEndereco");
 }
 
