@@ -4234,6 +4234,68 @@ telefoneElemento.textContent =
   }
 }
 
+let enderecoPrincipalFinalizacao = null;
+
+async function buscarEnderecoPrincipalFinalizacao() {
+  const elementoEndereco = document.getElementById(
+    "enderecoCadastroEntrega"
+  );
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!elementoEndereco) return;
+
+  enderecoPrincipalFinalizacao = null;
+  elementoEndereco.textContent = "Carregando endereço...";
+
+  if (!token) {
+    elementoEndereco.textContent = "Faça login para consultar seu endereço.";
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/addresses`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      cache: "no-store"
+    });
+
+    if (!resposta.ok) {
+      throw new Error("Não foi possível consultar os endereços.");
+    }
+
+    const enderecos = await resposta.json();
+
+    if (!Array.isArray(enderecos)) {
+      throw new Error("Lista de endereços inválida.");
+    }
+
+    const principal = enderecos.find(
+      endereco => endereco.is_primary === true
+    );
+
+    if (!principal) {
+      elementoEndereco.textContent =
+        "Nenhum endereço principal encontrado.";
+      return;
+    }
+
+    enderecoPrincipalFinalizacao = principal;
+
+    elementoEndereco.textContent =
+      principal.address || "Endereço não informado";
+
+  } catch (erro) {
+    console.error("Erro ao carregar endereço:", erro);
+
+    enderecoPrincipalFinalizacao = null;
+
+    elementoEndereco.textContent =
+      "Não foi possível carregar o endereço.";
+  }
+}
 /* =========================
    FINALIZAÇÃO DO PEDIDO
 ========================= */
@@ -4281,21 +4343,18 @@ function carregarFinalizacaoPedido() {
     return;
   }
 
-  const pedido = carregarPedidoAtual();
+const pedido = carregarPedidoAtual();
 
  const nomeSalvo = "Carregando...";
  const telefoneSalvo = "Carregando...";
-
-  const enderecoPadrao =
-    localStorage.getItem("enderecoUsuario") ||
-    "Rua 01 Número 1132 Setor Oeste\nSandolândia - TO";
-  const enderecoTemporario = localStorage.getItem("enderecoEntrega");
+   
+ const enderecoTemporario = localStorage.getItem("enderecoEntrega");
 
   nomeEntrega.textContent = nomeSalvo;
   telefoneEntrega.textContent = telefoneSalvo;
 
-buscarDadosClienteFinalizacao();
-  enderecoCadastroEntrega.innerHTML = enderecoPadrao.replace(/\n/g, "<br>");
+  buscarDadosClienteFinalizacao();
+  buscarEnderecoPrincipalFinalizacao();
 
   if (
     enderecoTemporario &&
@@ -4682,21 +4741,33 @@ async function confirmarPedido() {
   document.getElementById("telefoneEntrega")?.textContent.trim() ||
   "";
 
-  const endereco =
-    formaRecebimento === "entregaTemporario"
-      ? localStorage.getItem("enderecoEntrega") ||
-        "Localização enviada pelo cliente"
-      : formaRecebimento === "entregaCadastro"
-        ? localStorage.getItem("enderecoUsuario") || "Endereço não informado"
-        : "Retirar no estabelecimento";
+const endereco =
+  formaRecebimento === "entregaTemporario"
+    ? localStorage.getItem("enderecoEntrega") ||
+      "Localização enviada pelo cliente"
+    : formaRecebimento === "entregaCadastro"
+      ? enderecoPrincipalFinalizacao?.address || ""
+      : "Retirar no estabelecimento";
 
-  const localizacaoEntrega =
-    formaRecebimento === "entregaTemporario"
-      ? localStorage.getItem("localizacaoEntrega") || ""
-      : formaRecebimento === "entregaCadastro"
-        ? localStorage.getItem("localizacaoUsuario") || ""
-        : "";
-
+const localizacaoEntrega =
+  formaRecebimento === "entregaTemporario"
+    ? localStorage.getItem("localizacaoEntrega") || ""
+    : formaRecebimento === "entregaCadastro"
+      ? enderecoPrincipalFinalizacao?.location || ""
+      : "";
+if (
+  formaRecebimento === "entregaCadastro" &&
+  (
+    !enderecoPrincipalFinalizacao ||
+    !enderecoPrincipalFinalizacao.address?.trim()
+  )
+) {
+  mostrarAviso(
+    "Seu endereço ainda não foi carregado. Atualize a página e tente novamente.",
+    "erro"
+  );
+  return;
+}
   const deliveryType =
     formaRecebimento === "retirada" ? "retirada" : "delivery";
 
