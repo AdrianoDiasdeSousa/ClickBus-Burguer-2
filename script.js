@@ -4283,7 +4283,11 @@ async function buscarEnderecoPrincipalFinalizacao() {
     }
 
     enderecoPrincipalFinalizacao = principal;
+     const seloPrincipal = document.getElementById("seloEnderecoPrincipal");
 
+if (seloPrincipal) {
+  seloPrincipal.hidden = false;
+}
     elementoEndereco.textContent =
       principal.address || "Endereço não informado";
 
