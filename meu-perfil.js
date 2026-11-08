@@ -10,6 +10,17 @@ function elemento(id) {
   return document.getElementById(id);
 }
 
+function formatarCpfPerfil(valor) {
+  const numeros = String(valor || "")
+    .replace(/\D/g, "")
+    .slice(0, 11);
+
+  return numeros
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+}
+
 function mostrarMensagem(texto, erro = false) {
   const mensagem = elemento("mensagemPerfil");
   mensagem.textContent = texto;
@@ -46,7 +57,7 @@ async function configurarDadosPessoais() {
   const usuario = await requisicaoPerfil("/auth/me");
 
   elemento("perfilNome").value = usuario.name || "";
-  elemento("perfilCpf").value = usuario.cpf || "";
+  elemento("perfilCpf").value = formatarCpfPerfil(usuario.cpf);
   cpfOriginalPerfil = String(usuario.cpf || "").replace(/\D/g, "");
   elemento("perfilEmail").value = usuario.email || "";
   elemento("perfilTelefone").value = usuario.phone || "";
@@ -113,7 +124,7 @@ async function salvarDadosPessoais(evento) {
     elemento("perfilNome").value = usuario.name || "";
     elemento("perfilEmail").value = usuario.email || "";
     elemento("perfilTelefone").value = usuario.phone || "";
-    elemento("perfilCpf").value = usuario.cpf || "";
+    elemento("perfilCpf").value = formatarCpfPerfil(usuario.cpf);
 
     cpfOriginalPerfil = String(usuario.cpf || "")
       .replace(/\D/g, "");
@@ -611,7 +622,12 @@ async function iniciarMeuPerfil() {
     "click",
     limparFormularioEndereco
   );
+
   
+elemento("perfilCpf").addEventListener("input", (evento) => {
+  evento.target.value = formatarCpfPerfil(evento.target.value);
+});
+
   const camposQueFormamEndereco = [
     "perfilCep",
     "perfilRua",
