@@ -1408,7 +1408,10 @@ function converterProdutoApiParaTela(produtoApi) {
 
 async function carregarProdutosDaApi() {
   try {
-    const resposta = await fetch(`${API_BASE_URL}/products`);
+    const resposta = await fetch(`${API_BASE_URL}/products`, {
+  signal: AbortSignal.timeout(10000),
+  cache: "no-store"
+});
 
     if (!resposta.ok) {
       throw new Error("Erro ao buscar produtos.");
