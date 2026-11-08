@@ -110,8 +110,6 @@ async function ensureStoreSettingsSchema() {
 // Consulta pública das configurações da loja.
 async function getStoreSettings(req, res) {
   try {
-    await ensureStoreSettingsSchema();
-
     const result = await pool.query(`
       SELECT
         id,
