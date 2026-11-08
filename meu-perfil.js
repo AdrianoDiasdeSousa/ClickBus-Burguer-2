@@ -610,6 +610,21 @@ elemento("formMeusDados").addEventListener(
     alterarSenhaPerfil
   );
 
+  elemento("btnBuscarMapaPerfil").addEventListener(
+    "click",
+    () => buscarEnderecoNoMapa("perfil")
+  );
+
+  elemento("btnLocalizacaoAtualPerfil").addEventListener(
+    "click",
+    () => salvarLocalizacaoNoCampo("perfilLocalizacao", "perfil")
+  );
+
+  elemento("btnConfirmarMapaPerfil").addEventListener(
+    "click",
+    () => confirmarLocalizacaoMapa("perfil")
+  );
+
   try {
     // O backend valida o token e exige a função de cliente.
     await configurarDadosPessoais();
