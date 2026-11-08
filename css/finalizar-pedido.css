@@ -505,3 +505,24 @@
 .btn-novo-endereco[hidden] {
   display: none !important;
 }
+
+.cabecalho-endereco-entrega {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.selo-endereco-principal {
+  background: #e6e2ff;
+  color: #5746bf;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.selo-endereco-principal[hidden] {
+  display: none !important;
+}
