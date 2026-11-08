@@ -132,8 +132,9 @@ const result = await pool.query(
 async function register(req, res) {
   let client;
   let transacaoIniciada = false;
-  
-const {
+
+  try {
+    const {
   name,
   email,
   phone,
