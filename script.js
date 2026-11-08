@@ -2771,7 +2771,9 @@ async function avancarPedido() {
 function sairDoSistema() {
   limparPedidoEmAndamento();
   sessionStorage.removeItem("clickbus_sessao_ativa");
-   
+  sessionStorage.removeItem("nomeDestinatarioPedido");
+  sessionStorage.removeItem("telefoneDestinatarioPedido");
+    
   localStorage.removeItem("clickbus_token");
   localStorage.removeItem("clickbus_usuario");
 
@@ -4205,8 +4207,19 @@ async function buscarDadosClienteFinalizacao() {
 
     const cliente = await resposta.json();
 
-    nomeElemento.textContent = cliente.name || "Cliente";
-    telefoneElemento.textContent = cliente.phone || "Não informado";
+    const nomeDestinatario = sessionStorage.getItem(
+  "nomeDestinatarioPedido"
+);
+
+const telefoneDestinatario = sessionStorage.getItem(
+  "telefoneDestinatarioPedido"
+);
+
+nomeElemento.textContent =
+  nomeDestinatario || cliente.name || "Cliente";
+
+telefoneElemento.textContent =
+  telefoneDestinatario || cliente.phone || "Não informado";
 
   } catch (erro) {
     console.error("Erro ao carregar cliente:", erro);
@@ -4220,6 +4233,7 @@ async function buscarDadosClienteFinalizacao() {
     );
   }
 }
+
 /* =========================
    FINALIZAÇÃO DO PEDIDO
 ========================= */
@@ -4324,31 +4338,46 @@ buscarDadosClienteFinalizacao();
 }
 
 function trocarCliente() {
-  const nomeAtual =
-    localStorage.getItem("nomeEntrega") ||
-    localStorage.getItem("nomeUsuario") ||
-    "Cliente";
+  const nomeElemento = document.getElementById("nomeEntrega");
+  const telefoneElemento = document.getElementById("telefoneEntrega");
 
-  const telefoneAtual =
-    localStorage.getItem("telefoneEntrega") ||
-    localStorage.getItem("telefoneUsuario") ||
-    "(63) 99999-9999";
+  if (!nomeElemento || !telefoneElemento) return;
 
-  const novoNome = prompt("Digite o nome do destinatário:", nomeAtual);
+  const nomeAtual = nomeElemento.textContent.trim();
+  const telefoneAtual = telefoneElemento.textContent.trim();
+
+  const novoNome = prompt(
+    "Digite o nome de quem vai receber o pedido:",
+    nomeAtual
+  );
 
   if (novoNome === null) return;
 
+  if (!novoNome.trim()) {
+    alert("Informe o nome do destinatário.");
+    return;
+  }
+
   const novoTelefone = prompt(
-    "Digite o telefone do destinatário:",
-    telefoneAtual,
+    "Digite o telefone de quem vai receber o pedido:",
+    telefoneAtual
   );
 
   if (novoTelefone === null) return;
 
-  localStorage.setItem("nomeEntrega", novoNome.trim());
-  localStorage.setItem("telefoneEntrega", novoTelefone.trim());
+  if (!novoTelefone.trim()) {
+    alert("Informe o telefone do destinatário.");
+    return;
+  }
 
-  carregarFinalizacaoPedido();
+  const nome = novoNome.trim();
+  const telefone = novoTelefone.trim();
+
+  sessionStorage.setItem("nomeDestinatarioPedido", nome);
+  sessionStorage.setItem("telefoneDestinatarioPedido", telefone);
+
+  nomeElemento.textContent = nome;
+  telefoneElemento.textContent = telefone;
 }
 
 function limparCamposEndereco(prefixo = "") {
@@ -4644,14 +4673,14 @@ async function confirmarPedido() {
   }, 0);
 
   const cliente =
-    localStorage.getItem("nomeEntrega") ||
-    localStorage.getItem("nomeUsuario") ||
-    "Cliente";
+  sessionStorage.getItem("nomeDestinatarioPedido") ||
+  document.getElementById("nomeEntrega")?.textContent.trim() ||
+  "";
 
   const telefone =
-    localStorage.getItem("telefoneEntrega") ||
-    localStorage.getItem("telefoneUsuario") ||
-    "";
+  sessionStorage.getItem("telefoneDestinatarioPedido") ||
+  document.getElementById("telefoneEntrega")?.textContent.trim() ||
+  "";
 
   const endereco =
     formaRecebimento === "entregaTemporario"
@@ -4683,11 +4712,48 @@ async function confirmarPedido() {
       : null;
 
   const observacoes = carregarObservacoesPedido();
+const tokenCliente = localStorage.getItem("clickbus_token");
 
+if (!tokenCliente) {
+  mostrarAviso("Faça login para finalizar o pedido.", "erro");
+  return;
+}
+
+let perfilCliente;
+
+try {
+  const respostaPerfil = await fetch(`${API_BASE_URL}/auth/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${tokenCliente}`
+    },
+    cache: "no-store"
+  });
+
+  if (!respostaPerfil.ok) {
+    throw new Error("Não foi possível consultar o cadastro.");
+  }
+
+  perfilCliente = await respostaPerfil.json();
+
+  if (!perfilCliente.email || !perfilCliente.cpf) {
+    throw new Error("O cadastro está sem e-mail ou CPF.");
+  }
+
+} catch (erro) {
+  console.error("Erro ao consultar o cliente:", erro);
+
+  mostrarAviso(
+    "Não foi possível confirmar seus dados. Tente novamente.",
+    "erro"
+  );
+
+  return;
+}
   const payloadPedido = {
     user_id: null,
-    customer_email: localStorage.getItem("usuarioLogado") || "",
-    customer_cpf: localStorage.getItem("cpfUsuario") || "",
+    customer_email: perfilCliente.email,
+    customer_cpf: perfilCliente.cpf,
     customer_name: cliente,
     customer_phone: telefone,
     delivery_type: deliveryType,
@@ -4793,6 +4859,8 @@ const resposta = await fetch(`${API_BASE_URL}/orders`, {
     localStorage.removeItem("pedidoAtual");
     localStorage.removeItem("observacoesPedidoAtual");
     localStorage.removeItem("produtoObservacaoId");
+    sessionStorage.removeItem("nomeDestinatarioPedido");
+    sessionStorage.removeItem("telefoneDestinatarioPedido");
 
     avisarENavegar("Pedido confirmado com sucesso!", "pedidos.html");
   } catch (error) {
