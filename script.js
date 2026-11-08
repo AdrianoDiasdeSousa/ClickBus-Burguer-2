@@ -2895,9 +2895,7 @@ async function carregarConfiguracoesLojaDaApi() {
 async function salvarConfiguracoesLojaNaApi(novasConfiguracoes) {
   const resposta = await fetch(`${API_BASE_URL}/store`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: obterHeadersAdmin(),
     body: JSON.stringify(novasConfiguracoes),
   });
 
