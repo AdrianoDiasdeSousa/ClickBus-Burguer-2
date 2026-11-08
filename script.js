@@ -3142,6 +3142,7 @@ function iniciarAtualizacaoStatusLoja() {
 setInterval(() => {
   atualizar();
 }, 60000);
+}
 
 async function alternarStatusManualLoja() {
   if (!usuarioEhAdmin()) {
