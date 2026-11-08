@@ -2771,7 +2771,9 @@ async function avancarPedido() {
 function sairDoSistema() {
   limparPedidoEmAndamento();
   sessionStorage.removeItem("clickbus_sessao_ativa");
-   
+  sessionStorage.removeItem("nomeDestinatarioPedido");
+  sessionStorage.removeItem("telefoneDestinatarioPedido");
+    
   localStorage.removeItem("clickbus_token");
   localStorage.removeItem("clickbus_usuario");
 
@@ -4172,6 +4174,246 @@ function avancarCarrinho() {
   window.location.href = "finalizar-pedido.html";
 }
 
+async function buscarDadosClienteFinalizacao() {
+  const nomeElemento = document.getElementById("nomeEntrega");
+  const telefoneElemento = document.getElementById("telefoneEntrega");
+
+  if (!nomeElemento || !telefoneElemento) return;
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    nomeElemento.textContent = "Faça login";
+    telefoneElemento.textContent = "";
+    mostrarAviso(
+      "Entre na sua conta para finalizar o pedido.",
+      "erro"
+    );
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      cache: "no-store"
+    });
+
+    if (!resposta.ok) {
+      throw new Error("Não foi possível consultar seu perfil.");
+    }
+
+    const cliente = await resposta.json();
+
+    const nomeDestinatario = sessionStorage.getItem(
+  "nomeDestinatarioPedido"
+);
+
+const telefoneDestinatario = sessionStorage.getItem(
+  "telefoneDestinatarioPedido"
+);
+
+nomeElemento.textContent =
+  nomeDestinatario || cliente.name || "Cliente";
+
+telefoneElemento.textContent =
+  telefoneDestinatario || cliente.phone || "Não informado";
+
+  } catch (erro) {
+    console.error("Erro ao carregar cliente:", erro);
+
+    nomeElemento.textContent = "Dados indisponíveis";
+    telefoneElemento.textContent = "";
+
+    mostrarAviso(
+      "Não foi possível atualizar seus dados. Verifique sua conexão.",
+      "erro"
+    );
+  }
+}
+
+let enderecoPrincipalFinalizacao = null;
+
+async function buscarEnderecoPrincipalFinalizacao() {
+  const elementoEndereco = document.getElementById(
+    "enderecoCadastroEntrega"
+  );
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!elementoEndereco) return;
+
+  enderecoPrincipalFinalizacao = null;
+  elementoEndereco.textContent = "Carregando endereço...";
+
+  if (!token) {
+    elementoEndereco.textContent = "Faça login para consultar seu endereço.";
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/addresses`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      cache: "no-store"
+    });
+
+    if (!resposta.ok) {
+      throw new Error("Não foi possível consultar os endereços.");
+    }
+
+    const enderecos = await resposta.json();
+
+    if (!Array.isArray(enderecos)) {
+      throw new Error("Lista de endereços inválida.");
+    }
+
+    const principal = enderecos.find(
+      endereco => endereco.is_primary === true
+    );
+
+    if (!principal) {
+      elementoEndereco.textContent =
+        "Nenhum endereço principal encontrado.";
+      return;
+    }
+
+    enderecoPrincipalFinalizacao = principal;
+     const seloPrincipal = document.getElementById("seloEnderecoPrincipal");
+
+if (seloPrincipal) {
+  seloPrincipal.hidden = false;
+}
+    elementoEndereco.textContent =
+      principal.address || "Endereço não informado";
+
+  } catch (erro) {
+    console.error("Erro ao carregar endereço:", erro);
+
+    enderecoPrincipalFinalizacao = null;
+
+    elementoEndereco.textContent =
+      "Não foi possível carregar o endereço.";
+  }
+}
+
+let enderecoSelecionadoFinalizacao = null;
+
+async function alternarListaEnderecos() {
+  const lista = document.getElementById("listaEnderecosEntrega");
+  const botao = document.getElementById("btnVerEnderecos");
+
+  if (!lista || !botao) return;
+
+  const abrir = lista.classList.contains("oculto");
+
+  if (!abrir) {
+    lista.classList.add("oculto");
+    botao.setAttribute("aria-expanded", "false");
+    return;
+  }
+
+  lista.classList.remove("oculto");
+  botao.setAttribute("aria-expanded", "true");
+  lista.textContent = "Carregando seus endereços...";
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    lista.textContent = "Faça login para consultar seus endereços.";
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/addresses`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      cache: "no-store"
+    });
+
+    if (!resposta.ok) {
+      throw new Error("Não foi possível carregar seus endereços.");
+    }
+
+    const enderecos = await resposta.json();
+
+    if (!Array.isArray(enderecos)) {
+      throw new Error("Lista de endereços inválida.");
+    }
+
+    lista.replaceChildren();
+
+    if (enderecos.length === 0) {
+      lista.textContent = "Nenhum endereço cadastrado.";
+      return;
+    }
+
+    enderecos.forEach((endereco) => {
+      const opcao = document.createElement("button");
+      opcao.type = "button";
+      opcao.className = "opcao-endereco-salvo";
+
+      const descricao = document.createElement("span");
+      descricao.textContent = endereco.address;
+
+      opcao.appendChild(descricao);
+
+      if (endereco.is_primary) {
+        const selo = document.createElement("strong");
+        selo.textContent = " Principal";
+        selo.className = "indicador-principal-lista";
+        opcao.appendChild(selo);
+      }
+
+      opcao.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        enderecoSelecionadoFinalizacao = endereco;
+
+        const enderecoExibido = document.getElementById(
+          "enderecoCadastroEntrega"
+        );
+
+        if (enderecoExibido) {
+          enderecoExibido.textContent = endereco.address;
+        }
+
+        const seloPrincipal = document.getElementById(
+          "seloEnderecoPrincipal"
+        );
+
+        if (seloPrincipal) {
+          seloPrincipal.hidden = !endereco.is_primary;
+        }
+
+        const radio = document.querySelector(
+          'input[name="formaRecebimento"][value="entregaCadastro"]'
+        );
+
+        if (radio) radio.checked = true;
+
+        lista.classList.add("oculto");
+        botao.setAttribute("aria-expanded", "false");
+
+        mostrarAviso(
+          "Endereço selecionado para esta entrega.",
+          "sucesso"
+        );
+      });
+
+      lista.appendChild(opcao);
+    });
+
+  } catch (erro) {
+    console.error("Erro ao listar endereços:", erro);
+    lista.textContent = "Não foi possível carregar seus endereços.";
+  }
+}
 /* =========================
    FINALIZAÇÃO DO PEDIDO
 ========================= */
@@ -4219,26 +4461,18 @@ function carregarFinalizacaoPedido() {
     return;
   }
 
-  const pedido = carregarPedidoAtual();
+const pedido = carregarPedidoAtual();
 
-  const nomeSalvo =
-    localStorage.getItem("nomeEntrega") ||
-    localStorage.getItem("nomeUsuario") ||
-    "Cliente";
-
-  const telefoneSalvo =
-    localStorage.getItem("telefoneEntrega") ||
-    localStorage.getItem("telefoneUsuario") ||
-    "(63) 99999-9999";
-
-  const enderecoPadrao =
-    localStorage.getItem("enderecoUsuario") ||
-    "Rua 01 Número 1132 Setor Oeste\nSandolândia - TO";
-  const enderecoTemporario = localStorage.getItem("enderecoEntrega");
+ const nomeSalvo = "Carregando...";
+ const telefoneSalvo = "Carregando...";
+   
+ const enderecoTemporario = localStorage.getItem("enderecoEntrega");
 
   nomeEntrega.textContent = nomeSalvo;
   telefoneEntrega.textContent = telefoneSalvo;
-  enderecoCadastroEntrega.innerHTML = enderecoPadrao.replace(/\n/g, "<br>");
+
+  buscarDadosClienteFinalizacao();
+  buscarEnderecoPrincipalFinalizacao();
 
   if (
     enderecoTemporario &&
@@ -4281,31 +4515,46 @@ function carregarFinalizacaoPedido() {
 }
 
 function trocarCliente() {
-  const nomeAtual =
-    localStorage.getItem("nomeEntrega") ||
-    localStorage.getItem("nomeUsuario") ||
-    "Cliente";
+  const nomeElemento = document.getElementById("nomeEntrega");
+  const telefoneElemento = document.getElementById("telefoneEntrega");
 
-  const telefoneAtual =
-    localStorage.getItem("telefoneEntrega") ||
-    localStorage.getItem("telefoneUsuario") ||
-    "(63) 99999-9999";
+  if (!nomeElemento || !telefoneElemento) return;
 
-  const novoNome = prompt("Digite o nome do destinatário:", nomeAtual);
+  const nomeAtual = nomeElemento.textContent.trim();
+  const telefoneAtual = telefoneElemento.textContent.trim();
+
+  const novoNome = prompt(
+    "Digite o nome de quem vai receber o pedido:",
+    nomeAtual
+  );
 
   if (novoNome === null) return;
 
+  if (!novoNome.trim()) {
+    alert("Informe o nome do destinatário.");
+    return;
+  }
+
   const novoTelefone = prompt(
-    "Digite o telefone do destinatário:",
-    telefoneAtual,
+    "Digite o telefone de quem vai receber o pedido:",
+    telefoneAtual
   );
 
   if (novoTelefone === null) return;
 
-  localStorage.setItem("nomeEntrega", novoNome.trim());
-  localStorage.setItem("telefoneEntrega", novoTelefone.trim());
+  if (!novoTelefone.trim()) {
+    alert("Informe o telefone do destinatário.");
+    return;
+  }
 
-  carregarFinalizacaoPedido();
+  const nome = novoNome.trim();
+  const telefone = novoTelefone.trim();
+
+  sessionStorage.setItem("nomeDestinatarioPedido", nome);
+  sessionStorage.setItem("telefoneDestinatarioPedido", telefone);
+
+  nomeElemento.textContent = nome;
+  telefoneElemento.textContent = telefone;
 }
 
 function limparCamposEndereco(prefixo = "") {
@@ -4356,15 +4605,55 @@ function abrirFormularioEndereco(modo = "novo") {
   const formulario = document.getElementById("formNovoEndereco");
 
   if (!formulario) return;
+   const titulo = document.getElementById("tituloFormularioEndereco");
+
+if (titulo) {
+  titulo.textContent =
+    modo === "editarUsuario"
+      ? "Editar endereço"
+      : "Cadastrar novo endereço";
+}
+
+  if (modo === "editarUsuario" && !enderecoPrincipalFinalizacao) {
+    mostrarAviso(
+      "O endereço ainda não foi carregado. Tente novamente.",
+      "erro"
+    );
+    return;
+  }
 
   localStorage.setItem("modoFormularioEndereco", modo);
+
   formulario.classList.remove("oculto");
+   const botaoNovoEndereco = document.querySelector(".btn-novo-endereco");
+
+if (botaoNovoEndereco) {
+  botaoNovoEndereco.hidden = true;
+}
 
   if (modo === "editarUsuario") {
-    preencherCamposEndereco("novo", obterDadosEnderecoUsuario());
+    const endereco = enderecoPrincipalFinalizacao;
+
+    preencherCamposEndereco("novo", {
+      cep: endereco.cep || "",
+      rua: endereco.street || "",
+      numero: endereco.number || "",
+      bairro: endereco.neighborhood || "",
+      cidade: endereco.city || "",
+      estado: endereco.state || "",
+      complemento: endereco.complement || "",
+      referencia: endereco.reference || "",
+      localizacao: endereco.location || ""
+    });
+
   } else {
     limparCamposEndereco("novo");
   }
+
+  formulario.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
 
 function cadastrarNovoEndereco() {
@@ -4387,78 +4676,148 @@ function fecharFormularioEndereco() {
 
   formulario.classList.add("oculto");
   formulario.reset();
+  const botaoNovoEndereco = document.querySelector(".btn-novo-endereco");
+
+if (botaoNovoEndereco) {
+  botaoNovoEndereco.hidden = false;
+}
   localStorage.removeItem("modoFormularioEndereco");
 }
 
-function salvarNovoEndereco(event) {
+async function salvarNovoEndereco(event) {
   event.preventDefault();
 
-  const modo = localStorage.getItem("modoFormularioEndereco") || "novo";
+  const formulario = document.getElementById("formNovoEndereco");
+  const botaoSalvar = formulario?.querySelector('[type="submit"]');
+
+  if (botaoSalvar?.disabled) return;
+
+  const modo =
+    localStorage.getItem("modoFormularioEndereco") || "novo";
+
+  const editando = modo === "editarUsuario";
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    mostrarAviso(
+      "Faça login para salvar seu endereço.",
+      "erro"
+    );
+    return;
+  }
+
   const dadosEndereco = lerCamposEndereco("novo");
-  const temLocalizacao = Boolean(dadosEndereco.localizacao);
+
   const enderecoCompleto = Boolean(
     dadosEndereco.cep &&
     dadosEndereco.rua &&
     dadosEndereco.numero &&
     dadosEndereco.bairro &&
     dadosEndereco.cidade &&
-    dadosEndereco.estado,
+    dadosEndereco.estado
   );
 
-  if (modo === "editarUsuario") {
-    if (!enderecoCompleto) {
-      mostrarAviso(
-        "Para atualizar o endereço do cadastro, preencha CEP, rua, número, bairro, cidade e estado.",
-        "erro",
-      );
-      return;
-    }
-
-    const enderecoMontado = montarEndereco(dadosEndereco);
-    localStorage.setItem("enderecoUsuario", enderecoMontado);
-    localStorage.setItem("enderecoUsuarioDados", JSON.stringify(dadosEndereco));
-    localStorage.setItem("localizacaoUsuario", dadosEndereco.localizacao || "");
-
-    const emailLogado = localStorage.getItem("usuarioLogado");
-    const usuarios = JSON.parse(localStorage.getItem("usuariosClickBus")) || [];
-    const usuario = usuarios.find((item) => item.email === emailLogado);
-
-    if (usuario) {
-      usuario.endereco = enderecoMontado;
-      usuario.enderecoDados = dadosEndereco;
-      usuario.localizacao = dadosEndereco.localizacao || "";
-      localStorage.setItem("usuariosClickBus", JSON.stringify(usuarios));
-    }
-
-    fecharFormularioEndereco();
-    carregarFinalizacaoPedido();
-    mostrarAviso("Endereço do cadastro atualizado.", "sucesso");
-    return;
-  }
-
-  if (!temLocalizacao && !enderecoCompleto) {
+  if (!enderecoCompleto) {
     mostrarAviso(
-      "Preencha o endereço completo ou use a localização atual para enviar só o ponto no mapa.",
-      "erro",
+      "Preencha CEP, rua, número, bairro, cidade e estado.",
+      "erro"
     );
     return;
   }
 
-  if (temLocalizacao && !dadosEndereco.referencia) {
+  if (editando && !enderecoPrincipalFinalizacao?.id) {
     mostrarAviso(
-      "Ponto de referência não informado. Tudo bem, a localização será usada para a entrega.",
-      "info",
+      "Não foi possível identificar o endereço para edição.",
+      "erro"
     );
+    return;
   }
 
   const enderecoMontado = montarEndereco(dadosEndereco);
-  const enderecoFinal = enderecoMontado || "Localização enviada pelo cliente";
 
-  localStorage.setItem("enderecoEntrega", enderecoFinal);
-  localStorage.setItem("localizacaoEntrega", dadosEndereco.localizacao || "");
-  fecharFormularioEndereco();
-  carregarFinalizacaoPedido();
-  mostrarAviso("Endereço de entrega salvo.", "sucesso");
+  const dadosParaSalvar = {
+    address: enderecoMontado,
+    cep: dadosEndereco.cep,
+    street: dadosEndereco.rua,
+    number: dadosEndereco.numero,
+    neighborhood: dadosEndereco.bairro,
+    city: dadosEndereco.cidade,
+    state: dadosEndereco.estado,
+    complement: dadosEndereco.complemento || "",
+    reference: dadosEndereco.referencia || "",
+    location: dadosEndereco.localizacao || "",
+    ...(!editando ? { is_primary: true } : {})
+  };
+
+  const url = editando
+    ? `${API_BASE_URL}/addresses/${enderecoPrincipalFinalizacao.id}`
+    : `${API_BASE_URL}/addresses`;
+
+  const metodo = editando ? "PUT" : "POST";
+
+  try {
+    if (botaoSalvar) {
+      botaoSalvar.disabled = true;
+    }
+
+    const resposta = await fetch(url, {
+      method: metodo,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(dadosParaSalvar)
+    });
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      throw new Error(
+        resultado.erro || "Não foi possível salvar o endereço."
+      );
+    }
+
+    // Remove endereços temporários antigos do navegador.
+    localStorage.removeItem("enderecoEntrega");
+    localStorage.removeItem("localizacaoEntrega");
+
+    fecharFormularioEndereco();
+
+    // Atualiza os dados exibidos na finalização.
+    await buscarEnderecoPrincipalFinalizacao();
+
+     // Atualiza o endereço escolhido após salvar no Neon.
+    enderecoSelecionadoFinalizacao = enderecoPrincipalFinalizacao;
+     
+    const radioPrincipal = document.querySelector(
+      'input[name="formaRecebimento"][value="entregaCadastro"]'
+    );
+
+    if (radioPrincipal) {
+      radioPrincipal.checked = true;
+    }
+
+    mostrarAviso(
+      editando
+        ? "Endereço atualizado no Neon com sucesso!"
+        : "Novo endereço cadastrado com sucesso!",
+      "sucesso"
+    );
+
+  } catch (erro) {
+    console.error("Erro ao salvar endereço:", erro);
+
+    mostrarAviso(
+      erro.message || "Não foi possível salvar seu endereço.",
+      "erro"
+    );
+
+  } finally {
+    if (botaoSalvar) {
+      botaoSalvar.disabled = false;
+    }
+  }
 }
 
 function excluirEnderecoEntrega(event) {
@@ -4601,30 +4960,44 @@ async function confirmarPedido() {
   }, 0);
 
   const cliente =
-    localStorage.getItem("nomeEntrega") ||
-    localStorage.getItem("nomeUsuario") ||
-    "Cliente";
+  sessionStorage.getItem("nomeDestinatarioPedido") ||
+  document.getElementById("nomeEntrega")?.textContent.trim() ||
+  "";
 
   const telefone =
-    localStorage.getItem("telefoneEntrega") ||
-    localStorage.getItem("telefoneUsuario") ||
-    "";
+  sessionStorage.getItem("telefoneDestinatarioPedido") ||
+  document.getElementById("telefoneEntrega")?.textContent.trim() ||
+  "";
+   
+const enderecoParaEntrega =
+  enderecoSelecionadoFinalizacao || enderecoPrincipalFinalizacao;
 
-  const endereco =
-    formaRecebimento === "entregaTemporario"
-      ? localStorage.getItem("enderecoEntrega") ||
-        "Localização enviada pelo cliente"
-      : formaRecebimento === "entregaCadastro"
-        ? localStorage.getItem("enderecoUsuario") || "Endereço não informado"
-        : "Retirar no estabelecimento";
+const endereco =
+  formaRecebimento === "entregaTemporario"
+    ? localStorage.getItem("enderecoEntrega") ||
+      "Localização enviada pelo cliente"
+    : formaRecebimento === "entregaCadastro"
+      ? enderecoParaEntrega?.address || ""
+      : "Retirar no estabelecimento";
 
-  const localizacaoEntrega =
-    formaRecebimento === "entregaTemporario"
-      ? localStorage.getItem("localizacaoEntrega") || ""
-      : formaRecebimento === "entregaCadastro"
-        ? localStorage.getItem("localizacaoUsuario") || ""
-        : "";
-
+const localizacaoEntrega =
+  formaRecebimento === "entregaTemporario"
+    ? localStorage.getItem("localizacaoEntrega") || ""
+    : formaRecebimento === "entregaCadastro"
+      ? enderecoParaEntrega?.location || ""
+      : "";
+   
+if (
+  formaRecebimento === "entregaCadastro" &&
+  !enderecoParaEntrega?.address?.trim()
+) {
+  mostrarAviso(
+    "Selecione um endereço válido para receber seu pedido.",
+    "erro"
+  );
+  return;
+}
+   
   const deliveryType =
     formaRecebimento === "retirada" ? "retirada" : "delivery";
 
@@ -4640,11 +5013,48 @@ async function confirmarPedido() {
       : null;
 
   const observacoes = carregarObservacoesPedido();
+const tokenCliente = localStorage.getItem("clickbus_token");
 
+if (!tokenCliente) {
+  mostrarAviso("Faça login para finalizar o pedido.", "erro");
+  return;
+}
+
+let perfilCliente;
+
+try {
+  const respostaPerfil = await fetch(`${API_BASE_URL}/auth/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${tokenCliente}`
+    },
+    cache: "no-store"
+  });
+
+  if (!respostaPerfil.ok) {
+    throw new Error("Não foi possível consultar o cadastro.");
+  }
+
+  perfilCliente = await respostaPerfil.json();
+
+  if (!perfilCliente.email || !perfilCliente.cpf) {
+    throw new Error("O cadastro está sem e-mail ou CPF.");
+  }
+
+} catch (erro) {
+  console.error("Erro ao consultar o cliente:", erro);
+
+  mostrarAviso(
+    "Não foi possível confirmar seus dados. Tente novamente.",
+    "erro"
+  );
+
+  return;
+}
   const payloadPedido = {
     user_id: null,
-    customer_email: localStorage.getItem("usuarioLogado") || "",
-    customer_cpf: localStorage.getItem("cpfUsuario") || "",
+    customer_email: perfilCliente.email,
+    customer_cpf: perfilCliente.cpf,
     customer_name: cliente,
     customer_phone: telefone,
     delivery_type: deliveryType,
@@ -4750,6 +5160,8 @@ const resposta = await fetch(`${API_BASE_URL}/orders`, {
     localStorage.removeItem("pedidoAtual");
     localStorage.removeItem("observacoesPedidoAtual");
     localStorage.removeItem("produtoObservacaoId");
+    sessionStorage.removeItem("nomeDestinatarioPedido");
+    sessionStorage.removeItem("telefoneDestinatarioPedido");
 
     avisarENavegar("Pedido confirmado com sucesso!", "pedidos.html");
   } catch (error) {

@@ -502,3 +502,53 @@
     width: 100%;
   }
 }
+.btn-novo-endereco[hidden] {
+  display: none !important;
+}
+
+.cabecalho-endereco-entrega {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.selo-endereco-principal {
+  background: #e6e2ff;
+  color: #5746bf;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.selo-endereco-principal[hidden] {
+  display: none !important;
+}
+.btn-ver-enderecos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 12px 0;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  color: #4655ef;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.btn-ver-enderecos:hover {
+  color: #303fca;
+  text-decoration: underline;
+}
+
+.btn-ver-enderecos:focus-visible {
+  outline: 2px solid #4655ef;
+  outline-offset: 4px;
+  border-radius: 4px;
+}

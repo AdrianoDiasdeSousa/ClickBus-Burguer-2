@@ -70,6 +70,25 @@ async function createOrder(req, res) {
     client = await pool.connect();
     await client.query("BEGIN");
     transacaoIniciada = true;
+    const resultadoCliente = await client.query(
+  `SELECT email
+   FROM users
+   WHERE id = $1
+     AND role = 'cliente'
+     AND is_active = TRUE`,
+  [usuario.id]
+);
+
+if (resultadoCliente.rows.length === 0) {
+  const erro = new Error(
+    "Conta de cliente não encontrada ou inativa."
+  );
+
+  erro.statusCode = 401;
+  throw erro;
+}
+
+const emailCliente = resultadoCliente.rows[0].email;
 
     const itensValidados = [];
     let totalCentavos = 0;
@@ -162,7 +181,7 @@ async function createOrder(req, res) {
       RETURNING *`,
       [
         usuario.id,
-        customer_email || null,
+        emailCliente,
         customer_name.trim(),
         customer_phone || null,
         delivery_type || "delivery",
