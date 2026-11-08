@@ -552,3 +552,78 @@
   outline-offset: 4px;
   border-radius: 4px;
 }
+/* Lista de endereços cadastrados */
+
+#listaEnderecosEntrega:not(.oculto) {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+
+#listaEnderecosEntrega.oculto {
+  display: none !important;
+}
+
+#listaEnderecosEntrega .opcao-endereco-salvo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  width: 100%;
+  padding: 16px;
+
+  border: 1px solid #dddddd;
+  border-radius: 12px;
+
+  background: #ffffff;
+  color: #242424;
+
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: left;
+
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+#listaEnderecosEntrega .opcao-endereco-salvo:hover {
+  border-color: #7970e8;
+  background: #f7f5ff;
+}
+
+#listaEnderecosEntrega .opcao-endereco-salvo:focus-visible {
+  outline: 3px solid #ed8900;
+  outline-offset: 2px;
+}
+
+#listaEnderecosEntrega .opcao-endereco-salvo span {
+  flex: 1;
+  min-width: 180px;
+  overflow-wrap: anywhere;
+}
+
+#listaEnderecosEntrega .indicador-principal-lista {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 12px;
+  border-radius: 999px;
+
+  background: #e7e2ff;
+  color: #5746bf;
+
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Destaque do endereço selecionado */
+
+#listaEnderecosEntrega .opcao-endereco-salvo.selecionado {
+  border: 2px solid #ed8900;
+  background: #fff8ef;
+}
