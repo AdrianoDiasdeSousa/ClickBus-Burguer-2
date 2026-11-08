@@ -978,14 +978,28 @@ async function fazerCadastro(event) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        name: nome,
-        cpf,
-        email,
-        phone: telefone,
-        password: senha,
-        address: endereco,
-      }),
+     
+body: JSON.stringify({
+  name: nome,
+  cpf,
+  email,
+  phone: telefone,
+  password: senha,
+  address: endereco,
+
+  address_details: {
+    cep: dadosEndereco.cep,
+    street: dadosEndereco.rua,
+    number: dadosEndereco.numero,
+    neighborhood: dadosEndereco.bairro,
+    city: dadosEndereco.cidade,
+    state: dadosEndereco.estado,
+    complement: dadosEndereco.complemento,
+    reference: dadosEndereco.referencia,
+    location: dadosEndereco.localizacao
+  }
+}),
+
     });
 
     const resultado = await resposta.json();
@@ -6551,9 +6565,24 @@ async function carregarClientesCadastrados() {
           "Não foi possível carregar os clientes.",
       );
     }
+     
+const clientes = Array.isArray(resultado)
+  ? resultado
+  : Array.isArray(resultado.clientes)
+    ? resultado.clientes
+    : Array.isArray(resultado.customers)
+      ? resultado.customers
+      : Array.isArray(resultado.users)
+        ? resultado.users
+        : Array.isArray(resultado.data)
+          ? resultado.data
+          : [];
 
-    const clientes =
-      Array.isArray(resultado) ? resultado : [];
+clientes.sort((a, b) => {
+  return new Date(b.created_at || 0) -
+         new Date(a.created_at || 0);
+});
+
 
     totalClientes.textContent = clientes.length;
 
@@ -6583,13 +6612,29 @@ async function carregarClientesCadastrados() {
           )
         : "Não informada";
 
-   card.innerHTML = `
+   
+card.innerHTML = `
   <h2>${cliente.name || "Cliente"}</h2>
+
+  <p>
+    <strong>CPF:</strong>
+    ${
+      cliente.cpf
+        ? String(cliente.cpf)
+            .replace(/\D/g, "")
+            .replace(
+              /^(\d{3})(\d{3})(\d{3})(\d{2})$/,
+              "$1.$2.$3-$4"
+            )
+        : "Não informado"
+    }
+  </p>
 
   <p>
     <strong>E-mail:</strong>
     ${cliente.email || "Não informado"}
   </p>
+
 
   <p>
     <strong>Telefone:</strong>

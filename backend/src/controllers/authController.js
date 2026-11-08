@@ -130,120 +130,290 @@ const result = await pool.query(
 }
 
 async function register(req, res) {
-  try {  
-const { name, email, phone, password, address, cpf } = req.body;
-    
+  let client;
+  let transacaoIniciada = false;
+
+  try {
+    const {
+  name,
+  email,
+  phone,
+  password,
+  address,
+  cpf,
+  address_details
+} = req.body;
+
     if (!name || !email || !password) {
       return res.status(400).json({
-        erro: "Nome, email e senha são obrigatórios.",
+        erro: "Nome, email e senha são obrigatórios."
       });
     }
 
-const cpfLimpo = typeof cpf === "string"
-  ? cpf.replace(/\D/g, "")
-  : "";
+    const cpfLimpo = String(cpf || "").replace(/\D/g, "");
 
-function cpfValido(numero) {
-  if (!/^\d{11}$/.test(numero)) return false;
-  if (new Set(numero).size === 1) return false;
-  for (let tamanho = 9; tamanho <= 10; tamanho++) {
-    const soma = numero
-      .slice(0, tamanho)
-      .split("")
-      .reduce(
-        (total, digito, indice) =>
-          total + Number(digito) * (tamanho + 1 - indice),
-        0
-      );
+    function cpfValido(numero) {
+      if (!/^\d{11}$/.test(numero)) return false;
+      if (new Set(numero).size === 1) return false;
 
-    const resto = (soma * 10) % 11;
-    const verificador = resto === 10 ? 0 : resto;
+      for (let tamanho = 9; tamanho <= 10; tamanho++) {
+        const soma = numero
+          .slice(0, tamanho)
+          .split("")
+          .reduce(
+            (total, digito, indice) =>
+              total + Number(digito) * (tamanho + 1 - indice),
+            0
+          );
 
-    if (verificador !== Number(numero[tamanho])) {
-      return false;
+        const resto = (soma * 10) % 11;
+        const verificador = resto === 10 ? 0 : resto;
+
+        if (verificador !== Number(numero[tamanho])) {
+          return false;
+        }
+      }
+
+      return true;
     }
-  }
 
-  return true;
-}
+    if (!cpfValido(cpfLimpo)) {
+      return res.status(400).json({
+        erro: "Informe um CPF válido."
+      });
+    }
 
-if (!cpfValido(cpfLimpo)) {
-  return res.status(400).json({
-    erro: "Informe um CPF válido.",
-  });
-}
+    const endereco = String(address || "").trim();
 
-    const userExists = await pool.query(
-      "SELECT id FROM users WHERE email = $1",
-      [email],
+    if (endereco.length < 5 || endereco.length > 500) {
+      return res.status(400).json({
+        erro: "Informe um endereço válido."
+      });
+    }
+
+    const emailFinal = String(email).trim().toLowerCase();
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    client = await pool.connect();
+
+    await client.query("BEGIN");
+    transacaoIniciada = true;
+
+    const emailExists = await client.query(
+      `SELECT id FROM users
+       WHERE LOWER(email) = $1
+       LIMIT 1`,
+      [emailFinal]
     );
 
-    if (userExists.rows.length > 0) {
-      return res.status(409).json({
-        erro: "Já existe uma conta com este email.",
-      });
+    if (emailExists.rowCount > 0) {
+      const erro = new Error(
+        "Já existe uma conta com este email."
+      );
+      erro.statusCode = 409;
+      throw erro;
     }
 
+    const cpfExists = await client.query(
+      `SELECT id FROM users
+       WHERE regexp_replace(
+         COALESCE(cpf, ''), '[^0-9]', '', 'g'
+       ) = $1
+       LIMIT 1`,
+      [cpfLimpo]
+    );
 
-const cpfExists = await pool.query(
-  `SELECT id
-   FROM users
-   WHERE regexp_replace(
-     COALESCE(cpf, ''), '[^0-9]', '', 'g'
-   ) = $1
-   LIMIT 1`,
-  [cpfLimpo]
-);
+    if (cpfExists.rowCount > 0) {
+      const erro = new Error(
+        "Já existe uma conta cadastrada com este CPF."
+      );
+      erro.statusCode = 409;
+      throw erro;
+    }
 
-if (cpfExists.rows.length > 0) {
-  return res.status(409).json({
-    erro: "Já existe uma conta cadastrada com este CPF.",
-  });
-}
-
-    
-    const passwordHash = await bcrypt.hash(password, 10);
- 
-const result = await pool.query(
-  `INSERT INTO users
-    (name, email, phone, password_hash, role, address, cpf)
-   VALUES
-    ($1, $2, $3, $4, $5, $6, $7)
-   RETURNING id, name, email, phone, role, address, cpf, created_at`,
-  [
-    name,
-    email,
-    phone || null,
-    passwordHash,
-    "cliente",
-    address || null,
-    cpfLimpo,
-  ],
-);
+    const result = await client.query(
+      `INSERT INTO users (
+         name,
+         email,
+         phone,
+         password_hash,
+         role,
+         address,
+         cpf
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING
+         id, name, email, phone,
+         role, address, cpf, created_at`,
+      [
+        String(name).trim(),
+        emailFinal,
+        phone || null,
+        passwordHash,
+        "cliente",
+        endereco,
+        cpfLimpo
+      ]
+    );
 
     const user = result.rows[0];
+
+    
+const detalhes = address_details || {};
+
+const camposObrigatorios = [
+  "cep",
+  "street",
+  "number",
+  "neighborhood",
+  "city",
+  "state"
+];
+
+for (const campo of camposObrigatorios) {
+  if (
+    typeof detalhes[campo] !== "string" ||
+    !detalhes[campo].trim()
+  ) {
+    const erro = new Error(
+      `Campo obrigatório do endereço: ${campo}`
+    );
+    erro.statusCode = 400;
+    throw erro;
+  }
+}
+
+const limites = {
+  cep: 9,
+  street: 150,
+  number: 30,
+  neighborhood: 100,
+  city: 100,
+  state: 2,
+  complement: 150,
+  reference: 200,
+  location: 500
+};
+
+const campos = {};
+
+for (const [campo, limite] of Object.entries(limites)) {
+  const valor = detalhes[campo];
+
+  if (
+    valor != null &&
+    typeof valor !== "string"
+  ) {
+    const erro = new Error(
+      `Campo ${campo} inválido.`
+    );
+    erro.statusCode = 400;
+    throw erro;
+  }
+
+  const texto = String(valor || "").trim();
+
+  if (texto.length > limite) {
+    const erro = new Error(
+      `Campo ${campo} excede o limite permitido.`
+    );
+    erro.statusCode = 400;
+    throw erro;
+  }
+
+  campos[campo] = texto || null;
+}
+
+if (!/^\d{5}-?\d{3}$/.test(campos.cep)) {
+  const erro = new Error("Informe um CEP válido.");
+  erro.statusCode = 400;
+  throw erro;
+}
+
+if (!/^[A-Za-z]{2}$/.test(campos.state)) {
+  const erro = new Error("Informe um estado válido.");
+  erro.statusCode = 400;
+  throw erro;
+}
+
+await client.query(
+  `INSERT INTO user_addresses (
+     user_id,
+     address,
+     is_primary,
+     cep,
+     street,
+     number,
+     neighborhood,
+     city,
+     state,
+     complement,
+     reference,
+     location
+   )
+   VALUES (
+     $1, $2, TRUE, $3, $4, $5, $6,
+     $7, $8, $9, $10, $11
+   )`,
+  [
+    user.id,
+    endereco,
+    campos.cep,
+    campos.street,
+    campos.number,
+    campos.neighborhood,
+    campos.city,
+    campos.state.toUpperCase(),
+    campos.complement,
+    campos.reference,
+    campos.location
+  ]
+);
+
+    await client.query("COMMIT");
+    transacaoIniciada = false;
+
     const token = criarTokenUsuario(user);
 
     return res.status(201).json({
       mensagem: "Usuário cadastrado com sucesso.",
       token,
-      user,
+      user
     });
-    
-} catch (error) {
-  if (error.code === "23505") {
-    return res.status(409).json({
-      erro: "Já existe uma conta com este CPF ou email.",
+
+  } catch (error) {
+    if (client && transacaoIniciada) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error("Erro no rollback:", rollbackError);
+      }
+    }
+
+    if (error.code === "23505") {
+      return res.status(409).json({
+        erro: "CPF ou email já cadastrado."
+      });
+    }
+
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        erro: error.message
+      });
+    }
+
+    console.error("Erro no cadastro:", error);
+
+    return res.status(500).json({
+      erro: "Erro interno ao cadastrar usuário."
     });
+
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-
-  console.error("Erro no cadastro:", error);
-
-  return res.status(500).json({
-    erro: "Erro interno ao cadastrar usuário.",
-  });
-}
-
 }
 
 async function login(req, res) {
@@ -657,13 +827,14 @@ async function resetPassword(req, res) {
 
 async function getCustomers(req, res) {
   try {
-    // Garante que somente o administrador tenha acesso.
+    // Permite acesso somente ao administrador.
     await obterUsuarioAdminAutenticado(req);
 
     const result = await pool.query(`
       SELECT
         id,
         name,
+        cpf,
         email,
         phone,
         address,
@@ -682,6 +853,7 @@ async function getCustomers(req, res) {
     });
   }
 }
+
 
 async function deleteCustomer(req, res) {
   try {

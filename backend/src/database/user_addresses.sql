@@ -18,15 +18,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_user_addresses_one_primary
 ON user_addresses(user_id)
 WHERE is_primary = TRUE;
 
--- Preserva os endereços existentes.
-INSERT INTO user_addresses (user_id, address, is_primary)
-SELECT id, address, TRUE
-FROM users
-WHERE role = 'cliente'
-  AND address IS NOT NULL
-  AND length(btrim(address)) > 0
-  AND NOT EXISTS (
-      SELECT 1
-      FROM user_addresses
-      WHERE user_addresses.user_id = users.id
-  );
+ALTER TABLE user_addresses
+  ADD COLUMN IF NOT EXISTS cep VARCHAR(9),
+  ADD COLUMN IF NOT EXISTS street VARCHAR(150),
+  ADD COLUMN IF NOT EXISTS number VARCHAR(30),
+  ADD COLUMN IF NOT EXISTS neighborhood VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS city VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS state VARCHAR(2),
+  ADD COLUMN IF NOT EXISTS complement VARCHAR(150),
+  ADD COLUMN IF NOT EXISTS reference VARCHAR(200),
+  ADD COLUMN IF NOT EXISTS location TEXT;
