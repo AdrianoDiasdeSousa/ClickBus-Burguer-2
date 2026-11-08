@@ -1746,8 +1746,28 @@ function digitarQuantidade(id, valor) {
   atualizarTotal();
 }
 
+function atualizarContadorCarrinho() {
+  const contador = document.getElementById("contadorCarrinhoTopo");
+
+  if (!contador) return;
+
+  const produtos = carregarProdutos();
+
+  const quantidadeTotal = produtos.reduce((total, produto) => {
+    const quantidade = Number(produto.quantidade) || 0;
+    return total + Math.max(0, Math.trunc(quantidade));
+  }, 0);
+
+  contador.textContent =
+    quantidadeTotal > 99 ? "99+" : String(quantidadeTotal);
+
+  contador.hidden = quantidadeTotal === 0;
+}
+
 
 function atualizarTotal() {
+  atualizarContadorCarrinho();
+   
   if (usuarioEhAdmin()) {
     const valorTotal = document.getElementById("valorTotal");
     if (valorTotal) valorTotal.textContent = "R$ 0,00";

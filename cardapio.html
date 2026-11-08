@@ -22,13 +22,17 @@
         <span>Sem pedido mínimo</span>
 
         <a href="pedidos.html">📋 Pedidos</a>
+
 <a
   href="carrinho.html"
   id="linkCarrinhoTopo"
   onclick="event.preventDefault(); abrirCarrinhoDoCardapio();"
 >
-  🛒 Carrinho
+  <span class="icone-carrinho-topo">🛒</span>
+  <span id="contadorCarrinhoTopo" hidden>0</span>
+  <span>Carrinho</span>
 </a>
+
         
 <a
   href="meu-perfil.html"

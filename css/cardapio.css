@@ -671,3 +671,30 @@ body {
 .config-alerta-pedidos {
   margin-top: 28px;
 }
+
+/* Contador de itens do carrinho no menu */
+
+#linkCarrinhoTopo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#contadorCarrinhoTopo {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+#contadorCarrinhoTopo[hidden] {
+  display: none !important;
+}
+
+.icone-carrinho-topo {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
