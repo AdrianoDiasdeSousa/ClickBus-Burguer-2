@@ -4488,14 +4488,41 @@ function abrirFormularioEndereco(modo = "novo") {
 
   if (!formulario) return;
 
+  if (modo === "editarUsuario" && !enderecoPrincipalFinalizacao) {
+    mostrarAviso(
+      "O endereço ainda não foi carregado. Tente novamente.",
+      "erro"
+    );
+    return;
+  }
+
   localStorage.setItem("modoFormularioEndereco", modo);
+
   formulario.classList.remove("oculto");
 
   if (modo === "editarUsuario") {
-    preencherCamposEndereco("novo", obterDadosEnderecoUsuario());
+    const endereco = enderecoPrincipalFinalizacao;
+
+    preencherCamposEndereco("novo", {
+      cep: endereco.cep || "",
+      rua: endereco.street || "",
+      numero: endereco.number || "",
+      bairro: endereco.neighborhood || "",
+      cidade: endereco.city || "",
+      estado: endereco.state || "",
+      complemento: endereco.complement || "",
+      referencia: endereco.reference || "",
+      localizacao: endereco.location || ""
+    });
+
   } else {
     limparCamposEndereco("novo");
   }
+
+  formulario.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
 
 function cadastrarNovoEndereco() {
@@ -4521,75 +4548,137 @@ function fecharFormularioEndereco() {
   localStorage.removeItem("modoFormularioEndereco");
 }
 
-function salvarNovoEndereco(event) {
+async function salvarNovoEndereco(event) {
   event.preventDefault();
 
-  const modo = localStorage.getItem("modoFormularioEndereco") || "novo";
+  const formulario = document.getElementById("formNovoEndereco");
+  const botaoSalvar = formulario?.querySelector('[type="submit"]');
+
+  if (botaoSalvar?.disabled) return;
+
+  const modo =
+    localStorage.getItem("modoFormularioEndereco") || "novo";
+
+  const editando = modo === "editarUsuario";
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    mostrarAviso(
+      "Faça login para salvar seu endereço.",
+      "erro"
+    );
+    return;
+  }
+
   const dadosEndereco = lerCamposEndereco("novo");
-  const temLocalizacao = Boolean(dadosEndereco.localizacao);
+
   const enderecoCompleto = Boolean(
     dadosEndereco.cep &&
     dadosEndereco.rua &&
     dadosEndereco.numero &&
     dadosEndereco.bairro &&
     dadosEndereco.cidade &&
-    dadosEndereco.estado,
+    dadosEndereco.estado
   );
 
-  if (modo === "editarUsuario") {
-    if (!enderecoCompleto) {
-      mostrarAviso(
-        "Para atualizar o endereço do cadastro, preencha CEP, rua, número, bairro, cidade e estado.",
-        "erro",
-      );
-      return;
-    }
-
-    const enderecoMontado = montarEndereco(dadosEndereco);
-    localStorage.setItem("enderecoUsuario", enderecoMontado);
-    localStorage.setItem("enderecoUsuarioDados", JSON.stringify(dadosEndereco));
-    localStorage.setItem("localizacaoUsuario", dadosEndereco.localizacao || "");
-
-    const emailLogado = localStorage.getItem("usuarioLogado");
-    const usuarios = JSON.parse(localStorage.getItem("usuariosClickBus")) || [];
-    const usuario = usuarios.find((item) => item.email === emailLogado);
-
-    if (usuario) {
-      usuario.endereco = enderecoMontado;
-      usuario.enderecoDados = dadosEndereco;
-      usuario.localizacao = dadosEndereco.localizacao || "";
-      localStorage.setItem("usuariosClickBus", JSON.stringify(usuarios));
-    }
-
-    fecharFormularioEndereco();
-    carregarFinalizacaoPedido();
-    mostrarAviso("Endereço do cadastro atualizado.", "sucesso");
-    return;
-  }
-
-  if (!temLocalizacao && !enderecoCompleto) {
+  if (!enderecoCompleto) {
     mostrarAviso(
-      "Preencha o endereço completo ou use a localização atual para enviar só o ponto no mapa.",
-      "erro",
+      "Preencha CEP, rua, número, bairro, cidade e estado.",
+      "erro"
     );
     return;
   }
 
-  if (temLocalizacao && !dadosEndereco.referencia) {
+  if (editando && !enderecoPrincipalFinalizacao?.id) {
     mostrarAviso(
-      "Ponto de referência não informado. Tudo bem, a localização será usada para a entrega.",
-      "info",
+      "Não foi possível identificar o endereço para edição.",
+      "erro"
     );
+    return;
   }
 
   const enderecoMontado = montarEndereco(dadosEndereco);
-  const enderecoFinal = enderecoMontado || "Localização enviada pelo cliente";
 
-  localStorage.setItem("enderecoEntrega", enderecoFinal);
-  localStorage.setItem("localizacaoEntrega", dadosEndereco.localizacao || "");
-  fecharFormularioEndereco();
-  carregarFinalizacaoPedido();
-  mostrarAviso("Endereço de entrega salvo.", "sucesso");
+  const dadosParaSalvar = {
+    address: enderecoMontado,
+    cep: dadosEndereco.cep,
+    street: dadosEndereco.rua,
+    number: dadosEndereco.numero,
+    neighborhood: dadosEndereco.bairro,
+    city: dadosEndereco.cidade,
+    state: dadosEndereco.estado,
+    complement: dadosEndereco.complemento || "",
+    reference: dadosEndereco.referencia || "",
+    location: dadosEndereco.localizacao || "",
+    ...(!editando ? { is_primary: true } : {})
+  };
+
+  const url = editando
+    ? `${API_BASE_URL}/addresses/${enderecoPrincipalFinalizacao.id}`
+    : `${API_BASE_URL}/addresses`;
+
+  const metodo = editando ? "PUT" : "POST";
+
+  try {
+    if (botaoSalvar) {
+      botaoSalvar.disabled = true;
+    }
+
+    const resposta = await fetch(url, {
+      method: metodo,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(dadosParaSalvar)
+    });
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      throw new Error(
+        resultado.erro || "Não foi possível salvar o endereço."
+      );
+    }
+
+    // Remove endereços temporários antigos do navegador.
+    localStorage.removeItem("enderecoEntrega");
+    localStorage.removeItem("localizacaoEntrega");
+
+    fecharFormularioEndereco();
+
+    // Atualiza os dados exibidos na finalização.
+    await buscarEnderecoPrincipalFinalizacao();
+
+    const radioPrincipal = document.querySelector(
+      'input[name="formaRecebimento"][value="entregaCadastro"]'
+    );
+
+    if (radioPrincipal) {
+      radioPrincipal.checked = true;
+    }
+
+    mostrarAviso(
+      editando
+        ? "Endereço atualizado no Neon com sucesso!"
+        : "Novo endereço cadastrado com sucesso!",
+      "sucesso"
+    );
+
+  } catch (erro) {
+    console.error("Erro ao salvar endereço:", erro);
+
+    mostrarAviso(
+      erro.message || "Não foi possível salvar seu endereço.",
+      "erro"
+    );
+
+  } finally {
+    if (botaoSalvar) {
+      botaoSalvar.disabled = false;
+    }
+  }
 }
 
 function excluirEnderecoEntrega(event) {
