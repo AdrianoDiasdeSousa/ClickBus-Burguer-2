@@ -255,7 +255,8 @@ function renderizarEnderecos() {
       const linkMapa = document.createElement("a");
 
       linkMapa.href = obterLinkLocalizacao(endereco.location);
-      linkMapa.textContent = "Ver localização no Google Maps";
+      linkMapa.textContent = "📍 Ver no Google Maps";
+      linkMapa.className = "botao-google-maps-perfil";
       linkMapa.target = "_blank";
       linkMapa.rel = "noopener noreferrer";
 
