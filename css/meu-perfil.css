@@ -478,3 +478,46 @@
 .item-endereco a:hover {
   color: #93c5fd;
 }
+
+/* Botão para visualizar a localização no Google Maps */
+
+.item-endereco a.botao-google-maps-perfil,
+.item-endereco a.botao-google-maps-perfil:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  margin: 12px 0;
+  padding: 11px 16px;
+
+  background-color: #4055f5;
+  color: #ffffff;
+
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+
+  transition: background-color 0.2s ease,
+              transform 0.2s ease;
+}
+
+.item-endereco a.botao-google-maps-perfil:hover {
+  background-color: #3045dc;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.item-endereco a.botao-google-maps-perfil:focus-visible {
+  outline: 3px solid #facc15;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .item-endereco a.botao-google-maps-perfil {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
