@@ -4300,6 +4300,120 @@ if (seloPrincipal) {
       "Não foi possível carregar o endereço.";
   }
 }
+
+let enderecoSelecionadoFinalizacao = null;
+
+async function alternarListaEnderecos() {
+  const lista = document.getElementById("listaEnderecosEntrega");
+  const botao = document.getElementById("btnVerEnderecos");
+
+  if (!lista || !botao) return;
+
+  const abrir = lista.classList.contains("oculto");
+
+  if (!abrir) {
+    lista.classList.add("oculto");
+    botao.setAttribute("aria-expanded", "false");
+    return;
+  }
+
+  lista.classList.remove("oculto");
+  botao.setAttribute("aria-expanded", "true");
+  lista.textContent = "Carregando seus endereços...";
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    lista.textContent = "Faça login para consultar seus endereços.";
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/addresses`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      cache: "no-store"
+    });
+
+    if (!resposta.ok) {
+      throw new Error("Não foi possível carregar seus endereços.");
+    }
+
+    const enderecos = await resposta.json();
+
+    if (!Array.isArray(enderecos)) {
+      throw new Error("Lista de endereços inválida.");
+    }
+
+    lista.replaceChildren();
+
+    if (enderecos.length === 0) {
+      lista.textContent = "Nenhum endereço cadastrado.";
+      return;
+    }
+
+    enderecos.forEach((endereco) => {
+      const opcao = document.createElement("button");
+      opcao.type = "button";
+      opcao.className = "opcao-endereco-salvo";
+
+      const descricao = document.createElement("span");
+      descricao.textContent = endereco.address;
+
+      opcao.appendChild(descricao);
+
+      if (endereco.is_primary) {
+        const selo = document.createElement("strong");
+        selo.textContent = " Principal";
+        selo.className = "indicador-principal-lista";
+        opcao.appendChild(selo);
+      }
+
+      opcao.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        enderecoSelecionadoFinalizacao = endereco;
+
+        const enderecoExibido = document.getElementById(
+          "enderecoCadastroEntrega"
+        );
+
+        if (enderecoExibido) {
+          enderecoExibido.textContent = endereco.address;
+        }
+
+        const seloPrincipal = document.getElementById(
+          "seloEnderecoPrincipal"
+        );
+
+        if (seloPrincipal) {
+          seloPrincipal.hidden = !endereco.is_primary;
+        }
+
+        const radio = document.querySelector(
+          'input[name="formaRecebimento"][value="entregaCadastro"]'
+        );
+
+        if (radio) radio.checked = true;
+
+        lista.classList.add("oculto");
+        botao.setAttribute("aria-expanded", "false");
+
+        mostrarAviso(
+          "Endereço selecionado para esta entrega.",
+          "sucesso"
+        );
+      });
+
+      lista.appendChild(opcao);
+    });
+
+  } catch (erro) {
+    console.error("Erro ao listar endereços:", erro);
+    lista.textContent = "Não foi possível carregar seus endereços.";
+  }
+}
 /* =========================
    FINALIZAÇÃO DO PEDIDO
 ========================= */
@@ -4673,6 +4787,9 @@ async function salvarNovoEndereco(event) {
     // Atualiza os dados exibidos na finalização.
     await buscarEnderecoPrincipalFinalizacao();
 
+     // Atualiza o endereço escolhido após salvar no Neon.
+    enderecoSelecionadoFinalizacao = enderecoPrincipalFinalizacao;
+     
     const radioPrincipal = document.querySelector(
       'input[name="formaRecebimento"][value="entregaCadastro"]'
     );
@@ -4851,34 +4968,36 @@ async function confirmarPedido() {
   sessionStorage.getItem("telefoneDestinatarioPedido") ||
   document.getElementById("telefoneEntrega")?.textContent.trim() ||
   "";
+   
+const enderecoParaEntrega =
+  enderecoSelecionadoFinalizacao || enderecoPrincipalFinalizacao;
 
 const endereco =
   formaRecebimento === "entregaTemporario"
     ? localStorage.getItem("enderecoEntrega") ||
       "Localização enviada pelo cliente"
     : formaRecebimento === "entregaCadastro"
-      ? enderecoPrincipalFinalizacao?.address || ""
+      ? enderecoParaEntrega?.address || ""
       : "Retirar no estabelecimento";
 
 const localizacaoEntrega =
   formaRecebimento === "entregaTemporario"
     ? localStorage.getItem("localizacaoEntrega") || ""
     : formaRecebimento === "entregaCadastro"
-      ? enderecoPrincipalFinalizacao?.location || ""
+      ? enderecoParaEntrega?.location || ""
       : "";
+   
 if (
   formaRecebimento === "entregaCadastro" &&
-  (
-    !enderecoPrincipalFinalizacao ||
-    !enderecoPrincipalFinalizacao.address?.trim()
-  )
+  !enderecoParaEntrega?.address?.trim()
 ) {
   mostrarAviso(
-    "Seu endereço ainda não foi carregado. Atualize a página e tente novamente.",
+    "Selecione um endereço válido para receber seu pedido.",
     "erro"
   );
   return;
 }
+   
   const deliveryType =
     formaRecebimento === "retirada" ? "retirada" : "delivery";
 
