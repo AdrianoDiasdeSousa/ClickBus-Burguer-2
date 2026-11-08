@@ -627,3 +627,8 @@
   border: 2px solid #ed8900;
   background: #fff8ef;
 }
+/* Esconde a bolinha de entrega enquanto a lista estiver aberta */
+#opcaoEnderecoCadastro:has(#listaEnderecosEntrega:not(.oculto))
+  > input[type="radio"] {
+  visibility: hidden;
+}
