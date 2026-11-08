@@ -371,7 +371,7 @@ async function fazerLogin(event) {
   event.preventDefault();
 
   const email = document.getElementById("email")?.value.trim();
-  const senha = document.getElementById("senha")?.value.trim();
+  const senha = document.getElementById("senha")?.value || "";
 
   if (!email || !senha) {
     mostrarAviso("Preencha todos os campos.", "erro");
@@ -611,13 +611,29 @@ function obterConfigMapaEndereco(contexto = "novo") {
         numero: "numero",
         bairro: "bairro",
         cidade: "cidade",
+       
         estado: "estado",
+      },
+    },
+
+    perfil: {
+      campoLocalizacaoId: "perfilLocalizacao",
+      mapaId: "mapaPerfilEndereco",
+      botaoConfirmarId: "btnConfirmarMapaPerfil",
+      campos: {
+        cep: "perfilCep",
+        rua: "perfilRua",
+        numero: "perfilNumero",
+        bairro: "perfilBairro",
+        cidade: "perfilCidade",
+        estado: "perfilEstado",
       },
     },
   };
 
   return configs[contexto] || configs.novo;
 }
+
 
 function montarBuscaEnderecoMapa(contexto = "novo") {
   const config = obterConfigMapaEndereco(contexto);
@@ -662,8 +678,13 @@ function exibirMapaEndereco(contexto = "novo", latitude, longitude) {
     return;
   }
 
-  mapaElemento.classList.remove("oculto");
-  if (botaoConfirmar) botaoConfirmar.classList.remove("oculto");
+mapaElemento.classList.remove("oculto");
+mapaElemento.hidden = false;
+
+if (botaoConfirmar) {
+  botaoConfirmar.classList.remove("oculto");
+  botaoConfirmar.hidden = false;
+}
 
   setTimeout(() => {
     if (!mapasEndereco[contexto]) {
@@ -880,11 +901,10 @@ async function fazerCadastro(event) {
 
   const nome = document.getElementById("nome")?.value.trim();
   const email = document.getElementById("email")?.value.trim();
-  const senha = document.getElementById("senha")?.value.trim();
+  const senha = document.getElementById("senha")?.value || "";
   const cpf = document.getElementById("cpf")?.value.trim() || "";
-  const confirmarSenha = document
-    .getElementById("confirmarSenha")
-    ?.value.trim();
+  const confirmarSenha =
+  document.getElementById("confirmarSenha")?.value || "";
 
   const telefone = formatarTelefoneBR(
     document.getElementById("telefone")?.value.trim() || "",
@@ -1500,6 +1520,18 @@ if (linkClientesAdmin) {
   } else {
     linkClientesAdmin.classList.add("oculto");
   }
+}
+
+const linkMeuPerfilCardapio =
+  document.getElementById("linkMeuPerfilCardapio");
+
+if (linkMeuPerfilCardapio) {
+  const token = localStorage.getItem("clickbus_token");
+
+  linkMeuPerfilCardapio.classList.toggle(
+    "oculto",
+    admin || !token
+  );
 }
 
   listaLanches.innerHTML = "";

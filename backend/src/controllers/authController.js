@@ -111,12 +111,14 @@ async function obterUsuarioAdminAutenticado(req) {
     throw erro;
   }
 
-  const result = await pool.query(
-    `SELECT id, name, email, phone, password_hash, role, address, recovery_question
-     FROM users
-     WHERE id = $1 AND role = 'admin'`,
-    [payload.id],
-  );
+const result = await pool.query(
+  `SELECT id, name, email, phone, password_hash, role, address, recovery_question
+   FROM users
+   WHERE id = $1
+     AND role = 'admin'
+     AND is_active = TRUE`,
+  [payload.id]
+);
 
   if (result.rows.length === 0) {
     const erro = new Error("Administrador não encontrado.");
@@ -128,14 +130,48 @@ async function obterUsuarioAdminAutenticado(req) {
 }
 
 async function register(req, res) {
-  try {
-    const { name, email, phone, password, address } = req.body;
-
+  try {  
+const { name, email, phone, password, address, cpf } = req.body;
+    
     if (!name || !email || !password) {
       return res.status(400).json({
         erro: "Nome, email e senha são obrigatórios.",
       });
     }
+
+const cpfLimpo = typeof cpf === "string"
+  ? cpf.replace(/\D/g, "")
+  : "";
+
+function cpfValido(numero) {
+  if (!/^\d{11}$/.test(numero)) return false;
+  if (new Set(numero).size === 1) return false;
+  for (let tamanho = 9; tamanho <= 10; tamanho++) {
+    const soma = numero
+      .slice(0, tamanho)
+      .split("")
+      .reduce(
+        (total, digito, indice) =>
+          total + Number(digito) * (tamanho + 1 - indice),
+        0
+      );
+
+    const resto = (soma * 10) % 11;
+    const verificador = resto === 10 ? 0 : resto;
+
+    if (verificador !== Number(numero[tamanho])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+if (!cpfValido(cpfLimpo)) {
+  return res.status(400).json({
+    erro: "Informe um CPF válido.",
+  });
+}
 
     const userExists = await pool.query(
       "SELECT id FROM users WHERE email = $1",
@@ -148,16 +184,42 @@ async function register(req, res) {
       });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
 
-    const result = await pool.query(
-      `INSERT INTO users 
-        (name, email, phone, password_hash, role, address)
-       VALUES 
-        ($1, $2, $3, $4, $5, $6)
-       RETURNING id, name, email, phone, role, address, created_at`,
-      [name, email, phone || null, passwordHash, "cliente", address || null],
-    );
+const cpfExists = await pool.query(
+  `SELECT id
+   FROM users
+   WHERE regexp_replace(
+     COALESCE(cpf, ''), '[^0-9]', '', 'g'
+   ) = $1
+   LIMIT 1`,
+  [cpfLimpo]
+);
+
+if (cpfExists.rows.length > 0) {
+  return res.status(409).json({
+    erro: "Já existe uma conta cadastrada com este CPF.",
+  });
+}
+
+    
+    const passwordHash = await bcrypt.hash(password, 10);
+ 
+const result = await pool.query(
+  `INSERT INTO users
+    (name, email, phone, password_hash, role, address, cpf)
+   VALUES
+    ($1, $2, $3, $4, $5, $6, $7)
+   RETURNING id, name, email, phone, role, address, cpf, created_at`,
+  [
+    name,
+    email,
+    phone || null,
+    passwordHash,
+    "cliente",
+    address || null,
+    cpfLimpo,
+  ],
+);
 
     const user = result.rows[0];
     const token = criarTokenUsuario(user);
@@ -167,13 +229,21 @@ async function register(req, res) {
       token,
       user,
     });
-  } catch (error) {
-    console.error("Erro no cadastro:", error);
-
-    return res.status(500).json({
-      erro: "Erro interno ao cadastrar usuário.",
+    
+} catch (error) {
+  if (error.code === "23505") {
+    return res.status(409).json({
+      erro: "Já existe uma conta com este CPF ou email.",
     });
   }
+
+  console.error("Erro no cadastro:", error);
+
+  return res.status(500).json({
+    erro: "Erro interno ao cadastrar usuário.",
+  });
+}
+
 }
 
 async function login(req, res) {
@@ -658,9 +728,379 @@ async function deleteCustomer(req, res) {
   }
 }
 
+
+async function getMyProfile(req, res) {
+  try {
+    const usuario = await obterUsuarioAutenticado(req);
+
+    if (usuario.role !== "cliente") {
+      return res.status(403).json({
+        erro: "Apenas clientes podem acessar este perfil.",
+      });
+    }
+
+    const resultado = await pool.query(
+      `SELECT id, name, cpf, email, phone
+       FROM users
+       WHERE id = $1
+         AND role = 'cliente'
+         AND is_active = TRUE`,
+      [usuario.id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(401).json({
+        erro: "Conta de cliente não encontrada ou inativa.",
+      });
+    }
+
+    return res.json(resultado.rows[0]);
+  } catch (error) {
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
+    console.error("Erro ao consultar Meu Perfil:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível carregar seus dados pessoais.",
+    });
+  }
+}
+
+function validarCpfPerfil(cpf) {
+  if (!/^\d{11}$/.test(cpf)) return false;
+  if (new Set(cpf).size === 1) return false;
+
+  for (let tamanho = 9; tamanho <= 10; tamanho++) {
+    const soma = cpf
+      .slice(0, tamanho)
+      .split("")
+      .reduce(
+        (total, digito, indice) =>
+          total + Number(digito) * (tamanho + 1 - indice),
+        0
+      );
+
+    const resto = (soma * 10) % 11;
+    const verificador = resto === 10 ? 0 : resto;
+
+    if (verificador !== Number(cpf[tamanho])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function updateMyProfile(req, res) {
+  let client;
+  let transacaoIniciada = false;
+
+  try {
+    const autenticado = await obterUsuarioAutenticado(req);
+
+    if (autenticado.role !== "cliente") {
+      return res.status(403).json({
+        erro: "Apenas clientes podem editar este perfil.",
+      });
+    }
+
+    const { name, email, phone, cpf, current_password } =
+      req.body || {};
+
+    if (
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof phone !== "string" ||
+      typeof cpf !== "string"
+    ) {
+      return res.status(400).json({
+        erro: "Informe nome, email, telefone e CPF válidos.",
+      });
+    }
+
+    const nomeFinal = name.trim();
+    const emailFinal = email.trim().toLowerCase();
+    const telefoneFinal = phone.trim();
+    const cpfFinal = cpf.replace(/\D/g, "");
+
+    if (nomeFinal.length < 3 || nomeFinal.length > 150) {
+      return res.status(400).json({
+        erro: "Informe um nome entre 3 e 150 caracteres.",
+      });
+    }
+
+    if (
+      emailFinal.length > 254 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailFinal)
+    ) {
+      return res.status(400).json({
+        erro: "Informe um email válido.",
+      });
+    }
+
+    if (
+      telefoneFinal.length < 8 ||
+      telefoneFinal.length > 30
+    ) {
+      return res.status(400).json({
+        erro: "Informe um telefone válido.",
+      });
+    }
+
+    if (cpfFinal && !validarCpfPerfil(cpfFinal)) {
+      return res.status(400).json({
+        erro: "Informe um CPF válido.",
+      });
+    }
+
+    client = await pool.connect();
+    await client.query("BEGIN");
+    transacaoIniciada = true;
+
+    const resultadoAtual = await client.query(
+      `SELECT id, cpf, password_hash
+       FROM users
+       WHERE id = $1
+         AND role = 'cliente'
+         AND is_active = TRUE
+       FOR UPDATE`,
+      [autenticado.id]
+    );
+
+    if (resultadoAtual.rowCount !== 1) {
+      return res.status(401).json({
+        erro: "Conta de cliente não encontrada ou inativa.",
+      });
+    }
+
+    const usuarioAtual = resultadoAtual.rows[0];
+    const cpfAnterior = String(usuarioAtual.cpf || "")
+      .replace(/\D/g, "");
+
+    if (cpfAnterior && !cpfFinal) {
+      return res.status(400).json({
+        erro: "O CPF cadastrado não pode ser apagado.",
+      });
+    }
+
+    const emailExistente = await client.query(
+      `SELECT id FROM users
+       WHERE LOWER(email) = $1
+         AND id <> $2
+       LIMIT 1`,
+      [emailFinal, autenticado.id]
+    );
+
+    if (emailExistente.rowCount > 0) {
+      return res.status(409).json({
+        erro: "Este email já está cadastrado em outra conta.",
+      });
+    }
+
+    if (cpfFinal) {
+      const cpfExistente = await client.query(
+        `SELECT id FROM users
+         WHERE regexp_replace(
+           COALESCE(cpf, ''), '[^0-9]', '', 'g'
+         ) = $1
+           AND id <> $2
+         LIMIT 1`,
+        [cpfFinal, autenticado.id]
+      );
+
+      if (cpfExistente.rowCount > 0) {
+        return res.status(409).json({
+          erro: "Este CPF já está cadastrado em outra conta.",
+        });
+      }
+    }
+
+    const atualizado = await client.query(
+      `UPDATE users
+       SET name = $1,
+           email = $2,
+           phone = $3,
+           cpf = $4
+       WHERE id = $5
+         AND role = 'cliente'
+         AND is_active = TRUE
+       RETURNING id, name, cpf, email, phone`,
+      [
+        nomeFinal,
+        emailFinal,
+        telefoneFinal,
+        cpfFinal || null,
+        autenticado.id,
+      ]
+    );
+
+    await client.query("COMMIT");
+    transacaoIniciada = false;
+
+    return res.json({
+      mensagem: "Dados pessoais atualizados com sucesso.",
+      usuario: atualizado.rows[0],
+    });
+  } catch (error) {
+    if (error.code === "23505") {
+      return res.status(409).json({
+        erro: "CPF ou email já cadastrado em outra conta.",
+      });
+    }
+
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
+    console.error("Erro ao atualizar Meu Perfil:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível atualizar seus dados pessoais.",
+    });
+  } finally {
+    if (client) {
+      if (transacaoIniciada) {
+        try {
+          await client.query("ROLLBACK");
+        } catch (erroRollback) {
+          console.error("Erro ao desfazer atualização:", erroRollback);
+        }
+      }
+      client.release();
+    }
+  }
+}
+
+async function changeMyPassword(req, res) {
+  try {
+    const usuario = await obterUsuarioAutenticado(req);
+
+    if (usuario.role !== "cliente") {
+      return res.status(403).json({
+        erro: "Apenas clientes podem alterar esta senha.",
+      });
+    }
+
+    const {
+      current_password,
+      new_password,
+      confirm_password,
+    } = req.body || {};
+
+    if (
+      typeof current_password !== "string" ||
+      !current_password ||
+      typeof new_password !== "string" ||
+      typeof confirm_password !== "string"
+    ) {
+      return res.status(400).json({
+        erro: "Preencha os três campos de senha.",
+      });
+    }
+
+    if (
+      new_password.length < 6 ||
+      new_password.length > 72
+    ) {
+      return res.status(400).json({
+        erro: "A nova senha deve ter entre 6 e 72 caracteres.",
+      });
+    }
+
+    if (new_password !== confirm_password) {
+      return res.status(400).json({
+        erro: "A confirmação da nova senha não confere.",
+      });
+    }
+
+    const resultado = await pool.query(
+      `SELECT id, password_hash
+       FROM users
+       WHERE id = $1
+         AND role = 'cliente'
+         AND is_active = TRUE`,
+      [usuario.id]
+    );
+
+    if (resultado.rowCount !== 1) {
+      return res.status(401).json({
+        erro: "Conta de cliente não encontrada ou inativa.",
+      });
+    }
+
+    const hashAtual = resultado.rows[0].password_hash;
+
+    const senhaCorreta = await bcrypt.compare(
+      current_password,
+      hashAtual
+    );
+
+    if (!senhaCorreta) {
+      return res.status(401).json({
+        erro: "Senha atual incorreta.",
+      });
+    }
+
+    const mesmaSenha = await bcrypt.compare(
+      new_password,
+      hashAtual
+    );
+
+    if (mesmaSenha) {
+      return res.status(400).json({
+        erro: "A nova senha deve ser diferente da senha atual.",
+      });
+    }
+
+    const novoHash = await bcrypt.hash(new_password, 10);
+
+    const atualizado = await pool.query(
+      `UPDATE users
+       SET password_hash = $1
+       WHERE id = $2
+         AND role = 'cliente'
+         AND is_active = TRUE
+         AND password_hash = $3
+       RETURNING id`,
+      [novoHash, usuario.id, hashAtual]
+    );
+
+    if (atualizado.rowCount !== 1) {
+      return res.status(409).json({
+        erro: "A senha foi alterada em outra operação. Tente novamente.",
+      });
+    }
+
+    return res.json({
+      mensagem: "Senha alterada com sucesso.",
+    });
+  } catch (error) {
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
+    console.error("Erro ao alterar senha do cliente:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível alterar sua senha agora.",
+    });
+  }
+}
+
 module.exports = {
   register,
   login,
+  getMyProfile,
+  updateMyProfile,
+  changeMyPassword,
   getAdminProfile,
   updateAdminProfile,
   forgotPassword,

@@ -1,0 +1,523 @@
+
+/* Meu Perfil - ClickBus Burguer */
+
+.pagina-meu-perfil {
+  min-height: calc(100vh - 80px);
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.55)),
+    url("../img/fundo.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  border: 6px solid #111;
+  border-top: 0;
+  padding: 40px 20px 70px;
+  color: white;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.pagina-meu-perfil[hidden] {
+  display: none;
+}
+
+.pagina-meu-perfil > h1 {
+  text-align: center;
+  font-size: 34px;
+  font-weight: normal;
+  margin: 0 0 12px;
+}
+
+.pagina-meu-perfil > p {
+  text-align: center;
+  font-size: 18px;
+  margin-bottom: 25px;
+}
+
+.perfil-container {
+  max-width: 750px;
+  margin: 0 auto 30px;
+  padding: 28px;
+  background: rgba(0, 0, 0, 0.72);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 18px;
+  box-sizing: border-box;
+}
+
+.perfil-container h2 {
+  text-align: center;
+  font-size: 28px;
+  font-weight: normal;
+  margin: 0 0 25px;
+}
+
+.perfil-container h3 {
+  font-size: 21px;
+  margin: 25px 0 15px;
+}
+
+#formMeusDados,
+#formEndereco {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+#formMeusDados label,
+#formEndereco label {
+  font-size: 19px;
+  margin: 0 0 6px;
+}
+
+#formMeusDados input,
+#formEndereco textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border: none;
+  border-radius: 4px;
+  background: #ddd;
+  color: #111;
+  font: 18px Georgia, "Times New Roman", serif;
+  box-sizing: border-box;
+}
+
+#formEndereco textarea {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.5;
+}
+
+#formMeusDados input:focus-visible,
+#formEndereco textarea:focus-visible {
+  outline: 3px solid #f4c430;
+  outline-offset: 2px;
+}
+
+#formEndereco label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-size: 17px;
+}
+
+#enderecoPrincipal {
+  width: 20px;
+  height: 20px;
+  accent-color: #4657ff;
+}
+
+#btnSalvarDados,
+#btnSalvarEndereco {
+  align-self: center;
+  background: #4657ff;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 12px 28px;
+  font: 21px Georgia, "Times New Roman", serif;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+#btnSalvarDados:hover,
+#btnSalvarEndereco:hover {
+  background: #2637d9;
+  transform: translateY(-2px);
+}
+
+#btnCancelarEdicaoEndereco {
+  align-self: center;
+  margin-top: 12px;
+  padding: 10px 22px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: transparent;
+  color: white;
+  font: 17px Georgia, "Times New Roman", serif;
+  cursor: pointer;
+}
+
+#btnCancelarEdicaoEndereco[hidden] {
+  display: none;
+}
+
+#btnSalvarDados:disabled,
+#btnSalvarEndereco:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+#listaEnderecos {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 20px 0;
+}
+
+#listaEnderecos .endereco-card {
+  padding: 18px;
+  border: 1px solid #777;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow-wrap: anywhere;
+}
+
+#listaEnderecos .endereco-card.principal {
+  border: 2px solid #f4c430;
+}
+
+#listaEnderecos .endereco-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+#listaEnderecos button {
+  border: none;
+  border-radius: 10px;
+  padding: 9px 14px;
+  background: #4657ff;
+  color: white;
+  font: 15px Georgia, "Times New Roman", serif;
+  cursor: pointer;
+}
+
+#listaEnderecos button:hover {
+  background: #2637d9;
+}
+
+#listaEnderecos button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#mensagemPerfil {
+  max-width: 750px;
+  margin: 0 auto 20px;
+  text-align: center;
+  font-size: 17px;
+}
+
+#mensagemPerfil:empty {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .pagina-meu-perfil {
+    padding: 30px 14px 50px;
+    background-attachment: scroll;
+  }
+
+  .pagina-meu-perfil > h1 {
+    font-size: 29px;
+  }
+
+  .pagina-meu-perfil > p {
+    font-size: 16px;
+  }
+
+  .perfil-container {
+    padding: 20px 15px;
+  }
+
+  .perfil-container h2 {
+    font-size: 24px;
+  }
+
+  #formMeusDados label,
+  #formEndereco label {
+    font-size: 17px;
+  }
+
+  #formMeusDados input,
+  #formEndereco textarea {
+    font-size: 16px;
+  }
+
+  #btnSalvarDados,
+  #btnSalvarEndereco {
+    width: 100%;
+    font-size: 19px;
+  }
+
+  #listaEnderecos .endereco-acoes button {
+    flex: 1 1 130px;
+  }
+}
+
+/* CAMPOS DETALHADOS DO ENDEREÇO */
+
+#camposEnderecoDetalhado {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+#camposEnderecoDetalhado[hidden] {
+  display: none;
+}
+
+#camposEnderecoDetalhado label,
+#formAlterarSenha label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 19px;
+  font-weight: bold;
+}
+
+#camposEnderecoDetalhado input,
+#formAlterarSenha input {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  margin: 0 0 16px;
+  border: none;
+  border-radius: 4px;
+  background: #ddd;
+  color: #111;
+  box-sizing: border-box;
+  font: 18px Georgia, "Times New Roman", serif;
+}
+
+#camposEnderecoDetalhado input:focus-visible,
+#formAlterarSenha input:focus-visible {
+  outline: 3px solid #f4c430;
+  outline-offset: 2px;
+}
+
+#camposEnderecoDetalhado input:disabled,
+#formAlterarSenha input:disabled {
+  opacity: 0.7;
+}
+
+/* BOTÕES DE LOCALIZAÇÃO */
+
+.acoes-localizacao-perfil {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0 18px;
+}
+
+.acoes-localizacao-perfil button,
+#btnConfirmarMapaPerfil {
+  padding: 11px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #4657ff;
+  color: #fff;
+  font: 16px Georgia, "Times New Roman", serif;
+  cursor: pointer;
+}
+
+.acoes-localizacao-perfil button:hover,
+#btnConfirmarMapaPerfil:hover {
+  background: #2637d9;
+}
+
+#mapaPerfilEndereco {
+  width: 100%;
+  height: 320px;
+  margin: 15px 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#mapaPerfilEndereco[hidden],
+#btnConfirmarMapaPerfil[hidden] {
+  display: none;
+}
+
+/* SEGURANÇA DA CONTA */
+
+#formAlterarSenha {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+#btnAlterarSenha {
+  align-self: center;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 16px;
+  background: #4657ff;
+  color: white;
+  font: 21px Georgia, "Times New Roman", serif;
+  cursor: pointer;
+}
+
+#btnAlterarSenha:hover:not(:disabled) {
+  background: #2637d9;
+}
+
+#btnAlterarSenha:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#mensagemAlterarSenha {
+  text-align: center;
+  margin-top: 14px;
+}
+
+/* LISTA DOS ENDEREÇOS */
+
+#listaEnderecos .item-endereco {
+  padding: 18px;
+  border: 1px solid #777;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow-wrap: anywhere;
+}
+
+#listaEnderecos .item-endereco strong {
+  display: block;
+  margin: 8px 0;
+  color: #f4c430;
+}
+
+#listaEnderecos .acoes-endereco {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* CELULARES */
+
+@media (max-width: 768px) {
+  #camposEnderecoDetalhado label,
+  #formAlterarSenha label {
+    font-size: 17px;
+  }
+
+  #camposEnderecoDetalhado input,
+  #formAlterarSenha input {
+    font-size: 16px;
+  }
+
+  .acoes-localizacao-perfil button {
+    flex: 1 1 180px;
+  }
+
+  #btnAlterarSenha {
+    width: 100%;
+    font-size: 19px;
+  }
+
+  #listaEnderecos .acoes-endereco button {
+    flex: 1 1 130px;
+  }
+}
+
+/* Mapa de localização dos endereços */
+
+#mapaPerfilEndereco {
+  width: 100%;
+  height: 320px;
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 0;
+}
+
+#mapaPerfilEndereco[hidden],
+#btnConfirmarMapaPerfil[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 600px) {
+  #mapaPerfilEndereco {
+    height: 280px;
+  }
+}
+
+
+/* Botão de confirmação da localização */
+
+#btnConfirmarMapaPerfil {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 18px;
+  background-color: #f7c72e;
+  color: #111;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+}
+
+#btnConfirmarMapaPerfil:hover {
+  background-color: #e6b91d;
+}
+
+#btnConfirmarMapaPerfil[hidden] {
+  display: none !important;
+}
+
+/* Link de localização no Google Maps */
+
+.item-endereco a {
+  color: #60a5fa;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.item-endereco a:visited {
+  color: #60a5fa;
+}
+
+.item-endereco a:hover {
+  color: #93c5fd;
+}
+
+/* Botão para visualizar a localização no Google Maps */
+
+.item-endereco a.botao-google-maps-perfil,
+.item-endereco a.botao-google-maps-perfil:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  margin: 12px 0;
+  padding: 11px 16px;
+
+  background-color: #4055f5;
+  color: #ffffff;
+
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+
+  transition: background-color 0.2s ease,
+              transform 0.2s ease;
+}
+
+.item-endereco a.botao-google-maps-perfil:hover {
+  background-color: #3045dc;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.item-endereco a.botao-google-maps-perfil:focus-visible {
+  outline: 3px solid #facc15;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .item-endereco a.botao-google-maps-perfil {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+

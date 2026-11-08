@@ -1,5 +1,15 @@
+
+"use strict";
+
 const pool = require("../config/db");
 
+const {
+  obterUsuarioAdminAutenticado,
+} = require("./authController");
+
+// Garante a estrutura das configurações da loja.
+// Futuramente, estes comandos devem ser movidos
+// para uma migração executada separadamente.
 async function ensureStoreSettingsSchema() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS store_settings (
@@ -17,19 +27,22 @@ async function ensureStoreSettingsSchema() {
       published_link TEXT DEFAULT '',
       share_message_client TEXT DEFAULT '',
       share_message_admin TEXT DEFAULT '',
-      updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITHOUT TIME ZONE
+        DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT only_one_store_settings CHECK (id = 1)
     );
   `);
 
   await pool.query(`
     ALTER TABLE store_settings
-    ADD COLUMN IF NOT EXISTS category VARCHAR(80) NOT NULL DEFAULT 'Hamburgueria';
+    ADD COLUMN IF NOT EXISTS category
+      VARCHAR(80) NOT NULL DEFAULT 'Hamburgueria';
   `);
 
   await pool.query(`
     ALTER TABLE store_settings
-    ADD COLUMN IF NOT EXISTS manual_status VARCHAR(20) NOT NULL DEFAULT 'auto';
+    ADD COLUMN IF NOT EXISTS manual_status
+      VARCHAR(20) NOT NULL DEFAULT 'auto';
   `);
 
   await pool.query(`
@@ -94,12 +107,13 @@ async function ensureStoreSettingsSchema() {
   `);
 }
 
+// Consulta pública das configurações da loja.
 async function getStoreSettings(req, res) {
   try {
     await ensureStoreSettingsSchema();
 
-    const result = await pool.query(
-      `SELECT
+    const result = await pool.query(`
+      SELECT
         id,
         store_name,
         category,
@@ -116,8 +130,8 @@ async function getStoreSettings(req, res) {
         share_message_admin,
         updated_at
       FROM store_settings
-      WHERE id = 1`,
-    );
+      WHERE id = 1
+    `);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -126,18 +140,25 @@ async function getStoreSettings(req, res) {
     }
 
     return res.json(result.rows[0]);
+
   } catch (error) {
-    console.error("Erro ao buscar configurações da loja:", error);
+    console.error(
+      "Erro ao buscar configurações da loja:",
+      error
+    );
 
     return res.status(500).json({
-      erro: "Erro interno ao buscar configurações da loja.",
-      detalhe: error.message,
+      erro: "Não foi possível buscar as configurações da loja.",
     });
   }
 }
 
+// Somente administradores autenticados podem alterar.
 async function updateStoreSettings(req, res) {
   try {
+    // Autenticação e autorização antes da alteração.
+    await obterUsuarioAdminAutenticado(req);
+
     await ensureStoreSettingsSchema();
 
     const {
@@ -154,11 +175,18 @@ async function updateStoreSettings(req, res) {
       published_link,
       share_message_client,
       share_message_admin,
-    } = req.body;
+    } = req.body || {};
 
-    const statusPermitidos = ["auto", "aberta", "fechada"];
+    const statusPermitidos = [
+      "auto",
+      "aberta",
+      "fechada",
+    ];
 
-    if (manual_status && !statusPermitidos.includes(manual_status)) {
+    if (
+      manual_status != null &&
+      !statusPermitidos.includes(manual_status)
+    ) {
       return res.status(400).json({
         erro: "Status manual inválido.",
       });
@@ -212,7 +240,7 @@ async function updateStoreSettings(req, res) {
         published_link === undefined ? null : published_link,
         share_message_client === undefined ? null : share_message_client,
         share_message_admin === undefined ? null : share_message_admin,
-      ],
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -225,12 +253,24 @@ async function updateStoreSettings(req, res) {
       mensagem: "Configurações da loja atualizadas com sucesso.",
       settings: result.rows[0],
     });
+
   } catch (error) {
-    console.error("Erro ao atualizar configurações da loja:", error);
+    if (
+      error.statusCode === 401 ||
+      error.statusCode === 403
+    ) {
+      return res.status(error.statusCode).json({
+        erro: error.message,
+      });
+    }
+
+    console.error(
+      "Erro ao atualizar configurações da loja:",
+      error
+    );
 
     return res.status(500).json({
-      erro: "Erro interno ao atualizar configurações da loja.",
-      detalhe: error.message,
+      erro: "Não foi possível atualizar as configurações da loja.",
     });
   }
 }
@@ -240,3 +280,4 @@ module.exports = {
   getStoreSettings,
   updateStoreSettings,
 };
+
