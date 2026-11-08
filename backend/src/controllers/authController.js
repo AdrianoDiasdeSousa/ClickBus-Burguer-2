@@ -130,120 +130,187 @@ const result = await pool.query(
 }
 
 async function register(req, res) {
-  try {  
-const { name, email, phone, password, address, cpf } = req.body;
-    
+  let client;
+  let transacaoIniciada = false;
+
+  try {
+    const {
+      name,
+      email,
+      phone,
+      password,
+      address,
+      cpf
+    } = req.body;
+
     if (!name || !email || !password) {
       return res.status(400).json({
-        erro: "Nome, email e senha são obrigatórios.",
+        erro: "Nome, email e senha são obrigatórios."
       });
     }
 
-const cpfLimpo = typeof cpf === "string"
-  ? cpf.replace(/\D/g, "")
-  : "";
+    const cpfLimpo = String(cpf || "").replace(/\D/g, "");
 
-function cpfValido(numero) {
-  if (!/^\d{11}$/.test(numero)) return false;
-  if (new Set(numero).size === 1) return false;
-  for (let tamanho = 9; tamanho <= 10; tamanho++) {
-    const soma = numero
-      .slice(0, tamanho)
-      .split("")
-      .reduce(
-        (total, digito, indice) =>
-          total + Number(digito) * (tamanho + 1 - indice),
-        0
-      );
+    function cpfValido(numero) {
+      if (!/^\d{11}$/.test(numero)) return false;
+      if (new Set(numero).size === 1) return false;
 
-    const resto = (soma * 10) % 11;
-    const verificador = resto === 10 ? 0 : resto;
+      for (let tamanho = 9; tamanho <= 10; tamanho++) {
+        const soma = numero
+          .slice(0, tamanho)
+          .split("")
+          .reduce(
+            (total, digito, indice) =>
+              total + Number(digito) * (tamanho + 1 - indice),
+            0
+          );
 
-    if (verificador !== Number(numero[tamanho])) {
-      return false;
+        const resto = (soma * 10) % 11;
+        const verificador = resto === 10 ? 0 : resto;
+
+        if (verificador !== Number(numero[tamanho])) {
+          return false;
+        }
+      }
+
+      return true;
     }
-  }
 
-  return true;
-}
+    if (!cpfValido(cpfLimpo)) {
+      return res.status(400).json({
+        erro: "Informe um CPF válido."
+      });
+    }
 
-if (!cpfValido(cpfLimpo)) {
-  return res.status(400).json({
-    erro: "Informe um CPF válido.",
-  });
-}
+    const endereco = String(address || "").trim();
 
-    const userExists = await pool.query(
-      "SELECT id FROM users WHERE email = $1",
-      [email],
+    if (endereco.length < 5 || endereco.length > 500) {
+      return res.status(400).json({
+        erro: "Informe um endereço válido."
+      });
+    }
+
+    const emailFinal = String(email).trim().toLowerCase();
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    client = await pool.connect();
+
+    await client.query("BEGIN");
+    transacaoIniciada = true;
+
+    const emailExists = await client.query(
+      `SELECT id FROM users
+       WHERE LOWER(email) = $1
+       LIMIT 1`,
+      [emailFinal]
     );
 
-    if (userExists.rows.length > 0) {
-      return res.status(409).json({
-        erro: "Já existe uma conta com este email.",
-      });
+    if (emailExists.rowCount > 0) {
+      const erro = new Error(
+        "Já existe uma conta com este email."
+      );
+      erro.statusCode = 409;
+      throw erro;
     }
 
+    const cpfExists = await client.query(
+      `SELECT id FROM users
+       WHERE regexp_replace(
+         COALESCE(cpf, ''), '[^0-9]', '', 'g'
+       ) = $1
+       LIMIT 1`,
+      [cpfLimpo]
+    );
 
-const cpfExists = await pool.query(
-  `SELECT id
-   FROM users
-   WHERE regexp_replace(
-     COALESCE(cpf, ''), '[^0-9]', '', 'g'
-   ) = $1
-   LIMIT 1`,
-  [cpfLimpo]
-);
+    if (cpfExists.rowCount > 0) {
+      const erro = new Error(
+        "Já existe uma conta cadastrada com este CPF."
+      );
+      erro.statusCode = 409;
+      throw erro;
+    }
 
-if (cpfExists.rows.length > 0) {
-  return res.status(409).json({
-    erro: "Já existe uma conta cadastrada com este CPF.",
-  });
-}
-
-    
-    const passwordHash = await bcrypt.hash(password, 10);
- 
-const result = await pool.query(
-  `INSERT INTO users
-    (name, email, phone, password_hash, role, address, cpf)
-   VALUES
-    ($1, $2, $3, $4, $5, $6, $7)
-   RETURNING id, name, email, phone, role, address, cpf, created_at`,
-  [
-    name,
-    email,
-    phone || null,
-    passwordHash,
-    "cliente",
-    address || null,
-    cpfLimpo,
-  ],
-);
+    const result = await client.query(
+      `INSERT INTO users (
+         name,
+         email,
+         phone,
+         password_hash,
+         role,
+         address,
+         cpf
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING
+         id, name, email, phone,
+         role, address, cpf, created_at`,
+      [
+        String(name).trim(),
+        emailFinal,
+        phone || null,
+        passwordHash,
+        "cliente",
+        endereco,
+        cpfLimpo
+      ]
+    );
 
     const user = result.rows[0];
+
+    await client.query(
+      `INSERT INTO user_addresses (
+         user_id,
+         address,
+         is_primary
+       )
+       VALUES ($1, $2, TRUE)`,
+      [user.id, endereco]
+    );
+
+    await client.query("COMMIT");
+    transacaoIniciada = false;
+
     const token = criarTokenUsuario(user);
 
     return res.status(201).json({
       mensagem: "Usuário cadastrado com sucesso.",
       token,
-      user,
+      user
     });
-    
-} catch (error) {
-  if (error.code === "23505") {
-    return res.status(409).json({
-      erro: "Já existe uma conta com este CPF ou email.",
+
+  } catch (error) {
+    if (client && transacaoIniciada) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error("Erro no rollback:", rollbackError);
+      }
+    }
+
+    if (error.code === "23505") {
+      return res.status(409).json({
+        erro: "CPF ou email já cadastrado."
+      });
+    }
+
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        erro: error.message
+      });
+    }
+
+    console.error("Erro no cadastro:", error);
+
+    return res.status(500).json({
+      erro: "Erro interno ao cadastrar usuário."
     });
+
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-
-  console.error("Erro no cadastro:", error);
-
-  return res.status(500).json({
-    erro: "Erro interno ao cadastrar usuário.",
-  });
-}
-
 }
 
 async function login(req, res) {
