@@ -132,16 +132,16 @@ const result = await pool.query(
 async function register(req, res) {
   let client;
   let transacaoIniciada = false;
-
-  try {
-    const {
-      name,
-      email,
-      phone,
-      password,
-      address,
-      cpf
-    } = req.body;
+  
+const {
+  name,
+  email,
+  phone,
+  password,
+  address,
+  cpf,
+  address_details
+} = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -258,15 +258,117 @@ async function register(req, res) {
 
     const user = result.rows[0];
 
-    await client.query(
-      `INSERT INTO user_addresses (
-         user_id,
-         address,
-         is_primary
-       )
-       VALUES ($1, $2, TRUE)`,
-      [user.id, endereco]
+    
+const detalhes = address_details || {};
+
+const camposObrigatorios = [
+  "cep",
+  "street",
+  "number",
+  "neighborhood",
+  "city",
+  "state"
+];
+
+for (const campo of camposObrigatorios) {
+  if (
+    typeof detalhes[campo] !== "string" ||
+    !detalhes[campo].trim()
+  ) {
+    const erro = new Error(
+      `Campo obrigatório do endereço: ${campo}`
     );
+    erro.statusCode = 400;
+    throw erro;
+  }
+}
+
+const limites = {
+  cep: 9,
+  street: 150,
+  number: 30,
+  neighborhood: 100,
+  city: 100,
+  state: 2,
+  complement: 150,
+  reference: 200,
+  location: 500
+};
+
+const campos = {};
+
+for (const [campo, limite] of Object.entries(limites)) {
+  const valor = detalhes[campo];
+
+  if (
+    valor != null &&
+    typeof valor !== "string"
+  ) {
+    const erro = new Error(
+      `Campo ${campo} inválido.`
+    );
+    erro.statusCode = 400;
+    throw erro;
+  }
+
+  const texto = String(valor || "").trim();
+
+  if (texto.length > limite) {
+    const erro = new Error(
+      `Campo ${campo} excede o limite permitido.`
+    );
+    erro.statusCode = 400;
+    throw erro;
+  }
+
+  campos[campo] = texto || null;
+}
+
+if (!/^\d{5}-?\d{3}$/.test(campos.cep)) {
+  const erro = new Error("Informe um CEP válido.");
+  erro.statusCode = 400;
+  throw erro;
+}
+
+if (!/^[A-Za-z]{2}$/.test(campos.state)) {
+  const erro = new Error("Informe um estado válido.");
+  erro.statusCode = 400;
+  throw erro;
+}
+
+await client.query(
+  `INSERT INTO user_addresses (
+     user_id,
+     address,
+     is_primary,
+     cep,
+     street,
+     number,
+     neighborhood,
+     city,
+     state,
+     complement,
+     reference,
+     location
+   )
+   VALUES (
+     $1, $2, TRUE, $3, $4, $5, $6,
+     $7, $8, $9, $10, $11
+   )`,
+  [
+    user.id,
+    endereco,
+    campos.cep,
+    campos.street,
+    campos.number,
+    campos.neighborhood,
+    campos.city,
+    campos.state.toUpperCase(),
+    campos.complement,
+    campos.reference,
+    campos.location
+  ]
+);
 
     await client.query("COMMIT");
     transacaoIniciada = false;
