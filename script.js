@@ -1515,6 +1515,7 @@ function criarImagemProduto(produto) {
     onerror="this.style.display='none'"
   />
 `;
+}
 
 async function renderizarCardapio() {
   const listaLanches = document.getElementById("listaLanches");
