@@ -54,6 +54,7 @@
             </button>
 
             <form id="formNovoEndereco" class="form-endereco oculto" onsubmit="salvarNovoEndereco(event)">
+              <h3 id="tituloFormularioEndereco">Cadastrar novo endereço</h3>
               <label for="novoLocalizacao">Localização da entrega</label>
               <p class="dica-localizacao">Digite o endereço, clique em buscar no mapa e ajuste o ponto exato. A localização atual continua como opção, mas no computador ela pode ser aproximada.</p>
               <div class="campo-localizacao">
@@ -96,12 +97,9 @@
 
             <label class="opcao-item" id="opcaoEnderecoCadastro">
               <div class="opcao-texto">
-                <strong>Endereço de cadastro</strong>
+              <strong>Meu endereço de entrega</strong>
 
-                <span id="enderecoCadastroEntrega">
-                  Rua 01 Número 1132 Setor Oeste<br />
-                  Sandolândia - TO
-                </span>
+                <span id="enderecoCadastroEntrega">Carregando endereço...</span>
 
                 <button
                   type="button"
