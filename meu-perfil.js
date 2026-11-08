@@ -274,8 +274,7 @@ function limparFormularioEndereco() {
   elemento("enderecoId").value = "";
   
   elemento("camposEnderecoDetalhado").hidden = false;
-  elemento("mapaPerfilEndereco").hidden = true;
-  elemento("btnConfirmarMapaPerfil").hidden = true;
+  fecharMapaPerfil();
 
   elemento("tituloFormularioEndereco").textContent =
     "Cadastrar novo endereço";
@@ -301,8 +300,7 @@ function editarEndereco(endereco) {
   elemento("perfilLocalizacao").value = endereco.location || "";
 
   elemento("camposEnderecoDetalhado").hidden = false;
-  elemento("mapaPerfilEndereco").hidden = true;
-  elemento("btnConfirmarMapaPerfil").hidden = true;
+  fecharMapaPerfil();
 
   elemento("tituloFormularioEndereco").textContent = "Editar endereço";
   elemento("btnCancelarEdicaoEndereco").hidden = false;
