@@ -978,14 +978,28 @@ async function fazerCadastro(event) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        name: nome,
-        cpf,
-        email,
-        phone: telefone,
-        password: senha,
-        address: endereco,
-      }),
+     
+body: JSON.stringify({
+  name: nome,
+  cpf,
+  email,
+  phone: telefone,
+  password: senha,
+  address: endereco,
+
+  address_details: {
+    cep: dadosEndereco.cep,
+    street: dadosEndereco.rua,
+    number: dadosEndereco.numero,
+    neighborhood: dadosEndereco.bairro,
+    city: dadosEndereco.cidade,
+    state: dadosEndereco.estado,
+    complement: dadosEndereco.complemento,
+    reference: dadosEndereco.referencia,
+    location: dadosEndereco.localizacao
+  }
+}),
+
     });
 
     const resultado = await resposta.json();
