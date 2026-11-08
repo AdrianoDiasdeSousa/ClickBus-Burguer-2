@@ -4172,6 +4172,54 @@ function avancarCarrinho() {
   window.location.href = "finalizar-pedido.html";
 }
 
+async function buscarDadosClienteFinalizacao() {
+  const nomeElemento = document.getElementById("nomeEntrega");
+  const telefoneElemento = document.getElementById("telefoneEntrega");
+
+  if (!nomeElemento || !telefoneElemento) return;
+
+  const token = localStorage.getItem("clickbus_token");
+
+  if (!token) {
+    nomeElemento.textContent = "Faça login";
+    telefoneElemento.textContent = "";
+    mostrarAviso(
+      "Entre na sua conta para finalizar o pedido.",
+      "erro"
+    );
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      cache: "no-store"
+    });
+
+    if (!resposta.ok) {
+      throw new Error("Não foi possível consultar seu perfil.");
+    }
+
+    const cliente = await resposta.json();
+
+    nomeElemento.textContent = cliente.name || "Cliente";
+    telefoneElemento.textContent = cliente.phone || "Não informado";
+
+  } catch (erro) {
+    console.error("Erro ao carregar cliente:", erro);
+
+    nomeElemento.textContent = "Dados indisponíveis";
+    telefoneElemento.textContent = "";
+
+    mostrarAviso(
+      "Não foi possível atualizar seus dados. Verifique sua conexão.",
+      "erro"
+    );
+  }
+}
 /* =========================
    FINALIZAÇÃO DO PEDIDO
 ========================= */
@@ -4221,15 +4269,8 @@ function carregarFinalizacaoPedido() {
 
   const pedido = carregarPedidoAtual();
 
-  const nomeSalvo =
-    localStorage.getItem("nomeEntrega") ||
-    localStorage.getItem("nomeUsuario") ||
-    "Cliente";
-
-  const telefoneSalvo =
-    localStorage.getItem("telefoneEntrega") ||
-    localStorage.getItem("telefoneUsuario") ||
-    "(63) 99999-9999";
+ const nomeSalvo = "Carregando...";
+ const telefoneSalvo = "Carregando...";
 
   const enderecoPadrao =
     localStorage.getItem("enderecoUsuario") ||
@@ -4238,6 +4279,8 @@ function carregarFinalizacaoPedido() {
 
   nomeEntrega.textContent = nomeSalvo;
   telefoneEntrega.textContent = telefoneSalvo;
+
+buscarDadosClienteFinalizacao();
   enderecoCadastroEntrega.innerHTML = enderecoPadrao.replace(/\n/g, "<br>");
 
   if (
