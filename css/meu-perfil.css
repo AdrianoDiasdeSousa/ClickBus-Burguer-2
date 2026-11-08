@@ -437,3 +437,28 @@
   }
 }
 
+
+/* Botão de confirmação da localização */
+
+#btnConfirmarMapaPerfil {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 18px;
+  background-color: #f7c72e;
+  color: #111;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+}
+
+#btnConfirmarMapaPerfil:hover {
+  background-color: #e6b91d;
+}
+
+#btnConfirmarMapaPerfil[hidden] {
+  display: none !important;
+}
