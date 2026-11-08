@@ -25,7 +25,8 @@
 
 <a
   href="carrinho.html"
-  id="linkCarrinhoTopo"
+  id="linkCarrinhoTopo" 
+  style="display: none;"
   onclick="event.preventDefault(); abrirCarrinhoDoCardapio();"
 >
   <span class="icone-carrinho-topo">🛒</span>
@@ -244,5 +245,27 @@
 
     <script src="api.js"></script>
     <script src="script.js?v=20260525"></script>
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+  const carrinho = document.getElementById("linkCarrinhoTopo");
+  const areaAdmin = document.getElementById("areaAdmin");
+
+  if (!carrinho || !areaAdmin) return;
+
+  function atualizarVisibilidadeCarrinho() {
+    const modoAdmin = !areaAdmin.classList.contains("oculto");
+    carrinho.style.display = modoAdmin ? "none" : "";
+  }
+
+  atualizarVisibilidadeCarrinho();
+
+  const observador = new MutationObserver(atualizarVisibilidadeCarrinho);
+
+  observador.observe(areaAdmin, {
+    attributes: true,
+    attributeFilter: ["class"]
+  });
+});
+</script>
   </body>
 </html>
