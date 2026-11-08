@@ -733,3 +733,40 @@ body {
   padding-top: 12px;
   border-top: 1px solid rgba(80, 45, 0, 0.25);
 }
+/* Organização moderna dos alertas do administrador */
+
+.config-alerta-pedidos {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(80, 45, 0, 0.25);
+}
+
+.config-alerta-pedidos h3 {
+  font-size: 16px;
+  margin: 0 0 10px;
+}
+
+.config-alerta-linha {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.config-alerta-linha label {
+  font-size: 13px;
+}
+
+.config-alerta-linha select,
+.config-alerta-linha button {
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 600px) {
+  .config-alerta-linha {
+    align-items: flex-start;
+  }
+}
