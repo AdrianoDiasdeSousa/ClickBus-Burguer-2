@@ -8,6 +8,7 @@ const {
   login,
   getMyProfile,
   updateMyProfile,
+  changeMyPassword,
   getAdminProfile,
   updateAdminProfile,
   forgotPassword,
@@ -22,9 +23,10 @@ const router = express.Router();
 router.post("/cadastro", register);
 router.post("/login", login);
 
-// Meu Perfil: dados do cliente autenticado
+ // Meu Perfil: dados do cliente autenticado
 router.get("/me", getMyProfile);
 router.put("/me", updateMyProfile);
+router.put("/change-password", changeMyPassword);
 
 // Recuperação de senha
 router.post("/forgot-password", forgotPassword);
