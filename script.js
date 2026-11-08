@@ -4487,6 +4487,14 @@ function abrirFormularioEndereco(modo = "novo") {
   const formulario = document.getElementById("formNovoEndereco");
 
   if (!formulario) return;
+   const titulo = document.getElementById("tituloFormularioEndereco");
+
+if (titulo) {
+  titulo.textContent =
+    modo === "editarUsuario"
+      ? "Editar endereço"
+      : "Cadastrar novo endereço";
+}
 
   if (modo === "editarUsuario" && !enderecoPrincipalFinalizacao) {
     mostrarAviso(
