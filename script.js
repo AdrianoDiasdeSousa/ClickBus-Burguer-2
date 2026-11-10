@@ -7291,3 +7291,31 @@ document.addEventListener(
   "DOMContentLoaded",
   configurarBotaoCompartilharLoja
 );
+
+function alternarVisibilidadeSenha(idCampo, botao) {
+  const campo = document.getElementById(idCampo);
+
+  if (!campo) return;
+
+  const mostrar = campo.type === "password";
+
+  campo.type = mostrar ? "text" : "password";
+
+  botao.setAttribute("aria-pressed", String(mostrar));
+
+  const nomes = {
+    senhaAtualAdmin: "senha atual",
+    novaSenhaAdmin: "nova senha",
+    confirmarSenhaAdmin: "confirmação da senha"
+  };
+
+  const nome = nomes[idCampo] || "senha";
+
+  botao.setAttribute(
+    "aria-label",
+    `${mostrar ? "Ocultar" : "Mostrar"} ${nome}`
+  );
+
+  botao.querySelector("span").textContent =
+    mostrar ? "🙈" : "👁";
+}
