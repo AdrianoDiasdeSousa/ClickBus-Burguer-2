@@ -347,6 +347,24 @@ async function salvarContaAdministrador(event) {
   }
 }
 
+function limparPedidoEmAndamento() {
+  const produtos = carregarProdutos();
+
+  produtos.forEach((produto) => {
+    produto.quantidade = 0;
+  });
+
+  salvarProdutos(produtos);
+
+  localStorage.removeItem("pedidoAtual");
+  localStorage.removeItem("produtoObservacaoId");
+  localStorage.removeItem("observacoesPedidoAtual");
+  localStorage.removeItem("enderecoTemporarioEntrega");
+  localStorage.removeItem("enderecoEntrega");
+  localStorage.removeItem("localizacaoEntrega");
+  localStorage.removeItem("tipoEnderecoSelecionado");
+}
+
 
 async function fazerLogin(event) {
   event.preventDefault();
