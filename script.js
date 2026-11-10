@@ -6325,9 +6325,9 @@ async function atualizarPaginaCompartilhar() {
     linkLojaCompartilhar.textContent = link;
   }
 
-  if (btnPedirAgoraCompartilhar) {
-    btnPedirAgoraCompartilhar.href = link;
-  }
+ if (btnPedirAgoraCompartilhar) {
+  btnPedirAgoraCompartilhar.href = "cardapio.html";
+}
 
   document.title = `Compartilhar Loja - ${perfil.nome}`;
 }
