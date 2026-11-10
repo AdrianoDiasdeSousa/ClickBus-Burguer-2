@@ -262,29 +262,62 @@
               placeholder="Digite o novo email, se quiser alterar"
             />
 
-           <label for="senhaAtualAdmin">Senha atual</label>
-<input
-  type="password"
-  id="senhaAtualAdmin"
-  autocomplete="current-password"
-  placeholder="Digite a senha atual para confirmar"
-/>
+          <label for="senhaAtualAdmin">Senha atual</label>
+<div class="campo-senha-admin">
+  <input
+    type="password"
+    id="senhaAtualAdmin"
+    autocomplete="current-password"
+    placeholder="Digite a senha atual para confirmar"
+  />
+  <button
+    type="button"
+    class="btn-ver-senha"
+    onclick="alternarVisibilidadeSenha('senhaAtualAdmin', this)"
+    aria-label="Mostrar senha atual"
+    aria-pressed="false"
+  >
+    <span aria-hidden="true">👁</span>
+  </button>
+</div>
 
 <label for="novaSenhaAdmin">Nova senha</label>
-<input
-  type="password"
-  id="novaSenhaAdmin"
-  autocomplete="new-password"
-  placeholder="Deixe vazio para manter a senha atual"
-/>
+<div class="campo-senha-admin">
+  <input
+    type="password"
+    id="novaSenhaAdmin"
+    autocomplete="new-password"
+    placeholder="Deixe vazio para manter a senha atual"
+  />
+  <button
+    type="button"
+    class="btn-ver-senha"
+    onclick="alternarVisibilidadeSenha('novaSenhaAdmin', this)"
+    aria-label="Mostrar nova senha"
+    aria-pressed="false"
+  >
+    <span aria-hidden="true">👁</span>
+  </button>
+</div>
 
 <label for="confirmarSenhaAdmin">Confirmar nova senha</label>
-<input
-  type="password"
-  id="confirmarSenhaAdmin"
-  autocomplete="new-password"
-  placeholder="Repita a nova senha"
-/>
+<div class="campo-senha-admin">
+  <input
+    type="password"
+    id="confirmarSenhaAdmin"
+    autocomplete="new-password"
+    placeholder="Repita a nova senha"
+  />
+  <button
+    type="button"
+    class="btn-ver-senha"
+    onclick="alternarVisibilidadeSenha('confirmarSenhaAdmin', this)"
+    aria-label="Mostrar confirmação da senha"
+    aria-pressed="false"
+  >
+    <span aria-hidden="true">👁</span>
+  </button>
+</div>
 
             <button type="submit" class="btn-salvar-perfil">
               Salvar conta do admin
