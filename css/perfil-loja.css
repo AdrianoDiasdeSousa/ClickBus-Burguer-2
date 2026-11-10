@@ -553,3 +553,40 @@
     padding: 20px 14px 22px;
   }
 }
+
+/* Olho para mostrar e ocultar senhas */
+
+.campo-senha-admin {
+  position: relative;
+  width: 100%;
+}
+
+.campo-senha-admin input {
+  padding-right: 55px;
+}
+
+.campo-senha-admin .btn-ver-senha {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  width: 42px;
+  height: 43px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #333;
+  font-size: 21px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.campo-senha-admin .btn-ver-senha:hover {
+  color: #e88700;
+}
+
+.campo-senha-admin .btn-ver-senha:focus-visible {
+  outline: 2px solid #e88700;
+  border-radius: 6px;
+}
