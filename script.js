@@ -149,14 +149,6 @@ async function preencherContaAdministrador() {
   const novaSenhaAdmin = document.getElementById("novaSenhaAdmin");
   const confirmarSenhaAdmin = document.getElementById("confirmarSenhaAdmin");
 
-  const perguntaRecuperacaoAdmin = document.getElementById(
-    "perguntaRecuperacaoAdmin"
-  );
-
-  const respostaRecuperacaoAdmin = document.getElementById(
-    "respostaRecuperacaoAdmin"
-  );
-
   if (!areaContaAdmin || !emailAdminAtual) return;
 
   if (!usuarioEhAdmin()) {
@@ -176,14 +168,6 @@ async function preencherContaAdministrador() {
   if (senhaAtualAdmin) senhaAtualAdmin.value = "";
   if (novaSenhaAdmin) novaSenhaAdmin.value = "";
   if (confirmarSenhaAdmin) confirmarSenhaAdmin.value = "";
-
-  if (perguntaRecuperacaoAdmin) {
-    perguntaRecuperacaoAdmin.value = "";
-  }
-
-  if (respostaRecuperacaoAdmin) {
-    respostaRecuperacaoAdmin.value = "";
-  }
 
   const token = localStorage.getItem("clickbus_token");
 
@@ -215,23 +199,18 @@ async function preencherContaAdministrador() {
       );
     }
 
-    // Os dados da conta vêm somente do backend.
-    emailAdminAtual.value = resultado.email || "";
+   // Os dados da conta vêm somente do backend.
+emailAdminAtual.value = resultado.email || "";
 
-    if (perguntaRecuperacaoAdmin) {
-      perguntaRecuperacaoAdmin.value =
-        resultado.recovery_question || "";
-    }
+} catch (error) {
+  console.error("Erro ao carregar conta do admin:", error);
 
-  } catch (error) {
-    console.error("Erro ao carregar conta do admin:", error);
-
-    mostrarAviso(
-      error.message ||
+  mostrarAviso(
+    error.message ||
       "Não foi possível carregar os dados do administrador.",
-      "erro"
-    );
-  }
+    "erro"
+   );
+ }
 }
 
 async function salvarContaAdministrador(event) {
@@ -247,22 +226,25 @@ async function salvarContaAdministrador(event) {
   if (!token) {
     mostrarAviso(
       "Sua sessão expirou. Faça login novamente como administrador.",
-      "erro",
+      "erro"
     );
     return;
   }
 
-  const emailAtual = document.getElementById("emailAdminAtual")?.value.trim();
-  const novoEmail = document.getElementById("novoEmailAdmin")?.value.trim();
-  const senhaAtual = document.getElementById("senhaAtualAdmin")?.value || "";
+  const emailAtual =
+    document.getElementById("emailAdminAtual")?.value.trim() || "";
+
+  const novoEmail =
+    document.getElementById("novoEmailAdmin")?.value.trim() || "";
+
+  const senhaAtual =
+    document.getElementById("senhaAtualAdmin")?.value || "";
+
   const novaSenha =
-    document.getElementById("novaSenhaAdmin")?.value.trim() || "";
+    document.getElementById("novaSenhaAdmin")?.value || "";
+
   const confirmarSenha =
-    document.getElementById("confirmarSenhaAdmin")?.value.trim() || "";
-  const perguntaRecuperacao =
-    document.getElementById("perguntaRecuperacaoAdmin")?.value.trim() || "";
-  const respostaRecuperacao =
-    document.getElementById("respostaRecuperacaoAdmin")?.value.trim() || "";
+    document.getElementById("confirmarSenhaAdmin")?.value || "";
 
   if (!senhaAtual) {
     mostrarAviso("Digite a senha atual para confirmar.", "erro");
@@ -271,13 +253,20 @@ async function salvarContaAdministrador(event) {
 
   const emailFinal = novoEmail || emailAtual;
 
-  if (!emailFinal || !emailFinal.includes("@") || !emailFinal.includes(".")) {
+  if (
+    !emailFinal ||
+    !emailFinal.includes("@") ||
+    !emailFinal.includes(".")
+  ) {
     mostrarAviso("Digite um email de administrador válido.", "erro");
     return;
   }
 
   if (novaSenha && novaSenha.length < 10) {
-    mostrarAviso("A nova senha precisa ter pelo menos 10 caracteres.", "erro");
+    mostrarAviso(
+      "A nova senha precisa ter pelo menos 10 caracteres.",
+      "erro"
+    );
     return;
   }
 
@@ -286,86 +275,78 @@ async function salvarContaAdministrador(event) {
     return;
   }
 
-  if (!perguntaRecuperacao || !respostaRecuperacao) {
-    mostrarAviso("Preencha a pergunta e a resposta de recuperação.", "erro");
+  if (!novaSenha && confirmarSenha) {
+    mostrarAviso(
+      "Digite a nova senha antes de confirmá-la.",
+      "erro"
+    );
     return;
   }
 
   try {
-    const resposta = await fetch(`${API_BASE_URL}/auth/admin-profile`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        current_password: senhaAtual,
-        new_email: emailFinal,
-        new_password: novaSenha,
-        recovery_question: perguntaRecuperacao,
-        recovery_answer: respostaRecuperacao,
-      }),
-    });
+    const resposta = await fetch(
+      `${API_BASE_URL}/auth/admin-profile`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          current_password: senhaAtual,
+          new_email: emailFinal,
+          new_password: novaSenha,
+        }),
+      }
+    );
 
     const resultado = await resposta.json();
 
     if (!resposta.ok) {
       throw new Error(
-        resultado?.erro || "Não foi possível salvar a conta do admin.",
+        resultado?.erro ||
+          "Não foi possível salvar a conta do admin."
       );
     }
 
     const usuario = resultado.user;
 
     localStorage.setItem("clickbus_token", resultado.token);
-    localStorage.setItem("clickbus_usuario", JSON.stringify(usuario));
-     
+    localStorage.setItem(
+      "clickbus_usuario",
+      JSON.stringify(usuario)
+    );
+
     sessionStorage.setItem("clickbus_sessao_ativa", "true");
-     
+
     localStorage.setItem("usuarioLogado", usuario.email);
     localStorage.setItem("tipoUsuario", "admin");
     localStorage.setItem("nomeUsuario", "Administrador");
 
-    document.getElementById("emailAdminAtual").value = usuario.email;
+    document.getElementById("emailAdminAtual").value =
+      usuario.email;
+
     document.getElementById("novoEmailAdmin").value = "";
     document.getElementById("senhaAtualAdmin").value = "";
     document.getElementById("novaSenhaAdmin").value = "";
     document.getElementById("confirmarSenhaAdmin").value = "";
-    document.getElementById("respostaRecuperacaoAdmin").value = "";
 
-    mostrarAviso("Conta do administrador atualizada com sucesso.", "sucesso");
+    mostrarAviso(
+      "Conta do administrador atualizada com sucesso.",
+      "sucesso"
+    );
+
   } catch (error) {
     console.error("Erro ao salvar conta do admin:", error);
+
     mostrarAviso(
-      error.message || "Não foi possível salvar a conta do administrador.",
-      "erro",
+      error.message ||
+        "Não foi possível salvar a conta do administrador.",
+      "erro"
     );
   }
 }
 
-function mudarSenhaAdministrador() {
-  mostrarAviso(
-    "A senha do admin agora fica em Perfil da loja > Conta do administrador.",
-    "info",
-  );
-}
-
-function limparPedidoEmAndamento() {
-  const produtos = carregarProdutos();
-
-  produtos.forEach((produto) => {
-    produto.quantidade = 0;
-  });
-
-  salvarProdutos(produtos);
-  localStorage.removeItem("pedidoAtual");
-  localStorage.removeItem("produtoObservacaoId");
-  localStorage.removeItem("observacoesPedidoAtual");
-  localStorage.removeItem("enderecoTemporarioEntrega");
-  localStorage.removeItem("enderecoEntrega");
-  localStorage.removeItem("localizacaoEntrega");
-  localStorage.removeItem("tipoEnderecoSelecionado");
-}
 
 async function fazerLogin(event) {
   event.preventDefault();
