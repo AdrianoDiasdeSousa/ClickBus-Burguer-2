@@ -112,7 +112,7 @@ async function obterUsuarioAdminAutenticado(req) {
   }
 
 const result = await pool.query(
-  `SELECT id, name, email, phone, password_hash, role, address, recovery_question
+  `SELECT id, name, email, phone, password_hash, role, address
    FROM users
    WHERE id = $1
      AND role = 'admin'
@@ -480,8 +480,8 @@ async function getAdminProfile(req, res) {
       id: admin.id,
       name: admin.name,
       email: admin.email,
-      recovery_question: admin.recovery_question || "",
     });
+    
   } catch (error) {
     console.error("Erro ao buscar admin:", error);
 
@@ -498,12 +498,10 @@ async function updateAdminProfile(req, res) {
     const admin = await obterUsuarioAdminAutenticado(req);
 
     const {
-      current_password,
-      new_email,
-      new_password,
-      recovery_question,
-      recovery_answer,
-    } = req.body;
+  current_password,
+  new_email,
+  new_password,
+} = req.body;
 
     if (!current_password) {
       return res.status(400).json({
@@ -558,39 +556,23 @@ if (
   });
 }
 
-    if (!recovery_question || !recovery_answer) {
-      return res.status(400).json({
-        erro: "Preencha a pergunta e a resposta de recuperação.",
-      });
-    }
-
     const senhaHashFinal = new_password
       ? await bcrypt.hash(String(new_password), 10)
       : admin.password_hash;
 
-    const respostaHash = await bcrypt.hash(
-      String(recovery_answer).trim().toLowerCase(),
-      10,
-    );
-
-    const result = await pool.query(
-      `UPDATE users
-       SET
-        email = $1,
-        password_hash = $2,
-        recovery_question = $3,
-        recovery_answer_hash = $4
-       WHERE id = $5 AND role = 'admin'
-       RETURNING id, name, email, phone, role, address, created_at, recovery_question`,
-      [
-        emailFinal,
-        senhaHashFinal,
-        String(recovery_question).trim(),
-        respostaHash,
-        admin.id,
-      ],
-    );
-
+ const result = await pool.query(
+  `UPDATE users
+   SET
+     email = $1,
+     password_hash = $2
+   WHERE id = $3 AND role = 'admin'
+   RETURNING id, name, email, phone, role, address, created_at`,
+  [
+    emailFinal,
+    senhaHashFinal,
+    admin.id,
+  ],
+);
     const user = result.rows[0];
     const token = criarTokenUsuario(user);
 
@@ -606,7 +588,7 @@ if (
         address: user.address,
         created_at: user.created_at,
       },
-      recovery_question: user.recovery_question || "",
+      
     });
   } catch (error) {
     console.error("Erro ao atualizar admin:", error);
