@@ -583,3 +583,13 @@
   outline: 3px solid #ffffff;
   outline-offset: 3px;
 }
+/* Espaço entre salvar conta e recuperar senha */
+.form-conta-admin .recuperacao-conta-admin {
+  margin-top: 0;
+  padding-top: 25px;
+  text-align: center;
+}
+
+.form-conta-admin .recuperacao-conta-admin a {
+  margin-top: 3px;
+}
