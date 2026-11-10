@@ -7271,3 +7271,23 @@ async function redefinirSenha(event) {
     mostrarAviso("Erro de conexão ao redefinir senha.", "erro");
   }
 }
+
+// Personaliza o botão da página Compartilhar Loja.
+function configurarBotaoCompartilharLoja() {
+  const botao = document.getElementById("btnPedirAgoraCompartilhar");
+
+  if (!botao) return;
+
+  if (usuarioEhAdmin()) {
+    botao.textContent = "← Voltar ao Painel Admin";
+  } else {
+    botao.textContent = "Fazer pedido agora";
+  }
+
+  botao.href = "cardapio.html";
+}
+
+document.addEventListener(
+  "DOMContentLoaded",
+  configurarBotaoCompartilharLoja
+);
